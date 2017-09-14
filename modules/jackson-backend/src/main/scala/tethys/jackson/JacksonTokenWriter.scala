@@ -4,22 +4,22 @@ import com.fasterxml.jackson.core.JsonGenerator
 import tethys.core.writers.tokens.TokenWriter
 
 class JacksonTokenWriter(jsonGenerator: JsonGenerator) extends TokenWriter {
-  override def writeStartArray(): JacksonTokenWriter.this.type = {
+  override def writeArrayStart(): JacksonTokenWriter.this.type = {
     jsonGenerator.writeStartArray()
     this
   }
 
-  override def writeEndArray(): JacksonTokenWriter.this.type = {
+  override def writeArrayEnd(): JacksonTokenWriter.this.type = {
     jsonGenerator.writeEndArray()
     this
   }
 
-  override def writeStartObject(): JacksonTokenWriter.this.type = {
+  override def writeObjectStart(): JacksonTokenWriter.this.type = {
     jsonGenerator.writeStartObject()
     this
   }
 
-  override def writeEndObject(): JacksonTokenWriter.this.type = {
+  override def writeObjectEnd(): JacksonTokenWriter.this.type = {
     jsonGenerator.writeEndObject()
     this
   }

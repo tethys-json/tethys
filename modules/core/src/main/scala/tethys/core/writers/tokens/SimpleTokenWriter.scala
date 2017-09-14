@@ -8,13 +8,13 @@ import scala.collection.mutable
 class SimpleTokenWriter extends TokenWriter {
   val tokens: mutable.ArrayBuffer[SimpleToken] = mutable.ArrayBuffer.empty
 
-  override def writeStartArray(): SimpleTokenWriter.this.type = append(StartArray)
+  override def writeArrayStart(): SimpleTokenWriter.this.type = append(ArrayStart)
 
-  override def writeEndArray(): SimpleTokenWriter.this.type = append(EndArray)
+  override def writeArrayEnd(): SimpleTokenWriter.this.type = append(ArrayEnd)
 
-  override def writeStartObject(): SimpleTokenWriter.this.type = append(StartObject)
+  override def writeObjectStart(): SimpleTokenWriter.this.type = append(ObjectStart)
 
-  override def writeEndObject(): SimpleTokenWriter.this.type = append(EndObject)
+  override def writeObjectEnd(): SimpleTokenWriter.this.type = append(ObjectEnd)
 
   override def writeFieldName(name: String): SimpleTokenWriter.this.type = append(FieldNameToken(name))
 
@@ -50,10 +50,10 @@ object SimpleTokenWriter {
   sealed trait SimpleToken
   sealed trait ValueToken extends SimpleToken
 
-  case object StartArray extends SimpleToken
-  case object EndArray extends SimpleToken
-  case object StartObject extends SimpleToken
-  case object EndObject extends SimpleToken
+  case object ArrayStart extends SimpleToken
+  case object ArrayEnd extends SimpleToken
+  case object ObjectStart extends SimpleToken
+  case object ObjectEnd extends SimpleToken
   case class FieldNameToken(name: String) extends SimpleToken
   case object Null extends ValueToken
   case class StringToken(value: String) extends ValueToken
@@ -81,11 +81,11 @@ object SimpleTokenWriter {
       case (name, a) => FieldNameToken(name) :: anyToTokens(a)
     }
 
-    StartObject :: tokens ::: EndObject :: Nil
+    ObjectStart :: tokens ::: ObjectEnd :: Nil
   }
 
   def arr(elems: Any*): List[SimpleToken] = {
-    StartArray :: elems.toList.flatMap(anyToTokens) ::: EndArray :: Nil
+    ArrayStart :: elems.toList.flatMap(anyToTokens) ::: ArrayEnd :: Nil
   }
 
   def value(v: String): List[ValueToken] = StringToken(v) :: Nil

@@ -1,13 +1,13 @@
 package tethys.core.writers.tokens
 
 trait TokenWriter {
-  def writeStartArray(): this.type
+  def writeArrayStart(): this.type
 
-  def writeEndArray(): this.type
+  def writeArrayEnd(): this.type
 
-  def writeStartObject(): this.type
+  def writeObjectStart(): this.type
 
-  def writeEndObject(): this.type
+  def writeObjectEnd(): this.type
 
   def writeFieldName(name: String): this.type
 

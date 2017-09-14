@@ -1,6 +1,6 @@
 package tethys.core
 
-import java.io.StringWriter
+import java.io.{StringWriter, Writer}
 
 import tethys.core.writers.tokens.{TokenWriter, TokenWriterProducer}
 
@@ -18,5 +18,9 @@ package object writers {
         tokenWriter.close()
       }
     }
+  }
+
+  implicit class WriterOps(val w: Writer) extends AnyVal {
+    def toTokenWriter(implicit tokenWriterProducer: TokenWriterProducer): TokenWriter = tokenWriterProducer.forWriter(w)
   }
 }
