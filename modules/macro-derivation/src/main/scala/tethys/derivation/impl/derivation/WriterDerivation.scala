@@ -69,9 +69,9 @@ trait WriterDerivation extends WriteBuilderUtils with CaseClassUtils with BaseMa
               ..${context.functions}
 
               override def write($valueTerm: $tpe, $tokenWriterTerm: $tokenWriterType): Unit = {
-                $tokenWriterTerm.writeStartObject()
+                $tokenWriterTerm.writeObjectStart()
                 ..$fields
-                $tokenWriterTerm.writeEndObject()
+                $tokenWriterTerm.writeObjectEnd()
               }
            } : $writersPack.JsonWriter[$tpe]
          """

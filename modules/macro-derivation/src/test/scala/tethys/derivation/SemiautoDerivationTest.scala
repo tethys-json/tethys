@@ -2,7 +2,7 @@ package tethys.derivation
 
 import org.scalatest.{FlatSpec, Matchers}
 import tethys.core.writers.JsonWriter
-import tethys.core.writers.builder.WriterBuilder
+import tethys.derivation.builder.WriterBuilder
 import tethys.core.writers.tokens.SimpleTokenWriter._
 import tethys.derivation.ADTWithType.{ADTWithTypeA, ADTWithTypeB}
 import tethys.derivation.semiauto._

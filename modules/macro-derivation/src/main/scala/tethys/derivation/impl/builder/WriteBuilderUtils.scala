@@ -16,7 +16,7 @@ trait WriteBuilderUtils extends MacroUtils {
   implicit lazy val simpleMacroWriteDescriptionLiftable: Liftable[MacroWriteDescription] = {
     Liftable[MacroWriteDescription] {
       case MacroWriteDescription(tpe, operations) =>
-        q"$writerBuildersPack.WriterDescription[$tpe](_root_.scala.Seq(..$operations))"
+        q"$buildersPack.WriterDescription[$tpe](_root_.scala.Seq(..$operations))"
     }
   }
 
@@ -37,16 +37,16 @@ trait WriteBuilderUtils extends MacroUtils {
 
   implicit lazy val builderMacroOperationLiftable: Liftable[BuilderMacroOperation] = Liftable[BuilderMacroOperation] {
     case BuilderMacroOperation.Remove(tpe, field) =>
-      q"$writerBuildersPack.BuilderOperation.Remove.apply[$tpe]($field)"
+      q"$buildersPack.WriterDescription.BuilderOperation.Remove.apply[$tpe]($field)"
 
     case BuilderMacroOperation.Update(tpe, field, fun, from, to) =>
-      q"$writerBuildersPack.BuilderOperation.Update.apply[$tpe, $from, $to]($field, $fun)"
+      q"$buildersPack.WriterDescription.BuilderOperation.Update.apply[$tpe, $from, $to]($field, $fun)"
 
     case BuilderMacroOperation.UpdatePartial(tpe, field, fun, from) =>
-      q"$writerBuildersPack.BuilderOperation.UpdatePartial.apply[$tpe, $from]($field, $fun)"
+      q"$buildersPack.WriterDescription.BuilderOperation.UpdatePartial.apply[$tpe, $from]($field, $fun)"
 
     case BuilderMacroOperation.Add(tpe, field, fun, to) =>
-      q"$writerBuildersPack.BuilderOperation.Add.apply[$tpe, $to]($field, $fun)"
+      q"$buildersPack.WriterDescription.BuilderOperation.Add.apply[$tpe, $to]($field, $fun)"
   }
 
   implicit lazy val builderMacroOperationUnliftable: Unliftable[BuilderMacroOperation] = Unliftable[BuilderMacroOperation] {

@@ -15,8 +15,10 @@ trait BaseMacroDefinitions {
 
   lazy val writersPack = q"$core.writers"
 
-  lazy val writerBuildersPack = q"$writersPack.builder"
+  lazy val readersPack = q"$core.writers"
 
   lazy val macroPack = q"$pack.derivation.impl"
+
+  lazy val buildersPack = q"$pack.derivation.builder"
 
 }
