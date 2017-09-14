@@ -21,7 +21,7 @@ trait Token {
 
   def isStructStart: Boolean = isObjectStart || isArrayStart
 
-  def isStructEnd: Boolean = isObjectEnd || isObjectEnd
+  def isStructEnd: Boolean = isObjectEnd || isArrayEnd
 
   def isEmpty: Boolean
 }

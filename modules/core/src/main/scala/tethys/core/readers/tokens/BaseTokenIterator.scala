@@ -13,7 +13,7 @@ trait BaseTokenIterator extends TokenIterator {
 
   override def skipExpression(): this.type = {
     val token = currentToken()
-    if(token.isStructStart) skipStructure(1)
+    if(token.isStructStart) skipStructure(1).next()
     else next()
   }
 
