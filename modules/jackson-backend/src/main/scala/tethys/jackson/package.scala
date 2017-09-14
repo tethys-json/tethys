@@ -17,7 +17,7 @@ package object jackson {
 
   implicit def jacksonTokenIteratorProducer(implicit jsonFactory: JsonFactory = defaultJsonFactory): TokenIteratorProducer = new TokenIteratorProducer {
     override def fromReader(reader: Reader): TokenIterator = {
-      JsonParserTokenIterator.fromFreshParser(jsonFactory.createParser(reader))
+      JacksonTokenIterator.fromFreshParser(jsonFactory.createParser(reader))
     }
   }
 }

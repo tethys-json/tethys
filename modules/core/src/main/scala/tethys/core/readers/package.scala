@@ -10,11 +10,19 @@ package object readers {
     def jsonAs[A](implicit jsonReader: JsonReader[A], producer: TokenIteratorProducer): Either[ReaderError, A] = {
       new StringReader(json).readJson[A]
     }
+
+    def toTokenIterator(implicit producer: TokenIteratorProducer): TokenIterator = {
+      new StringReader(json).toTokenIterator
+    }
   }
 
   implicit class ReaderReaderOps(val reader: Reader) extends AnyVal {
     def readJson[A](implicit jsonReader: JsonReader[A], producer: TokenIteratorProducer): Either[ReaderError, A] = {
       producer.fromReader(reader).readJson[A]
+    }
+
+    def toTokenIterator(implicit producer: TokenIteratorProducer): TokenIterator = {
+      producer.fromReader(reader)
     }
   }
 

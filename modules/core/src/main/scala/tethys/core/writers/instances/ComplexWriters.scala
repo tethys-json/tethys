@@ -13,7 +13,7 @@ trait ComplexWriters extends LowPriorityComplexWriters{
 
   implicit def mapWriter[K, A](implicit keyWriter: KeyWriter[K], valueWriter: JsonWriter[A]): JsonWriter[Map[K, A]] = new JsonWriter[Map[K, A]] {
     override def write(value: Map[K, A], tokenWriter: TokenWriter): Unit = {
-      tokenWriter.writeStartObject()
+      tokenWriter.writeObjectStart()
 
       val valueIterator = value.iterator
       while(valueIterator.hasNext) {
@@ -22,7 +22,7 @@ trait ComplexWriters extends LowPriorityComplexWriters{
         valueWriter.write(v._2, tokenWriter)
       }
 
-      tokenWriter.writeEndObject()
+      tokenWriter.writeObjectEnd()
     }
   }
 
@@ -44,7 +44,7 @@ trait ComplexWriters extends LowPriorityComplexWriters{
 private[writers] trait LowPriorityComplexWriters {
   implicit def genTraversableOnceWriter[A, C[X] <: GenTraversableOnce[X]](implicit valueWriter: JsonWriter[A]): JsonWriter[C[A]] = new JsonWriter[C[A]]{
     override def write(value: C[A], tokenWriter: TokenWriter): Unit = {
-      tokenWriter.writeStartArray()
+      tokenWriter.writeArrayStart()
 
       val valueIterator = value.toIterator
       while(valueIterator.hasNext) {
@@ -52,7 +52,7 @@ private[writers] trait LowPriorityComplexWriters {
         valueWriter.write(v, tokenWriter)
       }
 
-      tokenWriter.writeEndArray()
+      tokenWriter.writeArrayEnd()
     }
   }
 }
