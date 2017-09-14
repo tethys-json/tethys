@@ -3,10 +3,9 @@ package tethys.derivation
 import org.scalatest.{FlatSpec, Matchers}
 import tethys.core.writers.JsonWriter
 import tethys.core.writers.builder.WriterBuilder
+import tethys.core.writers.token.SimpleTokenWriter._
 import tethys.derivation.ADTWithType.{ADTWithTypeA, ADTWithTypeB}
 import tethys.derivation.semiauto._
-import tethys.core.writers.syntax._
-import ADTWithType.{ADTWithTypeA, ADTWithTypeB}
 
 /**
   * Created by eld0727 on 23.04.17.
@@ -26,8 +25,13 @@ class SemiautoDerivationTest extends FlatSpec with Matchers {
           .add("e")(_.b)
       }
     }
-    writeString(JsonWriterTestData(5, b = false, C(D(1)))).shouldBe(
-      """{"a":6.0,"c":{"a":1},"d":10,"e":false}"""
+    JsonWriterTestData(5, b = false, C(D(1))).asTokenList shouldBe obj(
+      "a" -> 6.0,
+      "c" -> obj(
+        "a" -> 1
+      ),
+      "d" -> 10,
+      "e" -> false
     )
   }
 
@@ -44,11 +48,12 @@ class SemiautoDerivationTest extends FlatSpec with Matchers {
       }
     }
 
-    writeString(D(1)) shouldBe """{"a":"uno!"}"""
-    writeString(D(2)) shouldBe """{"a":1}"""
-    writeString(D(3)) shouldBe """{"a":6}"""
+    D(1).asTokenList shouldBe obj("a" -> "uno!")
+    D(2).asTokenList shouldBe obj("a" -> 1)
+    D(3).asTokenList shouldBe obj("a" -> 6)
+
     intercept[IllegalArgumentException] {
-      writeString(D(0))
+      D(0).asTokenList
     }.getMessage shouldBe "Wrong value!"
   }
 
@@ -59,8 +64,14 @@ class SemiautoDerivationTest extends FlatSpec with Matchers {
   it should "derive writer for recursive type" in {
     implicit lazy val testWriter: JsonWriter[RecursiveType] = jsonWriter[RecursiveType]
 
-    writeString(RecursiveType(1, Seq(RecursiveType(2)))).shouldBe(
-      """{"a":1,"children":[{"a":2,"children":[]}]}"""
+    RecursiveType(1, Seq(RecursiveType(2))).asTokenList shouldBe obj(
+      "a" -> 1,
+      "children" -> arr(
+        obj(
+          "a" -> 2,
+          "children" -> arr()
+        )
+      )
     )
   }
 
@@ -68,8 +79,14 @@ class SemiautoDerivationTest extends FlatSpec with Matchers {
     implicit lazy val testWriter1: JsonWriter[ComplexRecursionA] = jsonWriter[ComplexRecursionA]
     implicit lazy val testWriter2: JsonWriter[ComplexRecursionB] = jsonWriter[ComplexRecursionB]
 
-    writeString(ComplexRecursionA(1, Some(ComplexRecursionB(2, ComplexRecursionA(3, None))))).shouldBe(
-      """{"a":1,"b":{"b":2,"a":{"a":3}}}"""
+    ComplexRecursionA(1, Some(ComplexRecursionB(2, ComplexRecursionA(3, None)))).asTokenList shouldBe obj(
+      "a" -> 1,
+      "b" -> obj(
+        "b" -> 2,
+        "a" -> obj(
+          "a" -> 3
+        )
+      )
     )
   }
 
@@ -78,8 +95,11 @@ class SemiautoDerivationTest extends FlatSpec with Matchers {
     implicit def recursionTraitWithTypeAWriter[B: JsonWriter]: JsonWriter[ADTWithTypeA[B]] = jsonWriter[ADTWithTypeA[B]]
     implicit def recursionTraitWithTypeBWriter[B: JsonWriter]: JsonWriter[ADTWithTypeB[B]] = jsonWriter[ADTWithTypeB[B]]
 
-    (ADTWithTypeB[Int](1, ADTWithTypeA[Int](2)): ADTWithType[Int]).asJson.shouldBe(
-      """{"a":1,"b":{"a":2}}"""
+    (ADTWithTypeB[Int](1, ADTWithTypeA[Int](2)): ADTWithType[Int]).asTokenList shouldBe obj(
+      "a" -> 1,
+      "b" -> obj(
+        "a" -> 2
+      )
     )
   }
 

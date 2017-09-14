@@ -1,7 +1,7 @@
 package tethys.derivation.impl.derivation
 
-import com.fasterxml.jackson.core.JsonGenerator
 import tethys.core.writers.JsonWriter
+import tethys.core.writers.token.TokenWriter
 import tethys.derivation.impl.builder.WriteBuilderUtils
 import tethys.derivation.impl.{BaseMacroDefinitions, CaseClassUtils}
 
@@ -12,9 +12,9 @@ trait WriterDerivation extends WriteBuilderUtils with CaseClassUtils with BaseMa
   val c: blackbox.Context
   import c.universe._
 
-  private val jsonGeneratorType = tq"${typeOf[JsonGenerator]}"
   private val valueTerm = TermName("value")
-  private val generatorTerm = TermName("jsonGenerator")
+  private val tokenWriterType = tq"${typeOf[TokenWriter]}"
+  private val tokenWriterTerm = TermName("tokenWriter")
 
   def deriveWriter[A: WeakTypeTag]: Expr[JsonWriter[A]] = {
     val description = MacroWriteDescription(
@@ -30,7 +30,7 @@ trait WriterDerivation extends WriteBuilderUtils with CaseClassUtils with BaseMa
 
     val subClassesCases = collectDistinctSubtypes(tpe).sortBy(_.typeSymbol.fullName).map { subtype =>
       val term = TermName(c.freshName("sub"))
-      cq"$term: $subtype => ${context.provideWriter(subtype)}.write($term, $generatorTerm)"
+      cq"$term: $subtype => ${context.provideWriter(subtype)}.write($term, $tokenWriterTerm)"
     }
 
     if(subClassesCases.isEmpty) abort(s"${tpe.typeSymbol} has no known direct subclass")
@@ -43,7 +43,7 @@ trait WriterDerivation extends WriteBuilderUtils with CaseClassUtils with BaseMa
 
               ..${context.writers}
 
-              override def write($valueTerm: $tpe, $generatorTerm: $jsonGeneratorType): Unit = {
+              override def write($valueTerm: $tpe, $tokenWriterTerm: $tokenWriterType): Unit = {
                 $valueTerm match { case ..$subClassesCases }
               }
            } : $writersPack.JsonWriter[$tpe]
@@ -68,10 +68,10 @@ trait WriterDerivation extends WriteBuilderUtils with CaseClassUtils with BaseMa
 
               ..${context.functions}
 
-              override def write($valueTerm: $tpe, $generatorTerm: $jsonGeneratorType): Unit = {
-                $generatorTerm.writeStartObject()
+              override def write($valueTerm: $tpe, $tokenWriterTerm: $tokenWriterType): Unit = {
+                $tokenWriterTerm.writeStartObject()
                 ..$fields
-                $generatorTerm.writeEndObject()
+                $tokenWriterTerm.writeEndObject()
               }
            } : $writersPack.JsonWriter[$tpe]
          """
@@ -217,12 +217,12 @@ trait WriterDerivation extends WriteBuilderUtils with CaseClassUtils with BaseMa
 
   implicit val jsonFieldLiftable: Liftable[JsonField] = Liftable {
     case SimpleJsonField(name, writer, expression) =>
-      q"$writer.write($name, $expression, $generatorTerm)"
+      q"$writer.write($name, $expression, $tokenWriterTerm)"
 
     case PartialJsonField(name, cases, expression) =>
       val resultCases = cases.map {
         case (writer, CaseDef(d, g, body)) =>
-          CaseDef(d, g, q"$writer.write($name, $body, $generatorTerm)")
+          CaseDef(d, g, q"$writer.write($name, $body, $tokenWriterTerm)")
       }
       q"$expression match { case ..$resultCases }"
   }
