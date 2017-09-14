@@ -1,6 +1,6 @@
 package tethys.core.writers.instances
 
-import com.fasterxml.jackson.core.JsonGenerator
+import tethys.core.writers.token.TokenWriter
 import tethys.core.writers.{JsonWriter, KeyWriter}
 
 import scala.collection.GenTraversableOnce
@@ -12,47 +12,47 @@ import scala.language.higherKinds
 trait ComplexWriters extends LowPriorityComplexWriters{
 
   implicit def mapWriter[K, A](implicit keyWriter: KeyWriter[K], valueWriter: JsonWriter[A]): JsonWriter[Map[K, A]] = new JsonWriter[Map[K, A]] {
-    override def write(value: Map[K, A], jsonGenerator: JsonGenerator): Unit = {
-      jsonGenerator.writeStartObject()
+    override def write(value: Map[K, A], tokenWriter: TokenWriter): Unit = {
+      tokenWriter.writeStartObject()
 
       val valueIterator = value.iterator
       while(valueIterator.hasNext) {
         val v = valueIterator.next()
-        jsonGenerator.writeFieldName(keyWriter.toKey(v._1))
-        valueWriter.write(v._2, jsonGenerator)
+        tokenWriter.writeFieldName(keyWriter.toKey(v._1))
+        valueWriter.write(v._2, tokenWriter)
       }
 
-      jsonGenerator.writeEndObject()
+      tokenWriter.writeEndObject()
     }
   }
 
   implicit def optionalWriter[A](implicit valueWriter: JsonWriter[A]): JsonWriter[Option[A]] = new JsonWriter[Option[A]] {
 
-    override def write(name: String, value: Option[A], jsonGenerator: JsonGenerator): Unit = {
+    override def write(name: String, value: Option[A], tokenWriter: TokenWriter): Unit = {
       if(value.nonEmpty) {
-        valueWriter.write(name, value.get, jsonGenerator)
+        valueWriter.write(name, value.get, tokenWriter)
       }
     }
 
-    override def write(value: Option[A], jsonGenerator: JsonGenerator): Unit = {
-      if(value.isEmpty) jsonGenerator.writeNull()
-      else valueWriter.write(value.get, jsonGenerator)
+    override def write(value: Option[A], tokenWriter: TokenWriter): Unit = {
+      if(value.isEmpty) tokenWriter.writeNull()
+      else valueWriter.write(value.get, tokenWriter)
     }
   }
 }
 
 private[writers] trait LowPriorityComplexWriters {
   implicit def genTraversableOnceWriter[A, C[X] <: GenTraversableOnce[X]](implicit valueWriter: JsonWriter[A]): JsonWriter[C[A]] = new JsonWriter[C[A]]{
-    override def write(value: C[A], jsonGenerator: JsonGenerator): Unit = {
-      jsonGenerator.writeStartArray()
+    override def write(value: C[A], tokenWriter: TokenWriter): Unit = {
+      tokenWriter.writeStartArray()
 
       val valueIterator = value.toIterator
       while(valueIterator.hasNext) {
         val v = valueIterator.next()
-        valueWriter.write(v, jsonGenerator)
+        valueWriter.write(v, tokenWriter)
       }
 
-      jsonGenerator.writeEndArray()
+      tokenWriter.writeEndArray()
     }
   }
 }

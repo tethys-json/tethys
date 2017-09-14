@@ -1,7 +1,5 @@
 package tethys.core.readers.tokens
 
-import com.fasterxml.jackson.core.{JsonParser, JsonToken}
-
 trait TokenIterator {
 
   def next(): this.type
@@ -22,11 +20,4 @@ trait TokenIterator {
 
   def collectExpression(): TokenIterator
 
-}
-
-object TokenIterator {
-  def fresh(jsonParser: JsonParser): TokenIterator = {
-    jsonParser.nextToken()
-    new JsonParserTokenIterator(jsonParser)
-  }
 }

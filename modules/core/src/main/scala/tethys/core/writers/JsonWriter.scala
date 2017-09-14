@@ -1,19 +1,19 @@
 package tethys.core.writers
 
-import com.fasterxml.jackson.core.JsonGenerator
 import tethys.core.commons.LowPriorityInstance
 import tethys.core.writers.instances.{BasicWriters, ComplexWriters}
+import tethys.core.writers.token.TokenWriter
 
 import scala.language.higherKinds
 
 trait JsonWriter[A] {
 
-  def write(name: String, value: A, jsonGenerator: JsonGenerator): Unit = {
-    jsonGenerator.writeFieldName(name)
-    write(value, jsonGenerator)
+  def write(name: String, value: A, tokenWriter: TokenWriter): Unit = {
+    tokenWriter.writeFieldName(name)
+    write(value, tokenWriter)
   }
 
-  def write(value: A, jsonGenerator: JsonGenerator): Unit
+  def write(value: A, tokenWriter: TokenWriter): Unit
 }
 
 object JsonWriter

@@ -1,6 +1,5 @@
 package tethys.core.readers.instances
 
-import com.fasterxml.jackson.core.JsonToken
 import tethys.core.readers._
 import tethys.core.readers.tokens.TokenIterator
 
