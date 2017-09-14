@@ -1,4 +1,4 @@
-package tethys.core.writers.token
+package tethys.core.writers.tokens
 
 import java.io.Writer
 

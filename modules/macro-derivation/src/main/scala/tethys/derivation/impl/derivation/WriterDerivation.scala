@@ -1,7 +1,7 @@
 package tethys.derivation.impl.derivation
 
 import tethys.core.writers.JsonWriter
-import tethys.core.writers.token.TokenWriter
+import tethys.core.writers.tokens.TokenWriter
 import tethys.derivation.impl.builder.WriteBuilderUtils
 import tethys.derivation.impl.{BaseMacroDefinitions, CaseClassUtils}
 

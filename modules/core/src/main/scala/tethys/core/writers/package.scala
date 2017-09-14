@@ -1,10 +1,10 @@
-package tethys.core.writers
+package tethys.core
 
 import java.io.StringWriter
 
-import tethys.core.writers.token.{TokenWriter, TokenWriterProducer}
+import tethys.core.writers.tokens.{TokenWriter, TokenWriterProducer}
 
-package object syntax {
+package object writers {
 
   implicit class JsonWriterOps[A](val a: A) extends AnyVal {
     def asJson(implicit jsonWriter: JsonWriter[A], tokenWriterProducer: TokenWriterProducer): String = {

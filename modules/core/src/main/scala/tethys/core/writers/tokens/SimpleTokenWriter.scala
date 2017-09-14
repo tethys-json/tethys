@@ -1,8 +1,7 @@
-package tethys.core.writers.token
+package tethys.core.writers.tokens
 import java.math.BigInteger
 
-import tethys.core.writers.JsonWriter
-import tethys.core.writers.token.SimpleTokenWriter._
+import tethys.core.writers.tokens.SimpleTokenWriter._
 
 import scala.collection.mutable
 
@@ -27,7 +26,7 @@ class SimpleTokenWriter extends TokenWriter {
 
   override def writeNumber(v: Long): SimpleTokenWriter.this.type = append(LongToken(v))
 
-  override def writeNumber(v: BigInteger): SimpleTokenWriter.this.type = append(BigIntegerToken(v))
+  override def writeNumber(v: BigInt): SimpleTokenWriter.this.type = append(BigIntegerToken(v))
 
   override def writeNumber(v: Double): SimpleTokenWriter.this.type = append(DoubleToken(v))
 
@@ -61,14 +60,14 @@ object SimpleTokenWriter {
   case class ShortToken(value: Short) extends ValueToken
   case class IntToken(value: Int) extends ValueToken
   case class LongToken(value: Long) extends ValueToken
-  case class BigIntegerToken(value: BigInteger) extends ValueToken
+  case class BigIntegerToken(value: BigInt) extends ValueToken
   case class DoubleToken(value: Double) extends ValueToken
   case class FloatToken(value: Float) extends ValueToken
   case class BigDecimalToken(value: BigDecimal) extends ValueToken
   case class BooleanToken(value: Boolean) extends ValueToken
 
   implicit class SimpleTokenWriterOps[A](val a: A) extends AnyVal {
-    import tethys.core.writers.syntax._
+    import tethys.core.writers._
 
     def asTokenList(implicit jsonWriter: JsonWriter[A]): List[SimpleToken] = {
       val tokenWriter = new SimpleTokenWriter
@@ -89,9 +88,19 @@ object SimpleTokenWriter {
     StartArray :: elems.toList.flatMap(anyToTokens) ::: EndArray :: Nil
   }
 
+  def value(v: String): List[ValueToken] = StringToken(v) :: Nil
+  def value(v: Short): List[ValueToken] = ShortToken(v) :: Nil
+  def value(v: Int): List[ValueToken] = IntToken(v) :: Nil
+  def value(v: Long): List[ValueToken] = LongToken(v) :: Nil
+  def value(v: BigInt): List[ValueToken] = BigIntegerToken(v) :: Nil
+  def value(v: Double): List[ValueToken] = DoubleToken(v) :: Nil
+  def value(v: Float): List[ValueToken] = FloatToken(v) :: Nil
+  def value(v: BigDecimal): List[ValueToken] = BigDecimalToken(v) :: Nil
+  def value(v: Boolean): List[ValueToken] = BooleanToken(v) :: Nil
+
   private def anyToTokens(any: Any): List[SimpleToken] = any match {
-    case tokens: List[SimpleToken] => tokens
-    case v: ValueToken => v :: Nil
+    case v: SimpleToken => v :: Nil
+    case tokens: List[_] => tokens.flatMap(anyToTokens)
     case value: String => StringToken(value) :: Nil
     case value: Short => ShortToken(value) :: Nil
     case value: Int => IntToken(value) :: Nil
@@ -101,5 +110,6 @@ object SimpleTokenWriter {
     case value: Float => FloatToken(value) :: Nil
     case value: BigDecimal => BigDecimalToken(value) :: Nil
     case value: Boolean => BooleanToken(value) :: Nil
+    case value => throw new Exception(s"Can't auto wrap '$value'")
   }
 }

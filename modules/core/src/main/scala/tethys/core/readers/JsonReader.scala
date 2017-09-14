@@ -1,7 +1,7 @@
 package tethys.core.readers
 
 import tethys.core.commons.LowPriorityInstance
-import tethys.core.readers.instances.{ComplexReaders, SimpleReaders}
+import tethys.core.readers.instances.{ComplexReaders, BasicReaders}
 import tethys.core.readers.tokens.TokenIterator
 
 trait JsonReader[A] {
@@ -20,7 +20,7 @@ trait JsonReader[A] {
 }
 
 object JsonReader
-  extends SimpleReaders
+  extends BasicReaders
     with ComplexReaders
     with LowPriorityJsonReaders {
   def apply[A](implicit jsonReader: JsonReader[A]): JsonReader[A] = jsonReader

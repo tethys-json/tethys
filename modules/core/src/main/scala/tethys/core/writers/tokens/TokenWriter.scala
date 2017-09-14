@@ -1,4 +1,4 @@
-package tethys.core.writers.token
+package tethys.core.writers.tokens
 
 trait TokenWriter {
   def writeStartArray(): this.type
@@ -19,7 +19,7 @@ trait TokenWriter {
 
   def writeNumber(v: Long): this.type
 
-  def writeNumber(v: java.math.BigInteger): this.type
+  def writeNumber(v: BigInt): this.type
 
   def writeNumber(v: Double): this.type
 

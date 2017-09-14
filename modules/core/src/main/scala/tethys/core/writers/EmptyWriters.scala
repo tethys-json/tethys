@@ -1,6 +1,6 @@
 package tethys.core.writers
 
-import tethys.core.writers.token.TokenWriter
+import tethys.core.writers.tokens.TokenWriter
 
 trait EmptyWriters {
   def emptyWriter[A]: JsonWriter[A] = new JsonWriter[A] {

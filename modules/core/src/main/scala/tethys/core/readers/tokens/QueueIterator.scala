@@ -26,6 +26,8 @@ class QueueIterator(nodes: mutable.Queue[TokenNode]) extends BaseTokenIterator {
 }
 
 object QueueIterator {
+  def apply(nodes: Seq[TokenNode]): QueueIterator = new QueueIterator(mutable.Queue[TokenNode](nodes:_*))
+
   case class TokenNode(token: Token,
                        string: Option[String] = None,
                        number: Option[Number] = None,

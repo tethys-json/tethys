@@ -2,7 +2,7 @@ package tethys.core.writers
 
 import tethys.core.commons.LowPriorityInstance
 import tethys.core.writers.instances.{BasicWriters, ComplexWriters}
-import tethys.core.writers.token.TokenWriter
+import tethys.core.writers.tokens.TokenWriter
 
 import scala.language.higherKinds
 
