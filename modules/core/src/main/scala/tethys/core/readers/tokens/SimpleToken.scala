@@ -80,6 +80,7 @@ object SimpleToken {
     case v: Float => value(v)
     case v: BigDecimal => value(v)
     case v: Boolean => value(v)
+    case null => TokenNode(NullValueToken) :: Nil
     case v => throw new Exception(s"Can't auto wrap '$v'")
   }
 }
