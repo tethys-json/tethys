@@ -1,6 +1,6 @@
 package tethys.derivation.impl.builder
 
-import tethys.core.writers.builder.{WriterBuilder, WriterDescription}
+import tethys.derivation.builder.{WriterBuilder, WriterDescription}
 import tethys.derivation.impl.{BaseMacroDefinitions, MacroUtils}
 
 import scala.reflect.macros.blackbox

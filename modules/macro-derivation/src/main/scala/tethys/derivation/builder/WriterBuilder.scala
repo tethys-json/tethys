@@ -1,6 +1,6 @@
-package tethys.core.writers.builder
+package tethys.derivation.builder
 
-import tethys.core.writers.builder.WriterBuilder._
+import tethys.derivation.builder.WriterBuilder._
 
 
 /**
@@ -18,6 +18,8 @@ sealed trait WriterBuilder[A] {
 }
 
 object WriterBuilder {
+  class NotDescribedException extends Exception("Definition should be in describe block", null)
+
   def apply[A <: Product](): WriterBuilder[A] = throw new NotDescribedException
 
   sealed trait FunApply[A, B] {

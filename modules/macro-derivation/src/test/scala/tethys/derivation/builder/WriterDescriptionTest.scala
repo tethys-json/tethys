@@ -1,8 +1,8 @@
 package tethys.derivation.builder
 
 import org.scalatest.{FlatSpec, Matchers}
-import tethys.core.writers.builder.{BuilderOperation, WriterBuilder, WriterDescription}
 import tethys.derivation.builder.WriterDescriptionTest._
+import tethys.derivation.builder.WriterDescription._
 import tethys.derivation.semiauto._
 
 class WriterDescriptionTest extends FlatSpec with Matchers {
