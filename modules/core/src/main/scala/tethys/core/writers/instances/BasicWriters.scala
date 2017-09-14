@@ -1,9 +1,9 @@
 package tethys.core.writers.instances
 
-import java.math.{BigDecimal => JBigDecimal}
+import java.math.{BigDecimal => JBigDecimal, BigInteger}
 
 import tethys.core.writers.JsonWriter
-import tethys.core.writers.token.TokenWriter
+import tethys.core.writers.tokens.TokenWriter
 
 trait BasicWriters {
 
@@ -28,7 +28,11 @@ trait BasicWriters {
   }
 
   implicit lazy val bigDecimalJsonWriter: JsonWriter[BigDecimal] = new JsonWriter[BigDecimal] {
-    override def write(value: BigDecimal, tokenWriter: TokenWriter): Unit = tokenWriter.writeNumber(value.bigDecimal)
+    override def write(value: BigDecimal, tokenWriter: TokenWriter): Unit = tokenWriter.writeNumber(value)
+  }
+
+  implicit lazy val bigIntJsonWriter: JsonWriter[BigInt] = new JsonWriter[BigInt] {
+    override def write(value: BigInt, tokenWriter: TokenWriter): Unit = tokenWriter.writeNumber(value)
   }
 
   implicit lazy val booleanJsonWriter: JsonWriter[Boolean] = new JsonWriter[Boolean] {
@@ -65,6 +69,10 @@ trait BasicWriters {
 
   implicit lazy val javaBigDecimalJsonWriter: JsonWriter[JBigDecimal] = new JsonWriter[JBigDecimal] {
     override def write(value: JBigDecimal, tokenWriter: TokenWriter): Unit = tokenWriter.writeNumber(value)
+  }
+
+  implicit lazy val javaBigIntegerJsonWriter: JsonWriter[BigInteger] = new JsonWriter[BigInteger] {
+    override def write(value: BigInteger, tokenWriter: TokenWriter): Unit = tokenWriter.writeNumber(value)
   }
 
   implicit lazy val javaBooleanJsonWriter: JsonWriter[java.lang.Boolean] = new JsonWriter[java.lang.Boolean] {

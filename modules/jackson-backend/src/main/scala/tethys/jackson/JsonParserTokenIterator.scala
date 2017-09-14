@@ -1,7 +1,7 @@
 package tethys.jackson
 
 import com.fasterxml.jackson.core.{JsonParser, JsonToken}
-import tethys.core.readers.tokens.{BaseTokenIterator, Token}
+import tethys.core.readers.tokens.{BaseTokenIterator, Token, TokenIterator}
 
 class JsonParserTokenIterator(jsonParser: JsonParser) extends BaseTokenIterator {
   override def currentToken(): Token = {
@@ -32,5 +32,12 @@ class JsonParserTokenIterator(jsonParser: JsonParser) extends BaseTokenIterator 
       case JsonToken.VALUE_FALSE => Some(false)
       case _ => None
     }
+  }
+}
+
+object JsonParserTokenIterator {
+  def fromFreshParser(parser: JsonParser): TokenIterator = {
+    parser.nextToken()// move parser to first token
+    new JsonParserTokenIterator(parser)
   }
 }

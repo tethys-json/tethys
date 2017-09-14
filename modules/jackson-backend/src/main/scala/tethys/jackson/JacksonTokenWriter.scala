@@ -1,9 +1,7 @@
 package tethys.jackson
 
-import java.math.BigInteger
-
 import com.fasterxml.jackson.core.JsonGenerator
-import tethys.core.writers.token.TokenWriter
+import tethys.core.writers.tokens.TokenWriter
 
 class JacksonTokenWriter(jsonGenerator: JsonGenerator) extends TokenWriter {
   override def writeStartArray(): JacksonTokenWriter.this.type = {
@@ -51,8 +49,8 @@ class JacksonTokenWriter(jsonGenerator: JsonGenerator) extends TokenWriter {
     this
   }
 
-  override def writeNumber(v: BigInteger): JacksonTokenWriter.this.type = {
-    jsonGenerator.writeNumber(v)
+  override def writeNumber(v: BigInt): JacksonTokenWriter.this.type = {
+    jsonGenerator.writeNumber(v.bigInteger)
     this
   }
 

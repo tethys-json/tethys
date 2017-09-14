@@ -1,6 +1,6 @@
 package tethys.core.writers.instances
 
-import tethys.core.writers.token.TokenWriter
+import tethys.core.writers.tokens.TokenWriter
 import tethys.core.writers.{JsonWriter, KeyWriter}
 
 import scala.collection.GenTraversableOnce

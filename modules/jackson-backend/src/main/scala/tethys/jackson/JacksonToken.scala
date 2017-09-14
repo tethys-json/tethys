@@ -10,7 +10,7 @@ case class JacksonToken(token: JsonToken) extends Token {
 
   override def isBooleanValue: Boolean = token.isBoolean
 
-  override def isNullValue = token == JsonToken.VALUE_NULL
+  override def isNullValue: Boolean = token == JsonToken.VALUE_NULL
 
   override def isFieldName: Boolean = token == JsonToken.FIELD_NAME
 
