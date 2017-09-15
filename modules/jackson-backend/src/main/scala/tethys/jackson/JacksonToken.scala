@@ -1,26 +1,34 @@
 package tethys.jackson
 
-import com.fasterxml.jackson.core.JsonToken
+import com.fasterxml.jackson.core.JsonTokenId
 import tethys.readers.tokens.Token
 
-case class JacksonToken(token: JsonToken) extends Token {
-  override def isStringValue: Boolean = token == JsonToken.VALUE_STRING
+case class JacksonToken(tokenId: Int) extends Token {
+  override def isStringValue: Boolean = tokenId == JsonTokenId.ID_STRING
 
-  override def isNumberValue: Boolean = token.isNumeric
+  override def isNumberValue: Boolean = tokenId match {
+    case JsonTokenId.ID_NUMBER_INT => true
+    case JsonTokenId.ID_NUMBER_FLOAT => true
+    case _ => false
+  }
 
-  override def isBooleanValue: Boolean = token.isBoolean
+  override def isBooleanValue: Boolean = tokenId match {
+    case JsonTokenId.ID_TRUE => true
+    case JsonTokenId.ID_FALSE => true
+    case _ => false
+  }
 
-  override def isNullValue: Boolean = token == JsonToken.VALUE_NULL
+  override def isNullValue: Boolean = tokenId == JsonTokenId.ID_NULL
 
-  override def isFieldName: Boolean = token == JsonToken.FIELD_NAME
+  override def isFieldName: Boolean = tokenId == JsonTokenId.ID_FIELD_NAME
 
-  override def isArrayStart: Boolean = token == JsonToken.START_ARRAY
+  override def isArrayStart: Boolean = tokenId == JsonTokenId.ID_START_ARRAY
 
-  override def isArrayEnd: Boolean = token == JsonToken.END_ARRAY
+  override def isArrayEnd: Boolean = tokenId == JsonTokenId.ID_END_ARRAY
 
-  override def isObjectStart: Boolean = token == JsonToken.START_OBJECT
+  override def isObjectStart: Boolean = tokenId == JsonTokenId.ID_START_OBJECT
 
-  override def isObjectEnd: Boolean = token == JsonToken.END_OBJECT
+  override def isObjectEnd: Boolean = tokenId == JsonTokenId.ID_END_OBJECT
 
-  override def isEmpty: Boolean = false
+  override def isEmpty: Boolean = tokenId == JsonTokenId.ID_NO_TOKEN
 }

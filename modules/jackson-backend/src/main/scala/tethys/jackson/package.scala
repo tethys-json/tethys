@@ -7,7 +7,12 @@ import tethys.readers.tokens.{TokenIterator, TokenIteratorProducer}
 import tethys.writers.tokens.{TokenWriter, TokenWriterProducer}
 
 package object jackson {
-  lazy val defaultJsonFactory: JsonFactory = new JsonFactory()
+  lazy val defaultJsonFactory: JsonFactory = {
+    val f = new JsonFactory()
+    f.configure(JsonFactory.Feature.INTERN_FIELD_NAMES, false)
+    f
+  }
+
 
   implicit def jacksonTokenWriterProducer(implicit jsonFactory: JsonFactory = defaultJsonFactory): TokenWriterProducer = new TokenWriterProducer {
     override def forWriter(writer: Writer): TokenWriter = {
