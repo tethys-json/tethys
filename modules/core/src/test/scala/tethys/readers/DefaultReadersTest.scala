@@ -50,7 +50,9 @@ class DefaultReadersTest extends FlatSpec {
   cases.foreach {
     case (TestDefinition(result, jsonReader, name), nodes) =>
       it should s"correctly read $name" in {
-        QueueIterator(nodes).readJson(jsonReader) shouldBe Right(result)
+        val iterator = QueueIterator(nodes)
+        iterator.readJson(jsonReader) shouldBe Right(result)
+        iterator.currentToken() shouldBe Token.Empty
       }
 
     case _ =>

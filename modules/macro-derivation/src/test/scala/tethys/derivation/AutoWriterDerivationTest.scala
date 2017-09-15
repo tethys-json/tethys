@@ -5,8 +5,9 @@ import tethys.writers.tokens.SimpleTokenWriter._
 import tethys.derivation.ADTWithType._
 import tethys.derivation.auto._
 
-class AutoDerivationTest extends FlatSpec with Matchers {
+class AutoWriterDerivationTest extends FlatSpec with Matchers {
 
+  behavior of "auto derivation"
   it should "auto derive writer for recursive type" in {
     RecursiveType(1, Seq(RecursiveType(2))).asTokenList shouldBe obj(
       "a" -> 1,
@@ -41,6 +42,6 @@ class AutoDerivationTest extends FlatSpec with Matchers {
   }
 
   it should "not auto derive writer for sealed cyclic trait with type parameter if one of subclasses has additional type" in {
-    "JsonWriter[ADTWithWrongType[Int]]" shouldNot compile
+    "tethys.JsonWriter[ADTWithWrongType[Int]]" shouldNot compile
   }
 }

@@ -1,5 +1,7 @@
 package tethys.readers
 
+import tethys.readers.tokens.TokenIterator
+
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
 
@@ -12,7 +14,7 @@ final class WrongTypeError(message: String, field: String) extends ReaderError(
 )
 
 final class WrongJsonError(field: String) extends ReaderError(
-  message = "Json is not properly formatted",
+  message = s"Json is not properly formatted: '$field'",
   cause = null,
   field = field
 )
@@ -31,14 +33,6 @@ object ReaderError {
   def catchNonFatal[A](fun: => A)(implicit fieldName: FieldName): Either[ReaderError, A] = {
     try Right(fun) catch {
       case NonFatal(e) => Left(new ReaderError(e.getMessage, e, fieldName.value()))
-    }
-  }
-
-  def processScalar[A](fun: => Option[A])(implicit fieldName: FieldName, classTag: ClassTag[A]): Either[ReaderError, A] = {
-    ReaderError.catchNonFatal(fun) match {
-      case Right(Some(result)) => Right(result)
-      case Right(_) => wrongType[A]
-      case left => left.asInstanceOf[Either[ReaderError, A]]
     }
   }
 }

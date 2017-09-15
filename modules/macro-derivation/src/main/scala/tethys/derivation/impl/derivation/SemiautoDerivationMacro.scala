@@ -1,6 +1,6 @@
 package tethys.derivation.impl.derivation
 
-import tethys.JsonWriter
+import tethys.{JsonReader, JsonWriter}
 import tethys.derivation.builder.WriterDescription
 
 import scala.reflect.macros.blackbox
@@ -15,8 +15,13 @@ object SemiautoDerivationMacro {
     new SemiautoDerivationMacroImpl[c.type](c).describedJsonWriter[A](description)
   }
 
+  def simpleJsonReader[A: c.WeakTypeTag](c: blackbox.Context): c.Expr[JsonReader[A]] = {
+    new SemiautoDerivationMacroImpl[c.type](c).simpleJsonReader[A]
+  }
+
   private class SemiautoDerivationMacroImpl[C <: blackbox.Context](val c: C)
-    extends WriterDerivation {
+    extends WriterDerivation
+      with ReaderDerivation {
 
     import c.universe._
 
@@ -38,6 +43,15 @@ object SemiautoDerivationMacro {
         abort(s"Can't auto derive JsonWriter[$tpe]")
       } else {
         deriveWriter[A](unliftMacroDescription(description))
+      }
+    }
+
+    def simpleJsonReader[A: WeakTypeTag]: Expr[JsonReader[A]] = {
+      val tpe = weakTypeOf[A]
+      if(isCaseClass(tpe)) {
+        deriveReader[A]
+      } else {
+        fail(s"Can't auto derive JsonWriter[$tpe]")
       }
     }
 

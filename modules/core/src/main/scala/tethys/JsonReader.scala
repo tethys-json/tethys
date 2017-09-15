@@ -10,6 +10,8 @@ trait JsonReader[A] {
 
   def read(it: TokenIterator)(implicit fieldName: FieldName): Either[ReaderError, A]
 
+  def defaultValue: Option[A] = None
+
   def map[B](fun: A => B): JsonReader[B] = new JsonReader[B] {
     override def read(it: TokenIterator)(implicit fieldName: FieldName): Either[ReaderError, B] = {
       self.read(it) match {

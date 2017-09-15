@@ -1,7 +1,7 @@
 package tethys
 
 package object derivation {
-  case class JsonWriterTestData(a: Int, b: Boolean, c: C)
+  case class JsonTreeTestData(a: Int, b: Boolean, c: C)
   case class C(d: D)
   case class D(a: Int)
 
