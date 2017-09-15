@@ -10,19 +10,19 @@ trait BasicReaders {
 
   implicit lazy val booleanJsonReader: JsonReader[Boolean] = new JsonReader[Boolean] {
     override def read(it: TokenIterator)(implicit fieldName: FieldName): Either[ReaderError, Boolean] = {
-      processScalar(it)(_.boolean())
+      processScalar(it)(it.boolean())
     }
   }
 
   implicit lazy val stringJsonReader: JsonReader[String] = new JsonReader[String] {
     override def read(it: TokenIterator)(implicit fieldName: FieldName): Either[ReaderError, String] = {
-      processScalar(it)(_.string())
+      processScalar(it)(it.string())
     }
   }
 
   implicit lazy val charJsonReader: JsonReader[Char] = new JsonReader[Char] {
     override def read(it: TokenIterator)(implicit fieldName: FieldName): Either[ReaderError, Char] = {
-      processScalar(it)(_.string().flatMap {
+      processScalar(it)(it.string().flatMap {
         case s if s.length == 1 => Some(s.charAt(0))
         case _ => None
       })
@@ -31,7 +31,7 @@ trait BasicReaders {
 
   implicit lazy val numberJsonReader: JsonReader[Number] = new JsonReader[Number] {
     override def read(it: TokenIterator)(implicit fieldName: FieldName): Either[ReaderError, Number] = {
-      processScalar(it)(_.number())
+      processScalar(it)(it.number())
     }
   }
 
@@ -75,9 +75,9 @@ trait BasicReaders {
   implicit lazy val javaBigIntegerJsonReader: JsonReader[java.math.BigInteger] = bigIntJsonReader.map(_.bigInteger)
 
 
-  private def processScalar[A](it: TokenIterator)(fun: (TokenIterator) => Option[A])(implicit fieldName: FieldName, classTag: ClassTag[A]): Either[ReaderError, A] = {
+  private def processScalar[A](it: TokenIterator)(fun: => Option[A])(implicit fieldName: FieldName, classTag: ClassTag[A]): Either[ReaderError, A] = {
     val either = ReaderError.catchNonFatal {
-      val res = fun(it)
+      val res = fun
       it.nextToken()
       res
     }
