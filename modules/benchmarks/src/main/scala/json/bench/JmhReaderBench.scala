@@ -8,8 +8,8 @@ import org.openjdk.jmh.annotations.{State, _}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
-@Warmup(iterations = 5, time = 20, timeUnit = TimeUnit.SECONDS)
-@Measurement(iterations = 10, time = 60, timeUnit = TimeUnit.SECONDS)
+@Warmup(iterations = 2, time = 20, timeUnit = TimeUnit.SECONDS)
+@Measurement(iterations = 6, time = 30, timeUnit = TimeUnit.SECONDS)
 @Fork(4)
 @State(Scope.Benchmark)
 class JmhReaderBench {
