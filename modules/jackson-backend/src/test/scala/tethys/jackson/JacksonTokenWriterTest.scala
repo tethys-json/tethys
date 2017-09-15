@@ -3,8 +3,8 @@ package tethys.jackson
 import java.io.StringWriter
 
 import org.scalatest.{FlatSpec, Matchers}
-import tethys.core.writers._
-import tethys.core.writers.tokens.TokenWriter
+import tethys._
+import tethys.writers.tokens.TokenWriter
 
 class JacksonTokenWriterTest extends FlatSpec with Matchers {
 

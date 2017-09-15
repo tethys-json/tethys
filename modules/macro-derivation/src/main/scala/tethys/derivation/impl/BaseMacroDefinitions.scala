@@ -9,16 +9,14 @@ trait BaseMacroDefinitions {
   val c: blackbox.Context
   import c.universe._
 
-  lazy val pack = q"tethys"
+  lazy val tethysPack = q"tethys"
 
-  lazy val core = q"$pack.core"
+  lazy val writersPack = q"$tethysPack.writers"
 
-  lazy val writersPack = q"$core.writers"
+  lazy val readersPack = q"$tethysPack.readers"
 
-  lazy val readersPack = q"$core.writers"
+  lazy val macroPack = q"$tethysPack.derivation.impl"
 
-  lazy val macroPack = q"$pack.derivation.impl"
-
-  lazy val buildersPack = q"$pack.derivation.builder"
+  lazy val buildersPack = q"$tethysPack.derivation.builder"
 
 }
