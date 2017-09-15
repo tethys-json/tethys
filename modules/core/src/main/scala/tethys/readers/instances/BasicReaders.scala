@@ -4,23 +4,25 @@ import tethys.JsonReader
 import tethys.readers.tokens.TokenIterator
 import tethys.readers.{FieldName, ReaderError}
 
+import scala.reflect.ClassTag
+
 trait BasicReaders {
 
   implicit lazy val booleanJsonReader: JsonReader[Boolean] = new JsonReader[Boolean] {
     override def read(it: TokenIterator)(implicit fieldName: FieldName): Either[ReaderError, Boolean] = {
-      ReaderError.processScalar(it.boolean())
+      processScalar(it)(_.boolean())
     }
   }
 
   implicit lazy val stringJsonReader: JsonReader[String] = new JsonReader[String] {
     override def read(it: TokenIterator)(implicit fieldName: FieldName): Either[ReaderError, String] = {
-      ReaderError.processScalar(it.string())
+      processScalar(it)(_.string())
     }
   }
 
   implicit lazy val charJsonReader: JsonReader[Char] = new JsonReader[Char] {
     override def read(it: TokenIterator)(implicit fieldName: FieldName): Either[ReaderError, Char] = {
-      ReaderError.processScalar(it.string().flatMap {
+      processScalar(it)(_.string().flatMap {
         case s if s.length == 1 => Some(s.charAt(0))
         case _ => None
       })
@@ -29,7 +31,7 @@ trait BasicReaders {
 
   implicit lazy val numberJsonReader: JsonReader[Number] = new JsonReader[Number] {
     override def read(it: TokenIterator)(implicit fieldName: FieldName): Either[ReaderError, Number] = {
-      ReaderError.processScalar(it.number())
+      processScalar(it)(_.number())
     }
   }
 
@@ -72,4 +74,18 @@ trait BasicReaders {
   implicit lazy val javaBigDecimalJsonReader: JsonReader[java.math.BigDecimal] = bigDecimalJsonReader.map(_.bigDecimal)
   implicit lazy val javaBigIntegerJsonReader: JsonReader[java.math.BigInteger] = bigIntJsonReader.map(_.bigInteger)
 
+
+  private def processScalar[A](it: TokenIterator)(fun: (TokenIterator) => Option[A])(implicit fieldName: FieldName, classTag: ClassTag[A]): Either[ReaderError, A] = {
+    val either = ReaderError.catchNonFatal {
+      val res = fun(it)
+      it.nextToken()
+      res
+    }
+
+    either match {
+      case Right(Some(result)) => Right(result)
+      case Right(_) => ReaderError.wrongType[A]
+      case left => left.asInstanceOf[Either[ReaderError, A]]
+    }
+  }
 }

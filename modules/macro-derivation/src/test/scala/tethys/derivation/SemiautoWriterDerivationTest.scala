@@ -10,14 +10,15 @@ import tethys.derivation.semiauto._
 /**
   * Created by eld0727 on 23.04.17.
   */
-class SemiautoDerivationTest extends FlatSpec with Matchers {
+class SemiautoWriterDerivationTest extends FlatSpec with Matchers {
 
+  behavior of "semiauto derivation"
   it should "generate proper writer from WriterDescription" in {
     implicit val dWriter: JsonWriter[D] = jsonWriter[D]
 
-    implicit val testWriter: JsonWriter[JsonWriterTestData] = jsonWriter {
+    implicit val testWriter: JsonWriter[JsonTreeTestData] = jsonWriter {
       describe {
-        WriterBuilder[JsonWriterTestData]()
+        WriterBuilder[JsonTreeTestData]()
           .remove(_.b)
           .update(_.a)(_ + 1.0)
           .update(_.c)(_.d)
@@ -25,7 +26,7 @@ class SemiautoDerivationTest extends FlatSpec with Matchers {
           .add("e")(_.b)
       }
     }
-    JsonWriterTestData(5, b = false, C(D(1))).asTokenList shouldBe obj(
+    JsonTreeTestData(5, b = false, C(D(1))).asTokenList shouldBe obj(
       "a" -> 6.0,
       "c" -> obj(
         "a" -> 1

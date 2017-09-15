@@ -5,17 +5,23 @@ import tethys.derivation.impl.builder.WriteBuilderUtils
 import tethys.derivation.impl.{BaseMacroDefinitions, CaseClassUtils}
 import tethys.writers.tokens.TokenWriter
 
+import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.reflect.macros.blackbox
 
-trait WriterDerivation extends WriteBuilderUtils with CaseClassUtils with BaseMacroDefinitions {
+trait WriterDerivation
+  extends WriteBuilderUtils
+    with CaseClassUtils
+    with BaseMacroDefinitions
+    with DerivationUtils {
+
   val c: blackbox.Context
   import c.universe._
 
   private val valueTerm = TermName("value")
   private val tokenWriterType = tq"${typeOf[TokenWriter]}"
   private val tokenWriterTerm = TermName("tokenWriter")
-  private def jsonWriterType(tpe: Type) = tq"$tethysPack.JsonWriter[$tpe]"
+  private val jsonWriterType = tq"$tethysPack.JsonWriter"
 
   def deriveWriter[A: WeakTypeTag]: Expr[JsonWriter[A]] = {
     val description = MacroWriteDescription(
@@ -34,20 +40,20 @@ trait WriterDerivation extends WriteBuilderUtils with CaseClassUtils with BaseMa
       cq"$term: $subtype => ${context.provideWriter(subtype)}.write($term, $tokenWriterTerm)"
     }
 
-    if(subClassesCases.isEmpty) abort(s"${tpe.typeSymbol} has no known direct subclass")
+    if(subClassesCases.isEmpty) fail(s"${tpe.typeSymbol} has no known direct subclass")
 
     c.Expr[JsonWriter[A]] {
       c.untypecheck {
         q"""
-           new ${jsonWriterType(tpe)} {
-              ${providerThisWriterImplicit(tpe)}
+           new $jsonWriterType[$tpe] {
+              ${provideThisWriterImplicit(tpe)}
 
               ..${context.writers}
 
               override def write($valueTerm: $tpe, $tokenWriterTerm: $tokenWriterType): Unit = {
                 $valueTerm match { case ..$subClassesCases }
               }
-           } : ${jsonWriterType(tpe)}
+           } : $jsonWriterType[$tpe]
          """
       }
     }
@@ -62,8 +68,8 @@ trait WriterDerivation extends WriteBuilderUtils with CaseClassUtils with BaseMa
     c.Expr[JsonWriter[A]] {
       c.untypecheck {
         q"""
-           new ${jsonWriterType(tpe)} {
-              ${providerThisWriterImplicit(tpe)}
+           new $jsonWriterType[$tpe] {
+              ${provideThisWriterImplicit(tpe)}
 
               ..${context.writers}
 
@@ -74,52 +80,17 @@ trait WriterDerivation extends WriteBuilderUtils with CaseClassUtils with BaseMa
                 ..$fields
                 $tokenWriterTerm.writeObjectEnd()
               }
-           } : ${jsonWriterType(tpe)}
+           } : $jsonWriterType[$tpe]
          """
       }
     }
   }
 
-  private def collectDistinctSubtypes(tpe: Type): List[Type] = {
-    val baseClass = classSym(tpe)
-    val baseArgs = tpe.dealias.typeArgs
-
-    val tpes = collectSubclasses(baseClass).map { sym =>
-      def substituteArgs: List[Type] = {
-        val subst = c.internal.thisType(sym).baseType(baseClass).typeArgs
-        sym.typeParams.map { param =>
-          val paramTpe = param.asType.toType
-          val index = subst.indexWhere(_ =:= paramTpe)
-          if(index != -1) baseArgs(index)
-          else abort(s"$sym contains additional type parameter that can't be derived in compile time")
-        }
-      }
-
-      appliedType(sym, substituteArgs)
-    }
-
-    tpes.foldLeft(List.empty[Type]) {
-      case (acc, t) =>
-        if(!acc.exists(_ =:= t)) t :: acc
-        else acc
-    }
-  }
-
-  private def collectSubclasses(classSym: ClassSymbol): List[ClassSymbol] = {
-    classSym.knownDirectSubclasses.toList.flatMap { child0 =>
-      val child = child0.asClass
-      child.typeSignature // Workaround for <https://issues.scala-lang.org/browse/SI-7755>
-      if (child.isCaseClass) List(child)
-      else if (child.isSealed) collectSubclasses(child)
-      else abort(s"$child is not case class or a sealed trait")
-    }
-  }
-
-  private def providerThisWriterImplicit(tpe: Type): Tree = {
-    c.typecheck(q"implicitly[${jsonWriterType(tpe)}]", silent = true) match {
+  private def provideThisWriterImplicit(tpe: Type): Tree = {
+    c.typecheck(q"implicitly[$jsonWriterType[$tpe]]", silent = true) match {
       case EmptyTree =>
         val thisWriterTerm = TermName(c.freshName("thisWriter"))
-        q"implicit private[this] def $thisWriterTerm: ${jsonWriterType(tpe)} = this"
+        q"implicit private[this] def $thisWriterTerm: $jsonWriterType[$tpe] = this"
       case _ => EmptyTree
     }
   }
@@ -203,11 +174,12 @@ trait WriterDerivation extends WriteBuilderUtils with CaseClassUtils with BaseMa
         q"private[this] lazy val $name = $writersPack.EmptyWriters.emptyWriter[Nothing]"
 
       case (tpe, name) =>
-        q"private[this] lazy val $name = implicitly[${jsonWriterType(tpe)}]"
+        q"private[this] lazy val $name = implicitly[$jsonWriterType[$tpe]]"
     }.toSeq
 
+    @tailrec
     private def unwrapType(tpe: Type): Type = tpe match {
-      case ConstantType(const) => const.tpe
+      case ConstantType(const) => unwrapType(const.tpe)
       case _ => tpe
     }
   }
@@ -226,16 +198,5 @@ trait WriterDerivation extends WriteBuilderUtils with CaseClassUtils with BaseMa
           CaseDef(d, g, q"$writer.write($name, $body, $tokenWriterTerm)")
       }
       q"$expression match { case ..$resultCases }"
-  }
-
-  protected def classSym(tpe: Type): ClassSymbol = {
-    val sym = tpe.typeSymbol
-    if (!sym.isClass)
-      abort(s"$sym is not a class or trait")
-
-    val classSym = sym.asClass
-    classSym.typeSignature // Workaround for <https://issues.scala-lang.org/browse/SI-7755>
-
-    classSym
   }
 }

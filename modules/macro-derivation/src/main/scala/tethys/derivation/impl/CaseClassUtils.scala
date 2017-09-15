@@ -9,7 +9,7 @@ trait CaseClassUtils extends LoggingUtils {
   val c: blackbox.Context
   import c.universe._
 
-  case class CaseClassDefinition(tpe: Type, fields: Seq[CaseClassField], typeParamsToRealTypes: Map[String, Type])
+  case class CaseClassDefinition(tpe: Type, fields: List[CaseClassField], typeParamsToRealTypes: Map[String, Type])
   case class CaseClassField(name: String, tpe: Type)
 
   def caseClassDefinition[A: WeakTypeTag]: CaseClassDefinition = caseClassDefinition(weakTypeOf[A])
