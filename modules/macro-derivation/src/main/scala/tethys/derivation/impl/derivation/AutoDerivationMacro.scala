@@ -1,7 +1,7 @@
 package tethys.derivation.impl.derivation
 
-import tethys.core.commons.LowPriorityInstance
-import tethys.core.writers.JsonWriter
+import tethys.JsonWriter
+import tethys.commons.LowPriorityInstance
 
 import scala.reflect.macros.blackbox
 

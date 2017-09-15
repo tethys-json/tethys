@@ -1,15 +1,18 @@
-package tethys.jackson
+package tethys.readers
 
-import tethys._
 import org.scalatest.{FlatSpec, Matchers}
+import tethys.readers.tokens.QueueIterator
+import tethys.readers.tokens.SimpleToken._
 
-class JacksonTokenIteratorTest extends FlatSpec with Matchers {
+class QueueIteratorTest extends FlatSpec with Matchers {
+  behavior of "QueueIterator"
 
-  behavior of "JacksonTokenIterator"
-
-  it should "properly iterate over json string" in {
-    val json = """{"a":1,"b":["s",true,{"a":null},1.0,false]}"""
-    val it = json.toTokenIterator
+  it should "properly iterate over json token nodes" in {
+    val json = obj(
+      "a" -> 1,
+      "b" -> arr("s", true, obj("a" -> null), 1.0, false)
+    )
+    val it = QueueIterator(json)
     it.currentToken().isObjectStart shouldBe true
 
     it.nextToken().isFieldName shouldBe true
@@ -46,8 +49,11 @@ class JacksonTokenIteratorTest extends FlatSpec with Matchers {
   }
 
   it should "correctly skip next expressions" in {
-    val json = """{"a":1,"b":["s",true,{"a":null},1.0,false]}"""
-    val it = json.toTokenIterator
+    val json = obj(
+      "a" -> 1,
+      "b" -> arr("s", true, obj("a" -> null), 1.0, false)
+    )
+    val it = QueueIterator(json)
     it.currentToken().isObjectStart shouldBe true
 
     it.nextToken().isFieldName shouldBe true
@@ -63,8 +69,11 @@ class JacksonTokenIteratorTest extends FlatSpec with Matchers {
   }
 
   it should "correctly collect expressions" in {
-    val json = """{"a":1,"b":["s",true,{"a":null},1.0,false]}"""
-    val it = json.toTokenIterator
+    val json = obj(
+      "a" -> 1,
+      "b" -> arr("s", true, obj("a" -> null), 1.0, false)
+    )
+    val it = QueueIterator(json)
     it.currentToken().isObjectStart shouldBe true
 
     it.nextToken().isFieldName shouldBe true

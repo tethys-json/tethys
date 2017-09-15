@@ -1,7 +1,7 @@
 package tethys.jackson
 
 import com.fasterxml.jackson.core.JsonToken
-import tethys.core.readers.tokens.Token
+import tethys.readers.tokens.Token
 
 case class JacksonToken(token: JsonToken) extends Token {
   override def isStringValue: Boolean = token == JsonToken.VALUE_STRING

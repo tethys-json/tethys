@@ -1,6 +1,6 @@
 package tethys.derivation
 
-import tethys.core.writers.JsonWriter
+import tethys.JsonWriter
 import tethys.derivation.builder.{WriterBuilder, WriterDescription}
 import tethys.derivation.impl.builder.WriterDescriptorMacro
 import tethys.derivation.impl.derivation.SemiautoDerivationMacro

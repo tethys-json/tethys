@@ -1,9 +1,9 @@
 package tethys.derivation.impl.derivation
 
-import tethys.core.writers.JsonWriter
-import tethys.core.writers.tokens.TokenWriter
+import tethys.JsonWriter
 import tethys.derivation.impl.builder.WriteBuilderUtils
 import tethys.derivation.impl.{BaseMacroDefinitions, CaseClassUtils}
+import tethys.writers.tokens.TokenWriter
 
 import scala.collection.mutable
 import scala.reflect.macros.blackbox
@@ -15,6 +15,7 @@ trait WriterDerivation extends WriteBuilderUtils with CaseClassUtils with BaseMa
   private val valueTerm = TermName("value")
   private val tokenWriterType = tq"${typeOf[TokenWriter]}"
   private val tokenWriterTerm = TermName("tokenWriter")
+  private def jsonWriterType(tpe: Type) = tq"$tethysPack.JsonWriter[$tpe]"
 
   def deriveWriter[A: WeakTypeTag]: Expr[JsonWriter[A]] = {
     val description = MacroWriteDescription(
@@ -38,7 +39,7 @@ trait WriterDerivation extends WriteBuilderUtils with CaseClassUtils with BaseMa
     c.Expr[JsonWriter[A]] {
       c.untypecheck {
         q"""
-           new $writersPack.JsonWriter[$tpe] {
+           new ${jsonWriterType(tpe)} {
               ${providerThisWriterImplicit(tpe)}
 
               ..${context.writers}
@@ -46,7 +47,7 @@ trait WriterDerivation extends WriteBuilderUtils with CaseClassUtils with BaseMa
               override def write($valueTerm: $tpe, $tokenWriterTerm: $tokenWriterType): Unit = {
                 $valueTerm match { case ..$subClassesCases }
               }
-           } : $writersPack.JsonWriter[$tpe]
+           } : ${jsonWriterType(tpe)}
          """
       }
     }
@@ -61,7 +62,7 @@ trait WriterDerivation extends WriteBuilderUtils with CaseClassUtils with BaseMa
     c.Expr[JsonWriter[A]] {
       c.untypecheck {
         q"""
-           new $writersPack.JsonWriter[$tpe] {
+           new ${jsonWriterType(tpe)} {
               ${providerThisWriterImplicit(tpe)}
 
               ..${context.writers}
@@ -73,7 +74,7 @@ trait WriterDerivation extends WriteBuilderUtils with CaseClassUtils with BaseMa
                 ..$fields
                 $tokenWriterTerm.writeObjectEnd()
               }
-           } : $writersPack.JsonWriter[$tpe]
+           } : ${jsonWriterType(tpe)}
          """
       }
     }
@@ -115,10 +116,10 @@ trait WriterDerivation extends WriteBuilderUtils with CaseClassUtils with BaseMa
   }
 
   private def providerThisWriterImplicit(tpe: Type): Tree = {
-    c.typecheck(q"implicitly[$writersPack.JsonWriter[$tpe]]", silent = true) match {
+    c.typecheck(q"implicitly[${jsonWriterType(tpe)}]", silent = true) match {
       case EmptyTree =>
         val thisWriterTerm = TermName(c.freshName("thisWriter"))
-        q"implicit private[this] def $thisWriterTerm: $writersPack.JsonWriter[$tpe] = this"
+        q"implicit private[this] def $thisWriterTerm: ${jsonWriterType(tpe)} = this"
       case _ => EmptyTree
     }
   }
@@ -202,7 +203,7 @@ trait WriterDerivation extends WriteBuilderUtils with CaseClassUtils with BaseMa
         q"private[this] lazy val $name = $writersPack.EmptyWriters.emptyWriter[Nothing]"
 
       case (tpe, name) =>
-        q"private[this] lazy val $name = implicitly[$writersPack.JsonWriter[$tpe]]"
+        q"private[this] lazy val $name = implicitly[${jsonWriterType(tpe)}]"
     }.toSeq
 
     private def unwrapType(tpe: Type): Type = tpe match {
