@@ -8,13 +8,23 @@ trait TokenIterator {
 
   def nextToken(): Token
 
-  def fieldName(): Option[String]
+  def fieldName(): String
 
-  def string(): Option[String]
+  def string(): String
 
-  def number(): Option[Number]
+  def number(): Number
 
-  def boolean(): Option[Boolean]
+  def short(): Short
+
+  def int(): Int
+
+  def long(): Long
+
+  def float(): Float
+
+  def double(): Double
+
+  def boolean(): Boolean
 
   def skipExpression(): this.type
 

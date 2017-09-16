@@ -46,7 +46,8 @@ package object tethys {
 
   implicit class TokenIteratorOps(val tokenIterator: TokenIterator) extends AnyVal {
     def readJson[A](implicit jsonReader: JsonReader[A]): Either[ReaderError, A] = {
-      jsonReader.read(tokenIterator)(FieldName())
+      implicit val fieldName: FieldName = FieldName()
+      ReaderError.catchNonFatal(jsonReader.read(tokenIterator))
     }
   }
 }

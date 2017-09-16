@@ -22,7 +22,6 @@ trait ReaderDerivation
   private val tokenIteratorTerm = TermName(c.freshName("it"))
   private val tokenIteratorType = tq"${typeOf[TokenIterator]}"
 
-  private val errorTerm = TermName(c.freshName("error"))
   private val readerErrorCompanion = q"$readersPack.ReaderError"
 
   private val jsonReaderType = tq"$tethysPack.JsonReader"
@@ -32,7 +31,6 @@ trait ReaderDerivation
     val classDef = caseClassDefinition(tpe)
     implicit val context: ReaderContext = new ReaderContext
 
-    val nameOpt = TermName(c.freshName("nameOpt"))
     val name = TermName(c.freshName("name"))
     val fieldNameTmp = TermName(c.freshName("fieldNameTmp"))
 
@@ -48,7 +46,6 @@ trait ReaderDerivation
       }
     }
 
-    val resultType = weakTypeOf[Either[ReaderError, A]]
     c.Expr[JsonReader[A]] {
       c.untypecheck {
         q"""
@@ -59,30 +56,23 @@ trait ReaderDerivation
 
               ..${context.readers}
 
-              override def read($tokenIteratorTerm: $tokenIteratorType)(implicit $fieldNameTerm: $fieldNameType): $resultType = {
+              override def read($tokenIteratorTerm: $tokenIteratorType)(implicit $fieldNameTerm: $fieldNameType): $tpe = {
                 if(!$tokenIteratorTerm.currentToken().isObjectStart) $readerErrorCompanion.wrongType[$tpe]
                 else {
                   val $fieldNameTmp = $fieldNameTerm
                   $tokenIteratorTerm.nextToken()
-                  var $errorTerm: ${weakTypeOf[Either[ReaderError, _]]} = null
                   ..$vars
 
-                  while($errorTerm == null && !$tokenIteratorTerm.currentToken().isObjectEnd) {
-                    val $nameOpt = $tokenIteratorTerm.fieldName()
-                    if($nameOpt.isEmpty) {
-                      $errorTerm = $readerErrorCompanion.wrongJson
-                    } else {
-                      $tokenIteratorTerm.nextToken()
-                      val $name = $nameOpt.get
-                      implicit val $fieldNameTerm: $fieldNameType = $fieldNameTmp.appendFieldName($name)
-                      $name match { case ..$cases }
-                    }
+                  while(!$tokenIteratorTerm.currentToken().isObjectEnd) {
+                    val $name = $tokenIteratorTerm.fieldName()
+                    $tokenIteratorTerm.nextToken()
+                    implicit val $fieldNameTerm: $fieldNameType = $fieldNameTmp.appendFieldName($name)
+                    $name match { case ..$cases }
                   }
                   $tokenIteratorTerm.nextToken()
 
-                  if($errorTerm != null) $errorTerm.asInstanceOf[$resultType]
-                  else if(!($isAllInitialized)) $readerErrorCompanion.wrongJson
-                  else Right(new ${weakTypeOf[A]}(..${definitions.map(_.value)}))
+                  if(!($isAllInitialized)) $readerErrorCompanion.wrongJson
+                  else new ${weakTypeOf[A]}(..${definitions.map(_.value)})
                 }
               }
            }: $jsonReaderType[$tpe]
@@ -148,19 +138,10 @@ trait ReaderDerivation
     }
 
     def fieldCase: CaseDef = {
-      val right = TermName(c.freshName(name + "Value"))
-      val left = TermName(c.freshName(name + "Error"))
       cq"""
           $name =>
-            ${readerContext.provideReader(tpe)}.read($tokenIteratorTerm) match {
-              case Right($right) =>
-                $value = $right
-                $isInitialized = true
-
-              case $left =>
-                $errorTerm = $left
-
-            }
+            $value = ${readerContext.provideReader(tpe)}.read($tokenIteratorTerm)
+            $isInitialized = true
         """
     }
   }

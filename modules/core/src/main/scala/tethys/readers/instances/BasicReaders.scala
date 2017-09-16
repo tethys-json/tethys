@@ -1,46 +1,67 @@
 package tethys.readers.instances
 
 import tethys.JsonReader
-import tethys.readers.tokens.TokenIterator
+import tethys.readers.tokens.{Token, TokenIterator}
 import tethys.readers.{FieldName, ReaderError}
 
 import scala.reflect.ClassTag
 
 trait BasicReaders {
 
-  implicit lazy val booleanJsonReader: JsonReader[Boolean] = new JsonReader[Boolean] {
-    override def read(it: TokenIterator)(implicit fieldName: FieldName): Either[ReaderError, Boolean] = {
-      processScalar(it)(it.boolean())
+  implicit lazy val booleanJsonReader: JsonReader[Boolean] = new ScalarReader[Boolean] {
+    override protected def isCorrectToken(token: Token) = token.isBooleanValue
+
+    override protected def value(it: TokenIterator)(implicit fieldName: FieldName) = it.boolean()
+  }
+
+  implicit lazy val stringJsonReader: JsonReader[String] = new ScalarReader[String] {
+    override protected def isCorrectToken(token: Token) = token.isStringValue
+
+    override protected def value(it: TokenIterator)(implicit fieldName: FieldName) = it.string()
+  }
+
+  implicit lazy val charJsonReader: JsonReader[Char] = new ScalarReader[Char] {
+    override protected def isCorrectToken(token: Token) = token.isStringValue
+
+    override protected def value(it: TokenIterator)(implicit fieldName: FieldName) = {
+      val s = it.string()
+      if(s.length == 1) s.charAt(0)
+      else ReaderError.wrongType[Char]
     }
   }
 
-  implicit lazy val stringJsonReader: JsonReader[String] = new JsonReader[String] {
-    override def read(it: TokenIterator)(implicit fieldName: FieldName): Either[ReaderError, String] = {
-      processScalar(it)(it.string())
-    }
+  implicit lazy val numberJsonReader: JsonReader[Number] = new ScalarReader[Number] {
+    override protected def isCorrectToken(token: Token) = token.isNumberValue
+
+    override protected def value(it: TokenIterator)(implicit fieldName: FieldName) = it.number()
   }
 
-  implicit lazy val charJsonReader: JsonReader[Char] = new JsonReader[Char] {
-    override def read(it: TokenIterator)(implicit fieldName: FieldName): Either[ReaderError, Char] = {
-      processScalar(it)(it.string().flatMap {
-        case s if s.length == 1 => Some(s.charAt(0))
-        case _ => None
-      })
-    }
+  implicit lazy val shortJsonReader: JsonReader[Short] = new ScalarReader[Short] {
+    override protected def isCorrectToken(token: Token) = token.isNumberValue
+
+    override protected def value(it: TokenIterator)(implicit fieldName: FieldName) = it.short()
+  }
+  implicit lazy val intJsonReader: JsonReader[Int] = new ScalarReader[Int] {
+    override protected def isCorrectToken(token: Token) = token.isNumberValue
+
+    override protected def value(it: TokenIterator)(implicit fieldName: FieldName) = it.int()
+  }
+  implicit lazy val longJsonReader: JsonReader[Long] = new ScalarReader[Long] {
+    override protected def isCorrectToken(token: Token) = token.isNumberValue
+
+    override protected def value(it: TokenIterator)(implicit fieldName: FieldName) = it.long()
   }
 
-  implicit lazy val numberJsonReader: JsonReader[Number] = new JsonReader[Number] {
-    override def read(it: TokenIterator)(implicit fieldName: FieldName): Either[ReaderError, Number] = {
-      processScalar(it)(it.number())
-    }
+  implicit lazy val floatJsonReader: JsonReader[Float] = new ScalarReader[Float] {
+    override protected def isCorrectToken(token: Token) = token.isNumberValue
+
+    override protected def value(it: TokenIterator)(implicit fieldName: FieldName) = it.float()
   }
+  implicit lazy val doubleJsonReader: JsonReader[Double] = new ScalarReader[Double] {
+    override protected def isCorrectToken(token: Token) = token.isNumberValue
 
-  implicit lazy val shortJsonReader: JsonReader[Short] = numberJsonReader.map(_.shortValue())
-  implicit lazy val intJsonReader: JsonReader[Int] = numberJsonReader.map(_.intValue())
-  implicit lazy val longJsonReader: JsonReader[Long] = numberJsonReader.map(_.longValue())
-
-  implicit lazy val floatJsonReader: JsonReader[Float] = numberJsonReader.map(_.floatValue())
-  implicit lazy val doubleJsonReader: JsonReader[Double] = numberJsonReader.map(_.doubleValue())
+    override protected def value(it: TokenIterator)(implicit fieldName: FieldName) = it.double()
+  }
 
   implicit lazy val bigDecimalJsonReader: JsonReader[BigDecimal] = numberJsonReader.map {
     case bd: BigDecimal => bd
@@ -66,26 +87,29 @@ trait BasicReaders {
     case num => BigInt(num.longValue())
   }
 
-  implicit lazy val javaShortJsonReader: JsonReader[java.lang.Short] = numberJsonReader.map(_.shortValue())
-  implicit lazy val javaIntJsonReader: JsonReader[java.lang.Integer] = numberJsonReader.map(_.intValue())
-  implicit lazy val javaLongJsonReader: JsonReader[java.lang.Long] = numberJsonReader.map(_.longValue())
-  implicit lazy val javaFloatJsonReader: JsonReader[java.lang.Float] = numberJsonReader.map(_.floatValue())
-  implicit lazy val javaDoubleJsonReader: JsonReader[java.lang.Double] = numberJsonReader.map(_.doubleValue())
+  implicit lazy val javaShortJsonReader: JsonReader[java.lang.Short] = shortJsonReader.map(a => a)
+  implicit lazy val javaIntJsonReader: JsonReader[java.lang.Integer] = intJsonReader.map(a => a)
+  implicit lazy val javaLongJsonReader: JsonReader[java.lang.Long] = longJsonReader.map(a => a)
+  implicit lazy val javaFloatJsonReader: JsonReader[java.lang.Float] = floatJsonReader.map(a => a)
+  implicit lazy val javaDoubleJsonReader: JsonReader[java.lang.Double] = doubleJsonReader.map(a => a)
   implicit lazy val javaBigDecimalJsonReader: JsonReader[java.math.BigDecimal] = bigDecimalJsonReader.map(_.bigDecimal)
   implicit lazy val javaBigIntegerJsonReader: JsonReader[java.math.BigInteger] = bigIntJsonReader.map(_.bigInteger)
 
 
-  private def processScalar[A](it: TokenIterator)(fun: => Option[A])(implicit fieldName: FieldName, classTag: ClassTag[A]): Either[ReaderError, A] = {
-    val either = ReaderError.catchNonFatal {
-      val res = fun
-      it.nextToken()
-      res
-    }
+  private abstract class ScalarReader[A](implicit ct: ClassTag[A]) extends JsonReader[A] {
 
-    either match {
-      case Right(Some(result)) => Right(result)
-      case Right(_) => ReaderError.wrongType[A]
-      case left => left.asInstanceOf[Either[ReaderError, A]]
+    protected def isCorrectToken(token: Token): Boolean
+
+    protected def value(it: TokenIterator)(implicit fieldName: FieldName): A
+
+    override def read(it: TokenIterator)(implicit fieldName: FieldName): A = {
+      if(isCorrectToken(it.currentToken())) {
+        val res = value(it)
+        it.nextToken()
+        res
+      } else {
+        ReaderError.wrongType[A]
+      }
     }
   }
 }

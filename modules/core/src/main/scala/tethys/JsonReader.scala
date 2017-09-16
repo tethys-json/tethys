@@ -8,17 +8,12 @@ import tethys.readers.{FieldName, ReaderError}
 trait JsonReader[A] {
   self =>
 
-  def read(it: TokenIterator)(implicit fieldName: FieldName): Either[ReaderError, A]
+  def read(it: TokenIterator)(implicit fieldName: FieldName): A
 
   def defaultValue: Option[A] = None
 
   def map[B](fun: A => B): JsonReader[B] = new JsonReader[B] {
-    override def read(it: TokenIterator)(implicit fieldName: FieldName): Either[ReaderError, B] = {
-      self.read(it) match {
-        case Right(a) => ReaderError.catchNonFatal(fun(a))
-        case left => left.asInstanceOf[Either[ReaderError, B]]
-      }
-    }
+    override def read(it: TokenIterator)(implicit fieldName: FieldName): B = fun(self.read(it))
   }
 }
 

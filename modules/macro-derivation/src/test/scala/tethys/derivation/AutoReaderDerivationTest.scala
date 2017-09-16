@@ -28,11 +28,11 @@ class AutoReaderDerivationTest extends FlatSpec with Matchers {
           "a" -> 2
         )
       )
-    )) shouldBe Right(JsonTreeTestData(
+    )) shouldBe JsonTreeTestData(
       a = 1,
       b = true,
       c = C(D(2))
-    ))
+    )
   }
 
   it should "derive reader for recursive type" in {
@@ -48,7 +48,7 @@ class AutoReaderDerivationTest extends FlatSpec with Matchers {
           "children" -> arr()
         )
       )
-    )) shouldBe Right(RecursiveType(1, Seq(RecursiveType(2), RecursiveType(3))))
+    )) shouldBe RecursiveType(1, Seq(RecursiveType(2), RecursiveType(3)))
 
   }
 
@@ -61,6 +61,6 @@ class AutoReaderDerivationTest extends FlatSpec with Matchers {
           "a" -> 3
         )
       )
-    )) shouldBe Right(ComplexRecursionA(1, Some(ComplexRecursionB(2, ComplexRecursionA(3, None)))))
+    )) shouldBe ComplexRecursionA(1, Some(ComplexRecursionB(2, ComplexRecursionA(3, None))))
   }
 }
