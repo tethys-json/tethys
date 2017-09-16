@@ -8,17 +8,15 @@ import org.openjdk.jmh.annotations._
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
 @Warmup(iterations = 2, time = 20, timeUnit = TimeUnit.SECONDS)
-@Measurement(iterations = 6, time = 30, timeUnit = TimeUnit.SECONDS)
-@Fork(4)
+@Measurement(iterations = 4, time = 30, timeUnit = TimeUnit.SECONDS)
+@Fork(2)
 @State(Scope.Thread)
 class JmhWriterBench {
   @Param(Array(
     "10",
     "100",
     "1000",
-    "5000",
     "10000",
-    "50000",
     "100000"
   ))
   var size: Int = _

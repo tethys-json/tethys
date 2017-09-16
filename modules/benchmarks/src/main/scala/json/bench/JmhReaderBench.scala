@@ -9,8 +9,8 @@ import org.openjdk.jmh.annotations.{State, _}
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
 @Warmup(iterations = 2, time = 20, timeUnit = TimeUnit.SECONDS)
-@Measurement(iterations = 6, time = 30, timeUnit = TimeUnit.SECONDS)
-@Fork(4)
+@Measurement(iterations = 4, time = 30, timeUnit = TimeUnit.SECONDS)
+@Fork(2)
 @State(Scope.Benchmark)
 class JmhReaderBench {
 
@@ -41,8 +41,7 @@ class JmhReaderBench {
     "json4s-jackson",
     "json4s-native",
     "play-json",
-    "spray-json",
-    "pushka"
+    "spray-json"
   ))
   var processorName: String = _
 
