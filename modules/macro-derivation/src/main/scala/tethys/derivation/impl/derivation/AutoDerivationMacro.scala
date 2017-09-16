@@ -46,7 +46,6 @@ object AutoDerivationMacro {
       val tpe = weakTypeOf[A]
       if(isCaseClass(tpe)) {
         val instance = deriveReader[A]
-        info(show(instance))
         c.Expr[LowPriorityInstance[JsonReader[A]]] {
           c.untypecheck {
             q"new ${weakTypeOf[LowPriorityInstance[JsonReader[A]]]}($instance)"

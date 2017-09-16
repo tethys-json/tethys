@@ -60,7 +60,11 @@ object HandwrittenBench {
   }
 
   object HandwrittenJacksonDataProcessor extends DataWriter with DataReader {
-    private val jsonFactory = new JsonFactory()
+    private val jsonFactory = {
+      val f = new JsonFactory()
+      f.configure(JsonFactory.Feature.INTERN_FIELD_NAMES, false)
+      f
+    }
 
     private def jsonGenerator: (JsonGenerator, SegmentedStringWriter) = {
       val bufferRecycler = new BufferRecycler()

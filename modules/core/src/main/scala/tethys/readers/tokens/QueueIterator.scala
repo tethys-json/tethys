@@ -12,17 +12,24 @@ class QueueIterator(nodes: mutable.Queue[TokenNode]) extends BaseTokenIterator {
     currentToken()
   }
 
-  override def fieldName(): Option[String] = if(nodes.isEmpty) None else {
-    val node = nodes.front
-    if(node.token.isFieldName) node.string
-    else None
-  }
+  //TODO
+  override def fieldName(): String = ??? //nodes.front.string
 
-  override def string(): Option[String] = if(nodes.isEmpty) None else nodes.front.string
+  override def string(): String = ??? //nodes.front.string
 
-  override def number(): Option[Number] = if(nodes.isEmpty) None else nodes.front.number
+  override def number(): Number = ??? //nodes.front.number
 
-  override def boolean(): Option[Boolean] = if(nodes.isEmpty) None else nodes.front.boolean
+  override def boolean(): Boolean = ??? //nodes.front.boolean
+
+  override def short(): Short = ???
+
+  override def int(): Int = ???
+
+  override def long(): Long = ???
+
+  override def float(): Float = ???
+
+  override def double(): Double = ???
 }
 
 object QueueIterator {

@@ -54,9 +54,9 @@ trait BaseTokenIterator extends TokenIterator {
     if(token.isStructStart) TokenNode(token) -> 1
     else if(token.isStructEnd) TokenNode(token) -> -1
     else if(token.isNullValue) TokenNode(token) -> 0
-    else if(token.isFieldName) TokenNode(token, string = fieldName()) -> 0
-    else if(token.isStringValue) TokenNode(token, string = string()) -> 0
-    else if(token.isNumberValue) TokenNode(token, number = number()) -> 0
-    else TokenNode(token, boolean = boolean()) -> 0
+    else if(token.isFieldName) TokenNode.string(token, fieldName()) -> 0
+    else if(token.isStringValue) TokenNode.string(token, string()) -> 0
+    else if(token.isNumberValue) TokenNode.number(token, number()) -> 0
+    else TokenNode.boolean(token, boolean()) -> 0
   }
 }
