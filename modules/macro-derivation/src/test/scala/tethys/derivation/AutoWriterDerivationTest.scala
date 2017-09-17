@@ -2,6 +2,7 @@ package tethys.derivation
 
 import org.scalatest.{FlatSpec, Matchers}
 import tethys.writers.tokens.SimpleTokenWriter._
+import tethys.commons.TokenNode._
 import tethys.derivation.ADTWithType._
 import tethys.derivation.auto._
 

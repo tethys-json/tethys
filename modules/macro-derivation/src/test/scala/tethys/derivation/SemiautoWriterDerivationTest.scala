@@ -4,6 +4,7 @@ import org.scalatest.{FlatSpec, Matchers}
 import tethys.JsonWriter
 import tethys.derivation.builder.WriterBuilder
 import tethys.writers.tokens.SimpleTokenWriter._
+import tethys.commons.TokenNode._
 import tethys.derivation.ADTWithType.{ADTWithTypeA, ADTWithTypeB}
 import tethys.derivation.semiauto._
 
