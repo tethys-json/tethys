@@ -1,5 +1,8 @@
 package tethys.readers.tokens
 
+import tethys.commons.Token
+import tethys.readers.tokens.TokenIterator.CopySupport
+
 trait TokenIterator {
 
   def next(): this.type
@@ -28,6 +31,12 @@ trait TokenIterator {
 
   def skipExpression(): this.type
 
-  def collectExpression(): TokenIterator
+  def collectExpression(): TokenIterator with CopySupport
 
+}
+
+object TokenIterator {
+  trait CopySupport {
+    def copy(): TokenIterator with CopySupport
+  }
 }

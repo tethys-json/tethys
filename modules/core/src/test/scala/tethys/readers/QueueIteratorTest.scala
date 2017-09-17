@@ -1,8 +1,8 @@
 package tethys.readers
 
 import org.scalatest.{FlatSpec, Matchers}
+import tethys.commons.TokenNode._
 import tethys.readers.tokens.QueueIterator
-import tethys.readers.tokens.SimpleToken._
 
 class QueueIteratorTest extends FlatSpec with Matchers {
   behavior of "QueueIterator"

@@ -2,11 +2,11 @@ package tethys.derivation
 
 import org.scalatest.{FlatSpec, Matchers}
 import tethys.JsonReader
+import tethys.commons.{Token, TokenNode}
+import tethys.commons.TokenNode._
 import tethys.derivation.semiauto._
 import tethys.readers.ReaderError
-import tethys.readers.tokens.QueueIterator.TokenNode
-import tethys.readers.tokens.SimpleToken._
-import tethys.readers.tokens.{QueueIterator, Token}
+import tethys.readers.tokens.QueueIterator
 
 class SemiautoReaderDerivationTest extends FlatSpec with Matchers {
 
