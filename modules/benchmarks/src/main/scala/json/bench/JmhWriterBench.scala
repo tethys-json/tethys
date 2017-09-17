@@ -19,14 +19,14 @@ class JmhWriterBench {
     "10000",
     "100000"
   ))
-  var size: Int = _
+  var arraySize: Int = _
 
   val seed = 10000
   var data: Seq[Data] = _
 
   @Setup(Level.Trial)
   def setup(): Unit = {
-    data = Data.dataSamples(size, seed)
+    data = Data.dataSamples(arraySize, seed)
   }
 
   @Param(Array(
