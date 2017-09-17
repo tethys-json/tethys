@@ -3,9 +3,10 @@ package tethys.writers
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers.{value => _, _}
 import tethys.JsonWriter
+import tethys.commons.TokenNode
+import tethys.commons.TokenNode._
 import tethys.writers.DefaultWritersTest.TestDefinition
 import tethys.writers.tokens.SimpleTokenWriter._
-import tethys.writers.tokens.SimpleTokenWriter.{Null, SimpleToken}
 
 import scala.reflect.ClassTag
 
@@ -19,7 +20,7 @@ class DefaultWritersTest extends FlatSpec {
     TestDefinition(value, jsonWriter, name)
   }
 
-  private val cases: List[(TestDefinition[_], List[SimpleToken])] = List[(TestDefinition[_], List[SimpleToken])](
+  private val cases: List[(TestDefinition[_], List[TokenNode])] = List[(TestDefinition[_], List[TokenNode])](
     test("1") -> value("1"),
     test('1') -> value("1"),
     test(1) -> value(1),
@@ -35,7 +36,7 @@ class DefaultWritersTest extends FlatSpec {
     test(List[Int](), "Seq.empty") -> arr(),
     test(Map("a" -> 1, "b" -> 2)) -> obj("a" -> 1, "b" -> 2),
     test(Option(1), "Option.nonEmpty") -> value(1),
-    test(Option.empty[Int], "Option.empty") -> List(Null),
+    test(Option.empty[Int], "Option.empty") -> List(NullValueNode),
     test(1: java.lang.Integer) -> value(1),
     test(java.lang.Short.valueOf(1: Short)) -> value(1: Short),
     test(1L: java.lang.Long) -> value(1L),
