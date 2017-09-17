@@ -1,6 +1,8 @@
 package tethys.readers.tokens
 
-import tethys.readers.tokens.QueueIterator.TokenNode
+import tethys.commons.TokenNode
+import tethys.commons.TokenNode._
+import tethys.readers.tokens.TokenIterator.CopySupport
 
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -17,7 +19,7 @@ trait BaseTokenIterator extends TokenIterator {
     else next()
   }
 
-  override def collectExpression(): TokenIterator = {
+  override def collectExpression(): TokenIterator with CopySupport = {
     val queue = createTokenNode() match {
       case (node, 0) => mutable.Queue[TokenNode](node)
       case (node, _) => collectTokens(1, mutable.Queue.newBuilder[TokenNode] += node)
@@ -51,12 +53,21 @@ trait BaseTokenIterator extends TokenIterator {
 
   private def createTokenNode(): (TokenNode, Int) = {
     val token = currentToken()
-    if(token.isStructStart) TokenNode(token) -> 1
-    else if(token.isStructEnd) TokenNode(token) -> -1
-    else if(token.isNullValue) TokenNode(token) -> 0
-    else if(token.isFieldName) TokenNode.string(token, fieldName()) -> 0
-    else if(token.isStringValue) TokenNode.string(token, string()) -> 0
-    else if(token.isNumberValue) TokenNode.number(token, number()) -> 0
-    else TokenNode.boolean(token, boolean()) -> 0
+    if(token.isArrayStart) ArrayStartNode -> 1
+    else if(token.isArrayEnd) ArrayEndNode -> -1
+    else if(token.isObjectStart) ObjectStartNode -> 1
+    else if(token.isObjectEnd) ObjectEndNode -> -1
+    else if(token.isNullValue) NullValueNode -> 0
+    else if(token.isFieldName) FieldNameNode(fieldName()) -> 0
+    else if(token.isStringValue) StringValueNode(string()) -> 0
+    else if(token.isNumberValue) number() match {
+      case v: java.lang.Short => ShortValueNode(v) -> 0
+      case v: java.lang.Integer => IntValueNode(v) -> 0
+      case v: java.lang.Long => LongValueNode(v) -> 0
+      case v: java.lang.Float => FloatValueNode(v) -> 0
+      case v: java.lang.Double => DoubleValueNode(v) -> 0
+      case n => NumberValueNode(n) -> 0
+    }
+    else BooleanValueNode(boolean()) -> 0
   }
 }

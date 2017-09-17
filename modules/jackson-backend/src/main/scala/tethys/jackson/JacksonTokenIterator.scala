@@ -1,8 +1,9 @@
 package tethys.jackson
 
 import com.fasterxml.jackson.core.{JsonParser, JsonTokenId}
-import tethys.readers.tokens.SimpleToken._
-import tethys.readers.tokens.{BaseTokenIterator, Token, TokenIterator}
+import tethys.commons.Token
+import tethys.commons.Token._
+import tethys.readers.tokens.{BaseTokenIterator, TokenIterator}
 
 class JacksonTokenIterator(jsonParser: JsonParser) extends BaseTokenIterator {
   private[this] var token: Token = fromId(jsonParser.currentTokenId())

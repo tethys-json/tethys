@@ -1,7 +1,8 @@
 package tethys.readers.instances
 
 import tethys.JsonReader
-import tethys.readers.tokens.{Token, TokenIterator}
+import tethys.commons.Token
+import tethys.readers.tokens.TokenIterator
 import tethys.readers.{FieldName, ReaderError}
 
 import scala.reflect.ClassTag
@@ -9,21 +10,21 @@ import scala.reflect.ClassTag
 trait BasicReaders {
 
   implicit lazy val booleanJsonReader: JsonReader[Boolean] = new ScalarReader[Boolean] {
-    override protected def isCorrectToken(token: Token) = token.isBooleanValue
+    override protected def isCorrectToken(token: Token): Boolean = token.isBooleanValue
 
-    override protected def value(it: TokenIterator)(implicit fieldName: FieldName) = it.boolean()
+    override protected def value(it: TokenIterator)(implicit fieldName: FieldName): Boolean = it.boolean()
   }
 
   implicit lazy val stringJsonReader: JsonReader[String] = new ScalarReader[String] {
-    override protected def isCorrectToken(token: Token) = token.isStringValue
+    override protected def isCorrectToken(token: Token): Boolean = token.isStringValue
 
-    override protected def value(it: TokenIterator)(implicit fieldName: FieldName) = it.string()
+    override protected def value(it: TokenIterator)(implicit fieldName: FieldName): String = it.string()
   }
 
   implicit lazy val charJsonReader: JsonReader[Char] = new ScalarReader[Char] {
-    override protected def isCorrectToken(token: Token) = token.isStringValue
+    override protected def isCorrectToken(token: Token): Boolean = token.isStringValue
 
-    override protected def value(it: TokenIterator)(implicit fieldName: FieldName) = {
+    override protected def value(it: TokenIterator)(implicit fieldName: FieldName): Char = {
       val s = it.string()
       if(s.length == 1) s.charAt(0)
       else ReaderError.wrongType[Char]
@@ -31,36 +32,36 @@ trait BasicReaders {
   }
 
   implicit lazy val numberJsonReader: JsonReader[Number] = new ScalarReader[Number] {
-    override protected def isCorrectToken(token: Token) = token.isNumberValue
+    override protected def isCorrectToken(token: Token): Boolean = token.isNumberValue
 
-    override protected def value(it: TokenIterator)(implicit fieldName: FieldName) = it.number()
+    override protected def value(it: TokenIterator)(implicit fieldName: FieldName): Number = it.number()
   }
 
   implicit lazy val shortJsonReader: JsonReader[Short] = new ScalarReader[Short] {
-    override protected def isCorrectToken(token: Token) = token.isNumberValue
+    override protected def isCorrectToken(token: Token): Boolean = token.isNumberValue
 
-    override protected def value(it: TokenIterator)(implicit fieldName: FieldName) = it.short()
+    override protected def value(it: TokenIterator)(implicit fieldName: FieldName): Short = it.short()
   }
   implicit lazy val intJsonReader: JsonReader[Int] = new ScalarReader[Int] {
-    override protected def isCorrectToken(token: Token) = token.isNumberValue
+    override protected def isCorrectToken(token: Token): Boolean = token.isNumberValue
 
-    override protected def value(it: TokenIterator)(implicit fieldName: FieldName) = it.int()
+    override protected def value(it: TokenIterator)(implicit fieldName: FieldName): Int = it.int()
   }
   implicit lazy val longJsonReader: JsonReader[Long] = new ScalarReader[Long] {
-    override protected def isCorrectToken(token: Token) = token.isNumberValue
+    override protected def isCorrectToken(token: Token): Boolean = token.isNumberValue
 
-    override protected def value(it: TokenIterator)(implicit fieldName: FieldName) = it.long()
+    override protected def value(it: TokenIterator)(implicit fieldName: FieldName): Long = it.long()
   }
 
   implicit lazy val floatJsonReader: JsonReader[Float] = new ScalarReader[Float] {
-    override protected def isCorrectToken(token: Token) = token.isNumberValue
+    override protected def isCorrectToken(token: Token): Boolean = token.isNumberValue
 
-    override protected def value(it: TokenIterator)(implicit fieldName: FieldName) = it.float()
+    override protected def value(it: TokenIterator)(implicit fieldName: FieldName): Float = it.float()
   }
   implicit lazy val doubleJsonReader: JsonReader[Double] = new ScalarReader[Double] {
-    override protected def isCorrectToken(token: Token) = token.isNumberValue
+    override protected def isCorrectToken(token: Token): Boolean = token.isNumberValue
 
-    override protected def value(it: TokenIterator)(implicit fieldName: FieldName) = it.double()
+    override protected def value(it: TokenIterator)(implicit fieldName: FieldName): Double = it.double()
   }
 
   implicit lazy val bigDecimalJsonReader: JsonReader[BigDecimal] = numberJsonReader.map {

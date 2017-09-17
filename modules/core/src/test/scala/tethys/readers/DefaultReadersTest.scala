@@ -3,9 +3,9 @@ package tethys.readers
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers.{value => _, _}
 import tethys.JsonReader
+import tethys.commons.{Token, TokenNode}
+import tethys.commons.TokenNode._
 import tethys.readers.DefaultReadersTest.TestDefinition
-import tethys.readers.tokens.QueueIterator.TokenNode
-import tethys.readers.tokens.SimpleToken._
 import tethys.readers.tokens._
 
 import scala.reflect.ClassTag
@@ -35,7 +35,7 @@ class DefaultReadersTest extends FlatSpec {
     test(List[Int](), "Seq.empty") -> arr(),
     test(Map("a" -> 1, "b" -> 2)) -> obj("a" -> 1, "b" -> 2),
     test(Option(1), "Option.nonEmpty") -> value(1),
-    test(Option.empty[Int], "Option.empty") -> List(TokenNode(NullValueToken)),
+    test(Option.empty[Int], "Option.empty") -> List(NullValueNode) ,
     test(1: java.lang.Integer) -> value(1),
     test(java.lang.Short.valueOf(1: Short)) -> value(1: Short),
     test(1L: java.lang.Long) -> value(1L),

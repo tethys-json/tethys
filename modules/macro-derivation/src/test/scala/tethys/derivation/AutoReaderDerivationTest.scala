@@ -2,11 +2,11 @@ package tethys.derivation
 
 import org.scalatest.{FlatSpec, Matchers}
 import tethys.JsonReader
+import tethys.commons.{Token, TokenNode}
+import tethys.commons.TokenNode._
 import tethys.derivation.auto._
 import tethys.readers.ReaderError
-import tethys.readers.tokens.QueueIterator.TokenNode
-import tethys.readers.tokens.SimpleToken._
-import tethys.readers.tokens.{QueueIterator, Token}
+import tethys.readers.tokens.QueueIterator
 
 class AutoReaderDerivationTest extends FlatSpec with Matchers {
 
@@ -28,11 +28,11 @@ class AutoReaderDerivationTest extends FlatSpec with Matchers {
           "a" -> 2
         )
       )
-    )) shouldBe JsonTreeTestData(
+    )) shouldBe Right(JsonTreeTestData(
       a = 1,
       b = true,
       c = C(D(2))
-    )
+    ))
   }
 
   it should "derive reader for recursive type" in {
@@ -48,7 +48,7 @@ class AutoReaderDerivationTest extends FlatSpec with Matchers {
           "children" -> arr()
         )
       )
-    )) shouldBe RecursiveType(1, Seq(RecursiveType(2), RecursiveType(3)))
+    )) shouldBe Right(RecursiveType(1, Seq(RecursiveType(2), RecursiveType(3))))
 
   }
 
@@ -61,6 +61,6 @@ class AutoReaderDerivationTest extends FlatSpec with Matchers {
           "a" -> 3
         )
       )
-    )) shouldBe ComplexRecursionA(1, Some(ComplexRecursionB(2, ComplexRecursionA(3, None))))
+    )) shouldBe Right(ComplexRecursionA(1, Some(ComplexRecursionB(2, ComplexRecursionA(3, None)))))
   }
 }
