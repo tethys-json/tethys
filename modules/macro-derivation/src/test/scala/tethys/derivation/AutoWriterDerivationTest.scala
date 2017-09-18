@@ -1,10 +1,14 @@
 package tethys.derivation
 
 import org.scalatest.{FlatSpec, Matchers}
-import tethys.writers.tokens.SimpleTokenWriter._
+import tethys.JsonWriter
 import tethys.commons.TokenNode._
 import tethys.derivation.ADTWithType._
 import tethys.derivation.auto._
+import tethys.derivation.semiauto._
+import tethys.writers.JsonObjectWriter
+import tethys.writers.instances.SimpleJsonObjectWriter
+import tethys.writers.tokens.SimpleTokenWriter._
 
 class AutoWriterDerivationTest extends FlatSpec with Matchers {
 
@@ -37,6 +41,25 @@ class AutoWriterDerivationTest extends FlatSpec with Matchers {
     (ADTWithTypeB[Int](1, ADTWithTypeA[Int](2)): ADTWithType[Int]).asTokenList shouldBe obj(
       "a" -> 1,
       "b" -> obj(
+        "a" -> 2
+      )
+    )
+  }
+
+  it should "auto derive writer that normally concatenates with other JsonObjectWriter's" in {
+    implicit def recursionTraitWithTypeWriter[B: JsonWriter]: JsonObjectWriter[ADTWithType[B]] = {
+      val simpleJsonObjectWriter = SimpleJsonObjectWriter[ADTWithType[B]].addField("clazz") {
+        case _: ADTWithTypeA[B] => "ADTWithTypeA"
+        case _: ADTWithTypeB[B] => "ADTWithTypeB"
+      }
+      simpleJsonObjectWriter ++ jsonWriter[ADTWithType[B]]
+    }
+
+    (ADTWithTypeB[Int](1, ADTWithTypeA[Int](2)): ADTWithType[Int]).asTokenList shouldBe obj(
+      "clazz" -> "ADTWithTypeB",
+      "a" -> 1,
+      "b" -> obj(
+        "clazz" -> "ADTWithTypeA",
         "a" -> 2
       )
     )
