@@ -23,7 +23,7 @@ class JmhReaderBench {
     "50000",
     "100000"
   ))
-  var size: Int = _
+  var arraySize: Int = _
 
   val seed = 10000
 
@@ -31,7 +31,7 @@ class JmhReaderBench {
 
   @Setup(Level.Trial)
   def setup(): Unit = {
-    data = CirceBench.CirceDataProcessor.write(Data.dataSamples(size, seed))
+    data = CirceBench.CirceDataProcessor.write(Data.dataSamples(arraySize, seed))
   }
 
   @Param(Array(
