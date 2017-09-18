@@ -1,12 +1,13 @@
 package tethys.derivation.impl.derivation
 
-import tethys.{JsonReader, JsonWriter}
+import tethys.JsonReader
 import tethys.commons.LowPriorityInstance
+import tethys.writers.JsonObjectWriter
 
 import scala.reflect.macros.blackbox
 
 object AutoDerivationMacro {
-  def jsonWriter[A: c.WeakTypeTag](c: blackbox.Context): c.Expr[LowPriorityInstance[JsonWriter[A]]] = {
+  def jsonWriter[A: c.WeakTypeTag](c: blackbox.Context): c.Expr[LowPriorityInstance[JsonObjectWriter[A]]] = {
     new AutoDerivationMacroImpl[c.type](c).jsonWriter[A]
   }
 
@@ -22,10 +23,10 @@ object AutoDerivationMacro {
 
     override protected def showError: Boolean = true
 
-    def jsonWriter[A: WeakTypeTag]: Expr[LowPriorityInstance[JsonWriter[A]]] = {
+    def jsonWriter[A: WeakTypeTag]: Expr[LowPriorityInstance[JsonObjectWriter[A]]] = {
       val tpe = weakTypeOf[A]
       val clazz = classSym(tpe)
-      val instance = {
+      val instance: Expr[JsonObjectWriter[A]] = {
         if (isCaseClass(tpe)) {
           deriveWriter[A]
         } else if (clazz.isSealed) {
@@ -35,9 +36,9 @@ object AutoDerivationMacro {
         }
       }
 
-      c.Expr[LowPriorityInstance[JsonWriter[A]]] {
+      c.Expr[LowPriorityInstance[JsonObjectWriter[A]]] {
         c.untypecheck {
-          q"new ${weakTypeOf[LowPriorityInstance[JsonWriter[A]]]}($instance)"
+          q"new ${weakTypeOf[LowPriorityInstance[JsonObjectWriter[A]]]}($instance)"
         }
       }
     }

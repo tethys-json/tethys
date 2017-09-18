@@ -1,7 +1,8 @@
 package tethys
 
 import tethys.commons.LowPriorityInstance
-import tethys.writers.instances.{BasicWriters, ComplexWriters}
+import tethys.writers.JsonObjectWriter
+import tethys.writers.instances.{BasicWriters, ComplexWriters, SimpleJsonObjectWriter}
 import tethys.writers.tokens.TokenWriter
 
 import scala.language.higherKinds
@@ -32,10 +33,18 @@ object JsonWriter
     with ComplexWriters
     with LowPriorityJsonWriters {
   def apply[A](implicit jsonWriter: JsonWriter[A]): JsonWriter[A] = jsonWriter
+
+  def apply[A](implicit jsonWriter: JsonObjectWriter[A]): JsonWriter[A] = jsonWriter
+
+  def obj[A]: SimpleJsonObjectWriter[A] = SimpleJsonObjectWriter[A]
 }
 
 private[tethys] trait LowPriorityJsonWriters {
   implicit final def lowPriorityWriter[A](implicit lowPriorityInstance: LowPriorityInstance[JsonWriter[A]]): JsonWriter[A] = {
+    lowPriorityInstance.instance
+  }
+
+  implicit final def lowPriorityObjectWriter[A](implicit lowPriorityInstance: LowPriorityInstance[JsonObjectWriter[A]]): JsonWriter[A] = {
     lowPriorityInstance.instance
   }
 }

@@ -1,8 +1,8 @@
 package tethys.derivation.impl.derivation
 
-import tethys.JsonWriter
 import tethys.derivation.impl.builder.WriteBuilderUtils
 import tethys.derivation.impl.{BaseMacroDefinitions, CaseClassUtils}
+import tethys.writers.JsonObjectWriter
 import tethys.writers.tokens.TokenWriter
 
 import scala.annotation.tailrec
@@ -22,8 +22,9 @@ trait WriterDerivation
   private val tokenWriterType = tq"${typeOf[TokenWriter]}"
   private val tokenWriterTerm = TermName("tokenWriter")
   private val jsonWriterType = tq"$tethysPack.JsonWriter"
+  private val jsonObjectWriterType = tq"$writersPack.JsonObjectWriter"
 
-  def deriveWriter[A: WeakTypeTag]: Expr[JsonWriter[A]] = {
+  def deriveWriter[A: WeakTypeTag]: Expr[JsonObjectWriter[A]] = {
     val description = MacroWriteDescription(
       tpe = weakTypeOf[A],
       operations = Seq()
@@ -31,56 +32,54 @@ trait WriterDerivation
     deriveWriter[A](description)
   }
 
-  def deriveWriterForSealedClass[A: WeakTypeTag]: Expr[JsonWriter[A]] = {
+  def deriveWriterForSealedClass[A: WeakTypeTag]: Expr[JsonObjectWriter[A]] = {
     val tpe = weakTypeOf[A]
     implicit val context: WriterContext = new WriterContext
 
     val subClassesCases = collectDistinctSubtypes(tpe).sortBy(_.typeSymbol.fullName).map { subtype =>
       val term = TermName(c.freshName("sub"))
-      cq"$term: $subtype => ${context.provideWriter(subtype)}.write($term, $tokenWriterTerm)"
+      cq"$term: $subtype => ${context.provideWriter(subtype)}.writeValues($term, $tokenWriterTerm)"
     }
 
     if(subClassesCases.isEmpty) fail(s"${tpe.typeSymbol} has no known direct subclass")
 
-    c.Expr[JsonWriter[A]] {
+    c.Expr[JsonObjectWriter[A]] {
       c.untypecheck {
         q"""
-           new $jsonWriterType[$tpe] {
-              ${provideThisWriterImplicit(tpe)}
+           new $jsonObjectWriterType[$tpe] {
+              ${provideThisObjectWriterImplicit(tpe)}
 
-              ..${context.writers}
+              ..${context.objectWriters}
 
-              override def write($valueTerm: $tpe, $tokenWriterTerm: $tokenWriterType): Unit = {
+              override def writeValues($valueTerm: $tpe, $tokenWriterTerm: $tokenWriterType): Unit = {
                 $valueTerm match { case ..$subClassesCases }
               }
-           } : $jsonWriterType[$tpe]
+           } : $jsonObjectWriterType[$tpe]
          """
       }
     }
   }
 
-  def deriveWriter[A: WeakTypeTag](description: MacroWriteDescription): Expr[JsonWriter[A]] = {
+  def deriveWriter[A: WeakTypeTag](description: MacroWriteDescription): Expr[JsonObjectWriter[A]] = {
     val tpe = description.tpe
 
     implicit val context: WriterContext = new WriterContext
 
     val fields = deriveFields(description)
-    c.Expr[JsonWriter[A]] {
+    c.Expr[JsonObjectWriter[A]] {
       c.untypecheck {
         q"""
-           new $jsonWriterType[$tpe] {
+           new $jsonObjectWriterType[$tpe] {
               ${provideThisWriterImplicit(tpe)}
 
               ..${context.writers}
 
               ..${context.functions}
 
-              override def write($valueTerm: $tpe, $tokenWriterTerm: $tokenWriterType): Unit = {
-                $tokenWriterTerm.writeObjectStart()
+              override def writeValues($valueTerm: $tpe, $tokenWriterTerm: $tokenWriterType): Unit = {
                 ..$fields
-                $tokenWriterTerm.writeObjectEnd()
               }
-           } : $jsonWriterType[$tpe]
+           } : $jsonObjectWriterType[$tpe]
          """
       }
     }
@@ -91,6 +90,15 @@ trait WriterDerivation
       case EmptyTree =>
         val thisWriterTerm = TermName(c.freshName("thisWriter"))
         q"implicit private[this] def $thisWriterTerm: $jsonWriterType[$tpe] = this"
+      case _ => EmptyTree
+    }
+  }
+
+  private def provideThisObjectWriterImplicit(tpe: Type): Tree = {
+    c.typecheck(q"implicitly[$jsonObjectWriterType[$tpe]]", silent = true) match {
+      case EmptyTree =>
+        val thisWriterTerm = TermName(c.freshName("thisWriter"))
+        q"implicit private[this] def $thisWriterTerm: $jsonObjectWriterType[$tpe] = this"
       case _ => EmptyTree
     }
   }
@@ -175,6 +183,11 @@ trait WriterDerivation
 
       case (tpe, name) =>
         q"private[this] lazy val $name = implicitly[$jsonWriterType[$tpe]]"
+    }.toSeq
+
+    def objectWriters: Seq[Tree] = writersMapping.map {
+      case (tpe, name) =>
+        q"private[this] lazy val $name = implicitly[$jsonObjectWriterType[$tpe]]"
     }.toSeq
 
     @tailrec

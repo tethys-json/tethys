@@ -7,6 +7,8 @@ import tethys.writers.tokens.SimpleTokenWriter._
 import tethys.commons.TokenNode._
 import tethys.derivation.ADTWithType.{ADTWithTypeA, ADTWithTypeB}
 import tethys.derivation.semiauto._
+import tethys.writers.JsonObjectWriter
+import tethys.writers.instances.SimpleJsonObjectWriter
 
 /**
   * Created by eld0727 on 23.04.17.
@@ -15,9 +17,9 @@ class SemiautoWriterDerivationTest extends FlatSpec with Matchers {
 
   behavior of "semiauto derivation"
   it should "generate proper writer from WriterDescription" in {
-    implicit val dWriter: JsonWriter[D] = jsonWriter[D]
+    implicit val dWriter: JsonObjectWriter[D] = jsonWriter[D]
 
-    implicit val testWriter: JsonWriter[JsonTreeTestData] = jsonWriter {
+    implicit val testWriter: JsonObjectWriter[JsonTreeTestData] = jsonWriter {
       describe {
         WriterBuilder[JsonTreeTestData]()
           .remove(_.b)
@@ -38,7 +40,7 @@ class SemiautoWriterDerivationTest extends FlatSpec with Matchers {
   }
 
   it should "derive writer for update partial" in {
-    implicit val partialWriter: JsonWriter[D] = jsonWriter {
+    implicit val partialWriter: JsonObjectWriter[D] = jsonWriter {
       describe {
         WriterBuilder[D]()
           .updatePartial(_.a) {
@@ -64,7 +66,7 @@ class SemiautoWriterDerivationTest extends FlatSpec with Matchers {
   }
 
   it should "derive writer for recursive type" in {
-    implicit lazy val testWriter: JsonWriter[RecursiveType] = jsonWriter[RecursiveType]
+    implicit lazy val testWriter: JsonObjectWriter[RecursiveType] = jsonWriter[RecursiveType]
 
     RecursiveType(1, Seq(RecursiveType(2))).asTokenList shouldBe obj(
       "a" -> 1,
@@ -78,8 +80,8 @@ class SemiautoWriterDerivationTest extends FlatSpec with Matchers {
   }
 
   it should "derive writer for A => B => A cycle" in {
-    implicit lazy val testWriter1: JsonWriter[ComplexRecursionA] = jsonWriter[ComplexRecursionA]
-    implicit lazy val testWriter2: JsonWriter[ComplexRecursionB] = jsonWriter[ComplexRecursionB]
+    implicit lazy val testWriter1: JsonObjectWriter[ComplexRecursionA] = jsonWriter[ComplexRecursionA]
+    implicit lazy val testWriter2: JsonObjectWriter[ComplexRecursionB] = jsonWriter[ComplexRecursionB]
 
     ComplexRecursionA(1, Some(ComplexRecursionB(2, ComplexRecursionA(3, None)))).asTokenList shouldBe obj(
       "a" -> 1,
@@ -93,13 +95,34 @@ class SemiautoWriterDerivationTest extends FlatSpec with Matchers {
   }
 
   it should "derive writer for sealed cyclic trait with type parameter" in {
-    implicit def recursionTraitWithTypeWriter[B: JsonWriter]: JsonWriter[ADTWithType[B]] = jsonWriter[ADTWithType[B]]
-    implicit def recursionTraitWithTypeAWriter[B: JsonWriter]: JsonWriter[ADTWithTypeA[B]] = jsonWriter[ADTWithTypeA[B]]
-    implicit def recursionTraitWithTypeBWriter[B: JsonWriter]: JsonWriter[ADTWithTypeB[B]] = jsonWriter[ADTWithTypeB[B]]
+    implicit def recursionTraitWithTypeWriter[B: JsonWriter]: JsonObjectWriter[ADTWithType[B]] = jsonWriter[ADTWithType[B]]
+    implicit def recursionTraitWithTypeAWriter[B: JsonWriter]: JsonObjectWriter[ADTWithTypeA[B]] = jsonWriter[ADTWithTypeA[B]]
+    implicit def recursionTraitWithTypeBWriter[B: JsonWriter]: JsonObjectWriter[ADTWithTypeB[B]] = jsonWriter[ADTWithTypeB[B]]
 
     (ADTWithTypeB[Int](1, ADTWithTypeA[Int](2)): ADTWithType[Int]).asTokenList shouldBe obj(
       "a" -> 1,
       "b" -> obj(
+        "a" -> 2
+      )
+    )
+  }
+
+  it should "derive writer that normally concatenates with other JsonObjectWriter's" in {
+    implicit def recursionTraitWithTypeWriter[B: JsonWriter]: JsonObjectWriter[ADTWithType[B]] = {
+      val simpleJsonObjectWriter = SimpleJsonObjectWriter[ADTWithType[B]].addField("clazz") {
+        case _: ADTWithTypeA[B] => "ADTWithTypeA"
+        case _: ADTWithTypeB[B] => "ADTWithTypeB"
+      }
+      simpleJsonObjectWriter ++ jsonWriter[ADTWithType[B]]
+    }
+    implicit def recursionTraitWithTypeAWriter[B: JsonWriter]: JsonObjectWriter[ADTWithTypeA[B]] = jsonWriter[ADTWithTypeA[B]]
+    implicit def recursionTraitWithTypeBWriter[B: JsonWriter]: JsonObjectWriter[ADTWithTypeB[B]] = jsonWriter[ADTWithTypeB[B]]
+
+    (ADTWithTypeB[Int](1, ADTWithTypeA[Int](2)): ADTWithType[Int]).asTokenList shouldBe obj(
+      "clazz" -> "ADTWithTypeB",
+      "a" -> 1,
+      "b" -> obj(
+        "clazz" -> "ADTWithTypeA",
         "a" -> 2
       )
     )

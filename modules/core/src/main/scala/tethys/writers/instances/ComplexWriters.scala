@@ -1,7 +1,8 @@
 package tethys.writers.instances
 
 import tethys.JsonWriter
-import tethys.writers.KeyWriter
+import tethys.writers.instances.ComplexWriters.LowPriorityComplexWriters
+import tethys.writers.{JsonObjectWriter, KeyWriter}
 import tethys.writers.tokens.TokenWriter
 
 import scala.collection.GenTraversableOnce
@@ -12,18 +13,14 @@ import scala.language.higherKinds
   */
 trait ComplexWriters extends LowPriorityComplexWriters{
 
-  implicit def mapWriter[K, A](implicit keyWriter: KeyWriter[K], valueWriter: JsonWriter[A]): JsonWriter[Map[K, A]] = new JsonWriter[Map[K, A]] {
-    override def write(value: Map[K, A], tokenWriter: TokenWriter): Unit = {
-      tokenWriter.writeObjectStart()
-
+  implicit def mapWriter[K, A](implicit keyWriter: KeyWriter[K], valueWriter: JsonWriter[A]): JsonObjectWriter[Map[K, A]] = new JsonObjectWriter[Map[K, A]] {
+    override def writeValues(value: Map[K, A], tokenWriter: TokenWriter): Unit = {
       val valueIterator = value.iterator
       while(valueIterator.hasNext) {
         val v = valueIterator.next()
         tokenWriter.writeFieldName(keyWriter.toKey(v._1))
         valueWriter.write(v._2, tokenWriter)
       }
-
-      tokenWriter.writeObjectEnd()
     }
   }
 
@@ -42,18 +39,20 @@ trait ComplexWriters extends LowPriorityComplexWriters{
   }
 }
 
-private[writers] trait LowPriorityComplexWriters {
-  implicit def genTraversableOnceWriter[A, C[X] <: GenTraversableOnce[X]](implicit valueWriter: JsonWriter[A]): JsonWriter[C[A]] = new JsonWriter[C[A]]{
-    override def write(value: C[A], tokenWriter: TokenWriter): Unit = {
-      tokenWriter.writeArrayStart()
+object ComplexWriters {
+  private[writers] trait LowPriorityComplexWriters {
+    implicit def genTraversableOnceWriter[A, C[X] <: GenTraversableOnce[X]](implicit valueWriter: JsonWriter[A]): JsonWriter[C[A]] = new JsonWriter[C[A]]{
+      override def write(value: C[A], tokenWriter: TokenWriter): Unit = {
+        tokenWriter.writeArrayStart()
 
-      val valueIterator = value.toIterator
-      while(valueIterator.hasNext) {
-        val v = valueIterator.next()
-        valueWriter.write(v, tokenWriter)
+        val valueIterator = value.toIterator
+        while(valueIterator.hasNext) {
+          val v = valueIterator.next()
+          valueWriter.write(v, tokenWriter)
+        }
+
+        tokenWriter.writeArrayEnd()
       }
-
-      tokenWriter.writeArrayEnd()
     }
   }
 }
