@@ -167,6 +167,6 @@ import tethys.derivation.auto._
 case class Foo(bar: Bar)
 case class Bar(seq: Seq[Int])
 
-val foo = """{"bar":{"seq":[1,2,3]}}""".jsonAs[Foo]
+val foo = """{"bar":{"seq":[1,2,3]}}""".jsonAs[Foo].fold(throw _, identity)
 val json = foo.asJson
 ```
