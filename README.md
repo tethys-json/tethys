@@ -13,9 +13,9 @@ Add dependencies to your `build.sbt`
 ```scala
 val tethysVersion = "0.6.0"
 libraryDependecies ++= Seq(
-  "io.tethys-json" %% "tethys-core" % tethysVersion,
-  "io.tethys-json" %% "tethys-jackson" % tethysVersion,
-  "io.tethys-json" %% "tethys-derivation" % tethysVersion
+  "com.tethys-json" %% "tethys-core" % tethysVersion,
+  "com.tethys-json" %% "tethys-jackson" % tethysVersion,
+  "com.tethys-json" %% "tethys-derivation" % tethysVersion
 )
 ```
 
@@ -23,7 +23,7 @@ or just
 
 ```scala
 libraryDependecies ++= Seq(
-  "io.tethys-json" %% "tethys" % "0.6.0"
+  "com.tethys-json" %% "tethys" % "0.6.0"
 )
 ```
 
@@ -147,6 +147,34 @@ implicit val barReader: JsonReader[Bar] = jsonReader[Bar]
 """{"bar":{"seq":[1,2,3]}}""".jsonAs[Foo] //Foo reader auto derived
 ``` 
 
+In complex cases you could provide some additional information to `jsonWriter` method
+
+```scala
+import tethys._
+import tethys.derivation.semiauto._
+
+case class Foo(a: Int, b: String, c: Any)
+
+implicit val fooWriter = jsonWriter[Foo] {
+  describe {
+    //Any functions are allowed in lambdas 
+    WriterBuilder[Foo]()
+      .remove(_.b)
+      .add("d")(_.b.trim)
+      .update(_.a)(_ + 1)
+      // the only way to semiauto derive Any
+      // this partial function will be replaced with match in final writer
+      .updatePartial(_.c) {  
+        case s: String => s
+        case i: Int if i % 2 == 0 => i / 2
+        case i: Int => i + 1
+        case other => other.toString 
+      }
+  }
+}
+```
+
+
 # jackson
 
 `tethys-jackson` module provides bridge instances for jackson streaming api
@@ -158,7 +186,7 @@ import tethys.jackson._
 //that's it. welcome to use jackson
 ```
 
-# all in one
+# complex case
 ```scala
 import tethys._
 import tethys.jackson._
