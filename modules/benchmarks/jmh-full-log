@@ -169,7 +169,7 @@ Stack profiler:
   2.3%   2.3% sun.misc.FloatingDecimal.parseDouble
   2.2%   2.2% com.fasterxml.jackson.core.json.ReaderBasedJsonParser._parsePosNumber
   2.1%   2.1% com.fasterxml.jackson.core.json.ReaderBasedJsonParser.nextToken
-  1.6%   1.6% json.bench.macrojson.TethysBench$$anon$2.read
+  1.6%   1.6% json.bench.tethys.TethysBench$$anon$2.read
   1.5%   1.5% com.fasterxml.jackson.core.util.TextBuffer.contentsAsInt
  10.3%  10.3% <other>
 
@@ -1407,7 +1407,7 @@ Stack profiler:
   3.0%   3.0% sun.misc.FloatingDecimal$BinaryToASCIIBuffer.access$100
   2.6%   2.6% scala.collection.mutable.MapBuilder.$plus$eq
   2.2%   2.2% sun.misc.FloatingDecimal.parseDouble
-  2.1%   2.1% json.bench.macrojson.TethysBench$$anon$2.read
+  2.1%   2.1% json.bench.tethys.TethysBench$$anon$2.read
   1.6%   1.6% java.math.BigDecimal.<init>
   1.6%   1.6% com.fasterxml.jackson.core.util.TextBuffer.contentsAsInt
   8.0%   8.0% <other>
@@ -2645,7 +2645,7 @@ Stack profiler:
   6.7%   6.7% tethys.readers.instances.LowPriorityComplexReaders$$anon$3.recRead
   3.5%   3.5% sun.misc.FloatingDecimal$BinaryToASCIIBuffer.access$100
   2.4%   2.4% scala.collection.mutable.MapBuilder.$plus$eq
-  2.4%   2.4% json.bench.macrojson.TethysBench$$anon$2.read
+  2.4%   2.4% json.bench.tethys.TethysBench$$anon$2.read
   1.7%   1.7% sun.misc.FloatingDecimal.parseDouble
   1.6%   1.6% java.math.BigDecimal.<init>
   1.2%   1.2% com.fasterxml.jackson.core.json.ReaderBasedJsonParser.getValueAsString
@@ -3886,7 +3886,7 @@ Stack profiler:
   5.7%   5.7% tethys.readers.instances.LowPriorityComplexReaders$$anon$3.recRead
   2.6%   2.6% sun.misc.FloatingDecimal$BinaryToASCIIBuffer.access$100
   2.4%   2.4% scala.collection.mutable.MapBuilder.$plus$eq
-  2.2%   2.2% json.bench.macrojson.TethysBench$$anon$2.read
+  2.2%   2.2% json.bench.tethys.TethysBench$$anon$2.read
   1.9%   1.9% java.lang.String.hashCode
  13.7%  13.7% <other>
 
@@ -5125,7 +5125,7 @@ Stack profiler:
   5.4%   5.4% tethys.readers.instances.LowPriorityComplexReaders$$anon$3.recRead
   2.6%   2.6% sun.misc.FloatingDecimal$BinaryToASCIIBuffer.access$100
   2.3%   2.3% scala.collection.mutable.MapBuilder.$plus$eq
-  2.0%   2.0% json.bench.macrojson.TethysBench$$anon$2.read
+  2.0%   2.0% json.bench.tethys.TethysBench$$anon$2.read
   2.0%   2.0% java.lang.String.hashCode
  13.1%  13.1% <other>
 
@@ -6362,7 +6362,7 @@ Stack profiler:
   6.5%   6.5% tethys.readers.instances.LowPriorityComplexReaders$$anon$3.recRead
   3.3%   3.3% sun.misc.FloatingDecimal$BinaryToASCIIBuffer.access$100
   2.5%   2.5% scala.collection.mutable.MapBuilder.$plus$eq
-  2.3%   2.3% json.bench.macrojson.TethysBench$$anon$2.read
+  2.3%   2.3% json.bench.tethys.TethysBench$$anon$2.read
   2.2%   2.2% java.lang.String.hashCode
   2.2%   2.2% com.fasterxml.jackson.core.sym.CharsToNameCanonicalizer.rehash
   1.7%   1.7% sun.misc.FloatingDecimal.parseDouble
@@ -7604,7 +7604,7 @@ Stack profiler:
   2.8%   2.8% scala.collection.mutable.MapBuilder.$plus$eq
   2.5%   2.5% java.lang.String.hashCode
   2.0%   2.0% sun.misc.FloatingDecimal.parseDouble
-  1.7%   1.7% json.bench.macrojson.TethysBench$$anon$2.read
+  1.7%   1.7% json.bench.tethys.TethysBench$$anon$2.read
  12.6%  12.6% <other>
 
 
@@ -13633,7 +13633,7 @@ Stack profiler:
  11.0%  11.0% com.fasterxml.jackson.core.json.WriterBasedJsonGenerator._flushBuffer
   6.7%   6.7% tethys.JsonWriter$class.write
   5.3%   5.3% com.fasterxml.jackson.core.json.WriterBasedJsonGenerator._verifyValueWrite
-  2.9%   2.9% json.bench.macrojson.TethysBench$$anon$1.write
+  2.9%   2.9% json.bench.tethys.TethysBench$$anon$1.write
   2.4%   2.4% com.fasterxml.jackson.core.json.WriterBasedJsonGenerator.writeStartArray
   2.3%   2.3% json.bench.generated.JmhWriterBench_bench_jmhTest.bench_thrpt_jmhStub
   2.3%   2.3% java.lang.StringBuffer.toString
@@ -15267,7 +15267,7 @@ Stack profiler:
   7.1%   7.1% com.fasterxml.jackson.core.json.WriterBasedJsonGenerator.writeNumber
   5.9%   5.9% java.lang.StringBuffer.toString
   4.9%   4.9% tethys.JsonWriter$class.write
-  2.6%   2.6% json.bench.macrojson.TethysBench$$anon$1.write
+  2.6%   2.6% json.bench.tethys.TethysBench$$anon$1.write
   1.9%   1.9% scala.collection.immutable.VectorIterator.gotoNextBlockStart
   5.5%   5.5% <other>
 
