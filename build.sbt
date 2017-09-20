@@ -1,7 +1,7 @@
 val commonSettings = Seq(
-  version := "0.6.0",
+  version := "0.6.0-SNAPSHOT",
   organization := "tethys",
-  scalaVersion := "2.11.8",
+  scalaVersion := "2.11.11",
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.0.1" % "test"
   )
@@ -10,6 +10,7 @@ val commonSettings = Seq(
 lazy val tethys = project.in(file("."))
   .settings(commonSettings)
   .dependsOn(core, `macro-derivation`, `jackson-backend`)
+  .aggregate(core, `macro-derivation`, `jackson-backend`)
 
 lazy val core = project.in(file("./modules/core"))
   .settings(commonSettings)

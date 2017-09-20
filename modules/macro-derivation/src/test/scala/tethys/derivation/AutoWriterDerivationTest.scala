@@ -1,18 +1,43 @@
 package tethys.derivation
 
 import org.scalatest.{FlatSpec, Matchers}
-import tethys.JsonWriter
 import tethys.commons.TokenNode._
 import tethys.derivation.ADTWithType._
 import tethys.derivation.auto._
 import tethys.derivation.semiauto._
-import tethys.writers.JsonObjectWriter
 import tethys.writers.instances.SimpleJsonObjectWriter
 import tethys.writers.tokens.SimpleTokenWriter._
+import tethys.{JsonObjectWriter, JsonWriter}
 
 class AutoWriterDerivationTest extends FlatSpec with Matchers {
 
   behavior of "auto derivation"
+  it should "auto derive writer for simple classes tree" in {
+    JsonTreeTestData(a = 5, b = false, c = C(D(1))).asTokenList shouldBe obj(
+      "a" -> 5,
+      "b" -> false,
+      "c" -> obj(
+        "d" -> obj(
+          "a" -> 1
+        )
+      )
+    )
+  }
+
+  it should "auto derive writers for a lot of embedded classes" in {
+    Seq(SeqMaster1(Seq(SeqMaster2(Seq(SeqMaster3(Seq(SeqMaster4(Seq(1))))))))).asTokenList shouldBe arr(
+      obj(
+        "a" -> arr(obj(
+          "a" -> arr(obj(
+            "a" -> arr(obj(
+              "a" -> arr(1)
+            ))
+          ))
+        ))
+      )
+    )
+  }
+
   it should "auto derive writer for recursive type" in {
     RecursiveType(1, Seq(RecursiveType(2))).asTokenList shouldBe obj(
       "a" -> 1,

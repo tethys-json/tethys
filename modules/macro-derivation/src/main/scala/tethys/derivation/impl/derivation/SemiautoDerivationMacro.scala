@@ -1,8 +1,7 @@
 package tethys.derivation.impl.derivation
 
-import tethys.{JsonReader, JsonWriter}
 import tethys.derivation.builder.WriterDescription
-import tethys.writers.JsonObjectWriter
+import tethys.{JsonObjectWriter, JsonReader, JsonWriter}
 
 import scala.reflect.macros.blackbox
 
