@@ -1,9 +1,8 @@
 package tethys.derivation
 
-import tethys.JsonReader
 import tethys.commons.LowPriorityInstance
 import tethys.derivation.impl.derivation.AutoDerivationMacro
-import tethys.writers.JsonObjectWriter
+import tethys.{JsonObjectWriter, JsonReader}
 
 import scala.language.experimental.macros
 

@@ -1,7 +1,6 @@
 package tethys.writers.instances
 
-import tethys.JsonWriter
-import tethys.writers.JsonObjectWriter
+import tethys.{JsonObjectWriter, JsonWriter}
 import tethys.writers.instances.SimpleJsonObjectWriter.JsonFieldObjectField
 import tethys.writers.tokens.TokenWriter
 

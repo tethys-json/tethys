@@ -14,4 +14,9 @@ package object derivation {
   trait JsonComplexTestData
   case class JsonComplexTestDataImpl1(a: Int) extends JsonComplexTestData
   case class JsonComplexTestDataImpl2(b: String) extends JsonComplexTestData
+
+  case class SeqMaster1(a: Seq[SeqMaster2])
+  case class SeqMaster2(a: Seq[SeqMaster3])
+  case class SeqMaster3(a: Seq[SeqMaster4])
+  case class SeqMaster4(a: Seq[Int])
 }

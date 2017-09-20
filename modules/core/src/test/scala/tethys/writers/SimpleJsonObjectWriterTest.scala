@@ -2,7 +2,7 @@ package tethys.writers
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers.{value => _, _}
-import tethys.JsonWriter
+import tethys.{JsonObjectWriter, JsonWriter}
 import tethys.commons.TokenNode._
 import tethys.writers.SimpleJsonObjectWriterTest.TestData
 import tethys.writers.instances.SimpleJsonObjectWriter

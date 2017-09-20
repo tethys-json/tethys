@@ -1,8 +1,8 @@
 package tethys.derivation.impl.derivation
 
+import tethys.{JsonObjectWriter, JsonWriter}
 import tethys.derivation.impl.builder.WriteBuilderUtils
 import tethys.derivation.impl.{BaseMacroDefinitions, CaseClassUtils}
-import tethys.writers.JsonObjectWriter
 import tethys.writers.tokens.TokenWriter
 
 import scala.annotation.tailrec
@@ -22,7 +22,7 @@ trait WriterDerivation
   private val tokenWriterType = tq"${typeOf[TokenWriter]}"
   private val tokenWriterTerm = TermName("tokenWriter")
   private val jsonWriterType = tq"$tethysPack.JsonWriter"
-  private val jsonObjectWriterType = tq"$writersPack.JsonObjectWriter"
+  private val jsonObjectWriterType = tq"$tethysPack.JsonObjectWriter"
 
   def deriveWriter[A: WeakTypeTag]: Expr[JsonObjectWriter[A]] = {
     val description = MacroWriteDescription(
@@ -47,7 +47,7 @@ trait WriterDerivation
       c.untypecheck {
         q"""
            new $jsonObjectWriterType[$tpe] {
-              ${provideThisObjectWriterImplicit(tpe)}
+              ${provideThisWriterImplicit(tpe)}
 
               ..${context.objectWriters}
 
@@ -90,15 +90,6 @@ trait WriterDerivation
       case EmptyTree =>
         val thisWriterTerm = TermName(c.freshName("thisWriter"))
         q"implicit private[this] def $thisWriterTerm: $jsonWriterType[$tpe] = this"
-      case _ => EmptyTree
-    }
-  }
-
-  private def provideThisObjectWriterImplicit(tpe: Type): Tree = {
-    c.typecheck(q"implicitly[$jsonObjectWriterType[$tpe]]", silent = true) match {
-      case EmptyTree =>
-        val thisWriterTerm = TermName(c.freshName("thisWriter"))
-        q"implicit private[this] def $thisWriterTerm: $jsonObjectWriterType[$tpe] = this"
       case _ => EmptyTree
     }
   }
@@ -193,7 +184,13 @@ trait WriterDerivation
     @tailrec
     private def unwrapType(tpe: Type): Type = tpe match {
       case ConstantType(const) => unwrapType(const.tpe)
-      case _ => tpe
+      case _ => dealiasType(tpe)
+    }
+
+    @tailrec
+    private def dealiasType(tpe: Type): Type = {
+      if(tpe.dealias == tpe) tpe
+      else dealiasType(tpe.dealias)
     }
   }
 
