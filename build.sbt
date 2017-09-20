@@ -1,7 +1,8 @@
 val commonSettings = Seq(
   version := "0.6.0-SNAPSHOT",
   organization := "tethys",
-  scalaVersion := "2.11.11",
+  scalaVersion := "2.11.8",
+  crossScalaVersions := Seq("2.11.8", "2.12.2"),
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.0.1" % "test"
   )
@@ -32,8 +33,7 @@ lazy val `jackson-backend` = project.in(file("./modules/jackson-backend"))
   .settings(
     name := "tethys-jackson-backend",
     libraryDependencies ++= Seq(
-      "com.fasterxml.jackson.core" % "jackson-core" % "2.9.1",
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided"
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.9.1"
     )
   ).dependsOn(core)
 
