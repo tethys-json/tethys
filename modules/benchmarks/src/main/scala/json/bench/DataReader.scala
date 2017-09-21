@@ -3,7 +3,7 @@ package json.bench
 import json.bench.circe.CirceBench
 import json.bench.handwritten.HandwrittenBench
 import json.bench.json4s.Json4sBench
-import json.bench.tethys.TethysBench
+import json.bench.tethysjson.TethysBench
 import json.bench.model.Data
 import json.bench.play.PlayBench
 import json.bench.pushka.PushkaBench
