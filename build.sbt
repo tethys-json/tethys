@@ -1,5 +1,5 @@
 val commonSettings = Seq(
-  version := "0.6.0",
+  version := "0.6.1-SNAPSHOT",
   organization := "com.tethys-json",
   scalaVersion := "2.11.8",
   crossScalaVersions := Seq("2.11.8", "2.12.2"),

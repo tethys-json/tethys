@@ -129,8 +129,9 @@ trait ReaderDerivation
          {
            var $value: $tpe = ${readerContext.provideDefaultValue(tpe)}
            var $isInitialized: Boolean = false
-           ${readerContext.provideReader(tpe)}.defaultValue.foreach { ($defaultValue: $tpe) =>
-              $value = $defaultValue
+           val $defaultValue: Option[$tpe] = ${readerContext.provideReader(tpe)}.defaultValue
+           if($defaultValue.nonEmpty) {
+              $value = $defaultValue.get
               $isInitialized = true
            }
          }
