@@ -7,7 +7,7 @@ import org.openjdk.jmh.annotations._
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
-@Warmup(iterations = 2, time = 20, timeUnit = TimeUnit.SECONDS)
+@Warmup(iterations = 2, time = 30, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 4, time = 30, timeUnit = TimeUnit.SECONDS)
 @Fork(2)
 @State(Scope.Thread)
@@ -31,9 +31,9 @@ class JmhWriterBench {
 
   @Param(Array(
     "tethys-jackson",
+    "pure-jackson",
     "circe-jawn",
     "StringBuilder",
-    "pure-jackson",
     "json4s-jackson",
     "json4s-native",
     "play-json",
