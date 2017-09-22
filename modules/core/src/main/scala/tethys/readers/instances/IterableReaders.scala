@@ -10,20 +10,71 @@ import scala.collection.mutable
 import scala.language.higherKinds
 import scala.reflect.ClassTag
 
-private[tethys] trait IterableReaders extends LowPriorityJsonReaders {
-  
-  implicit def iterableReader[@specialized(specializations) A, C[X] <: Traversable[X]](implicit
-                                                                                       jsonReader: JsonReader[A],
-                                                                                       cbf: CanBuildFrom[Nothing, A, C[A]],
-                                                                                       classTag: ClassTag[C[A]]): JsonReader[C[A]] = new TraversableReader[A, C] {
+private[tethys] trait IterableReaders extends LowPriorityIterableReaders {
+
+  implicit def shortIterableReader[C[X] <: Traversable[X]](implicit
+                                                         cbf: CanBuildFrom[Nothing, Short, C[Short]],
+                                                         classTag: ClassTag[C[Short]]): JsonReader[C[Short]] = new TraversableReader[Short, C] {
+    override protected def appendBuilder(it: TokenIterator, builder: mutable.Builder[Short, C[Short]])(implicit fieldName: FieldName): Unit = {
+      builder += PrimitiveReaders.ShortJsonReader.read(it)
+    }
+  }
+
+  implicit def intIterableReader[C[X] <: Traversable[X]](implicit
+                                                         cbf: CanBuildFrom[Nothing, Int, C[Int]],
+                                                         classTag: ClassTag[C[Int]]): JsonReader[C[Int]] = new TraversableReader[Int, C] {
+    override protected def appendBuilder(it: TokenIterator, builder: mutable.Builder[Int, C[Int]])(implicit fieldName: FieldName): Unit = {
+      builder += PrimitiveReaders.IntJsonReader.read(it)
+    }
+  }
+
+  implicit def longIterableReader[C[X] <: Traversable[X]](implicit
+                                                         cbf: CanBuildFrom[Nothing, Long, C[Long]],
+                                                         classTag: ClassTag[C[Long]]): JsonReader[C[Long]] = new TraversableReader[Long, C] {
+    override protected def appendBuilder(it: TokenIterator, builder: mutable.Builder[Long, C[Long]])(implicit fieldName: FieldName): Unit = {
+      builder += PrimitiveReaders.LongJsonReader.read(it)
+    }
+  }
+
+  implicit def floatIterableReader[C[X] <: Traversable[X]](implicit
+                                                         cbf: CanBuildFrom[Nothing, Float, C[Float]],
+                                                         classTag: ClassTag[C[Float]]): JsonReader[C[Float]] = new TraversableReader[Float, C] {
+    override protected def appendBuilder(it: TokenIterator, builder: mutable.Builder[Float, C[Float]])(implicit fieldName: FieldName): Unit = {
+      builder += PrimitiveReaders.FloatJsonReader.read(it)
+    }
+  }
+
+  implicit def doubleIterableReader[C[X] <: Traversable[X]](implicit
+                                                         cbf: CanBuildFrom[Nothing, Double, C[Double]],
+                                                         classTag: ClassTag[C[Double]]): JsonReader[C[Double]] = new TraversableReader[Double, C] {
+    override protected def appendBuilder(it: TokenIterator, builder: mutable.Builder[Double, C[Double]])(implicit fieldName: FieldName): Unit = {
+      builder += PrimitiveReaders.DoubleJsonReader.read(it)
+    }
+  }
+
+  implicit def booleanIterableReader[C[X] <: Traversable[X]](implicit
+                                                         cbf: CanBuildFrom[Nothing, Boolean, C[Boolean]],
+                                                         classTag: ClassTag[C[Boolean]]): JsonReader[C[Boolean]] = new TraversableReader[Boolean, C] {
+    override protected def appendBuilder(it: TokenIterator, builder: mutable.Builder[Boolean, C[Boolean]])(implicit fieldName: FieldName): Unit = {
+      builder += PrimitiveReaders.BooleanJsonReader.read(it)
+    }
+  }
+}
+
+private[tethys] trait LowPriorityIterableReaders extends LowPriorityJsonReaders {
+
+  implicit def iterableReader[A, C[X] <: Traversable[X]](implicit
+                                                         jsonReader: JsonReader[A],
+                                                         cbf: CanBuildFrom[Nothing, A, C[A]],
+                                                         classTag: ClassTag[C[A]]): JsonReader[C[A]] = new TraversableReader[A, C] {
     override protected def appendBuilder(it: TokenIterator, builder: mutable.Builder[A, C[A]])(implicit fieldName: FieldName): Unit = {
       builder += jsonReader.read(it)
     }
   }
 
-  protected abstract class TraversableReader[@specialized(tethys.specializations) A, C[X] <: Traversable[X]](implicit
-                                                                                                             cbf: CanBuildFrom[Nothing, A, C[A]],
-                                                                                                             classTag: ClassTag[C[A]]) extends JsonReader[C[A]] {
+  protected abstract class TraversableReader[A, C[X] <: Traversable[X]](implicit
+                                                                        cbf: CanBuildFrom[Nothing, A, C[A]],
+                                                                        classTag: ClassTag[C[A]]) extends JsonReader[C[A]] {
     protected def appendBuilder(it: TokenIterator, builder: mutable.Builder[A, C[A]])(implicit fieldName: FieldName): Unit
 
     override def read(it: TokenIterator)(implicit fieldName: FieldName): C[A] = {

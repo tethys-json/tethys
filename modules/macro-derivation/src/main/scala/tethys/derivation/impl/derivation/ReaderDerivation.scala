@@ -23,6 +23,7 @@ trait ReaderDerivation
   private val tokenIteratorType = tq"${typeOf[TokenIterator]}"
 
   private val readerErrorCompanion = q"$readersPack.ReaderError"
+  private val primitiveReadersCompanion = q"$readersPack.instances.PrimitiveReaders"
 
   private val jsonReaderType = tq"$tethysPack.JsonReader"
 
@@ -103,6 +104,19 @@ trait ReaderDerivation
     }
 
     def readers: Seq[Tree] = readersMapping.map {
+      case (tpe, name) if tpe =:= typeOf[Short] =>
+        q"private[this] val $name = $primitiveReadersCompanion.ShortJsonReader"
+      case (tpe, name) if tpe =:= typeOf[Int] =>
+        q"private[this] val $name = $primitiveReadersCompanion.IntJsonReader"
+      case (tpe, name) if tpe =:= typeOf[Long] =>
+        q"private[this] val $name = $primitiveReadersCompanion.LongJsonReader"
+      case (tpe, name) if tpe =:= typeOf[Float] =>
+        q"private[this] val $name = $primitiveReadersCompanion.FloatJsonReader"
+      case (tpe, name) if tpe =:= typeOf[Double] =>
+        q"private[this] val $name = $primitiveReadersCompanion.DoubleJsonReader"
+      case (tpe, name) if tpe =:= typeOf[Boolean] =>
+        q"private[this] val $name = $primitiveReadersCompanion.BooleanJsonReader"
+
       case (tpe, name) =>
         q"private[this] lazy val $name = implicitly[$jsonReaderType[$tpe]]"
     }.toSeq

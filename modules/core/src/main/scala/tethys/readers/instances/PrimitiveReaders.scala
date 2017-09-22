@@ -5,6 +5,8 @@ import tethys.readers.{FieldName, ReaderError}
 
 object PrimitiveReaders {
   object ShortJsonReader {
+    val defaultValue: Option[Short] = None
+
     def read(it: TokenIterator)(implicit fieldName: FieldName): Short = {
       if(it.currentToken().isNumberValue) {
         val res = it.short()
@@ -17,6 +19,8 @@ object PrimitiveReaders {
   }
 
   object IntJsonReader {
+    val defaultValue: Option[Int] = None
+
     def read(it: TokenIterator)(implicit fieldName: FieldName): Int = {
       if(it.currentToken().isNumberValue) {
         val res = it.int()
@@ -29,6 +33,8 @@ object PrimitiveReaders {
   }
 
   object LongJsonReader {
+    val defaultValue: Option[Long] = None
+
     def read(it: TokenIterator)(implicit fieldName: FieldName): Long = {
       if(it.currentToken().isNumberValue) {
         val res = it.long()
@@ -41,6 +47,8 @@ object PrimitiveReaders {
   }
 
   object FloatJsonReader {
+    val defaultValue: Option[Float] = None
+
     def read(it: TokenIterator)(implicit fieldName: FieldName): Float = {
       if(it.currentToken().isNumberValue) {
         val res = it.float()
@@ -53,6 +61,8 @@ object PrimitiveReaders {
   }
 
   object DoubleJsonReader {
+    val defaultValue: Option[Double] = None
+
     def read(it: TokenIterator)(implicit fieldName: FieldName): Double = {
       if(it.currentToken().isNumberValue) {
         val res = it.double()
@@ -65,6 +75,8 @@ object PrimitiveReaders {
   }
 
   object BooleanJsonReader {
+    val defaultValue: Option[Boolean] = None
+
     def read(it: TokenIterator)(implicit fieldName: FieldName): Boolean = {
       if(it.currentToken().isBooleanValue) {
         val res = it.boolean()
