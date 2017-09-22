@@ -5,7 +5,7 @@ import tethys.writers.KeyWriter
 import tethys.writers.tokens.TokenWriter
 
 private[tethys] trait MapWriters extends IterableWriters {
-  implicit def mapWriter[K, @specialized(specializations) A](implicit keyWriter: KeyWriter[K], valueWriter: JsonWriter[A]): JsonObjectWriter[Map[K, A]] = new JsonObjectWriter[Map[K, A]] {
+  implicit def mapWriter[K, A](implicit keyWriter: KeyWriter[K], valueWriter: JsonWriter[A]): JsonObjectWriter[Map[K, A]] = new JsonObjectWriter[Map[K, A]] {
     override def writeValues(value: Map[K, A], tokenWriter: TokenWriter): Unit = {
       val valueIterator = value.iterator
       while(valueIterator.hasNext) {

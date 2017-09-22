@@ -1,6 +1,6 @@
 package tethys.writers.instances
 
-import tethys.{JsonWriter, specializations}
+import tethys.JsonWriter
 import tethys.writers.tokens.TokenWriter
 
 private[tethys] trait OptionWriters extends MapWriters {
@@ -9,13 +9,13 @@ private[tethys] trait OptionWriters extends MapWriters {
     override def write(value: None.type, tokenWriter: TokenWriter): Unit = tokenWriter.writeNull()
   }
 
-  implicit def someWriter[@specialized(specializations) A](implicit jsonWriter: JsonWriter[A]): JsonWriter[Some[A]] = new JsonWriter[Some[A]] {
+  implicit def someWriter[A](implicit jsonWriter: JsonWriter[A]): JsonWriter[Some[A]] = new JsonWriter[Some[A]] {
     override def write(value: Some[A], tokenWriter: TokenWriter): Unit = {
       jsonWriter.write(value.get, tokenWriter)
     }
   }
 
-  implicit def optionalWriter[@specialized(specializations) A](implicit valueWriter: JsonWriter[A]): JsonWriter[Option[A]] = new JsonWriter[Option[A]] {
+  implicit def optionalWriter[A](implicit valueWriter: JsonWriter[A]): JsonWriter[Option[A]] = new JsonWriter[Option[A]] {
 
     override def write(name: String, value: Option[A], tokenWriter: TokenWriter): Unit = {
       if(value.nonEmpty) {
