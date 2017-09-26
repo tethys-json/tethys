@@ -1,107 +1,35 @@
-# benchmarks
 
-# read
+# Parsing
 
-```text
-Benchmark                                              (arraySize)  (processorName)   Mode  Cnt            Score            Error   Units
-JmhReaderBench.bench                                            10   tethys-jackson  thrpt    8        21303.493 ±        233.432   ops/s
-JmhReaderBench.bench                                            10       circe-jawn  thrpt    8        13375.937 ±        182.539   ops/s
-JmhReaderBench.bench                                            10     pure-jackson  thrpt    8        25437.778 ±        572.707   ops/s
-JmhReaderBench.bench                                            10   json4s-jackson  thrpt    8         4206.049 ±        162.484   ops/s
-JmhReaderBench.bench                                            10    json4s-native  thrpt    8         4604.009 ±         73.922   ops/s
-JmhReaderBench.bench                                            10        play-json  thrpt    8         7064.693 ±         97.385   ops/s
-JmhReaderBench.bench                                            10       spray-json  thrpt    8        10990.755 ±        324.898   ops/s
-JmhReaderBench.bench                                           100   tethys-jackson  thrpt    8         2414.252 ±         50.675   ops/s
-JmhReaderBench.bench                                           100       circe-jawn  thrpt    8         1586.145 ±         26.513   ops/s
-JmhReaderBench.bench                                           100     pure-jackson  thrpt    8         2692.034 ±         38.457   ops/s
-JmhReaderBench.bench                                           100   json4s-jackson  thrpt    8          517.942 ±          2.963   ops/s
-JmhReaderBench.bench                                           100    json4s-native  thrpt    8          501.529 ±         22.473   ops/s
-JmhReaderBench.bench                                           100        play-json  thrpt    8          770.131 ±          1.187   ops/s
-JmhReaderBench.bench                                           100       spray-json  thrpt    8         1219.752 ±         93.009   ops/s
-JmhReaderBench.bench                                          1000   tethys-jackson  thrpt    8          236.927 ±          9.205   ops/s
-JmhReaderBench.bench                                          1000       circe-jawn  thrpt    8          149.804 ±          1.761   ops/s
-JmhReaderBench.bench                                          1000     pure-jackson  thrpt    8          264.297 ±          4.779   ops/s
-JmhReaderBench.bench                                          1000   json4s-jackson  thrpt    8           48.666 ±          3.072   ops/s
-JmhReaderBench.bench                                          1000    json4s-native  thrpt    8           42.920 ±          1.290   ops/s
-JmhReaderBench.bench                                          1000        play-json  thrpt    8           70.975 ±          1.833   ops/s
-JmhReaderBench.bench                                          1000       spray-json  thrpt    8          107.871 ±          4.684   ops/s
-JmhReaderBench.bench                                          5000   tethys-jackson  thrpt    8           41.417 ±          0.157   ops/s
-JmhReaderBench.bench                                          5000       circe-jawn  thrpt    8           29.474 ±          0.485   ops/s
-JmhReaderBench.bench                                          5000     pure-jackson  thrpt    8           52.536 ±          2.237   ops/s
-JmhReaderBench.bench                                          5000   json4s-jackson  thrpt    8            8.619 ±          0.202   ops/s
-JmhReaderBench.bench                                          5000    json4s-native  thrpt    8            6.959 ±          0.269   ops/s
-JmhReaderBench.bench                                          5000        play-json  thrpt    8           12.354 ±          0.160   ops/s
-JmhReaderBench.bench                                          5000       spray-json  thrpt    8           22.230 ±          2.932   ops/s
-JmhReaderBench.bench                                         10000   tethys-jackson  thrpt    8           19.784 ±          0.261   ops/s
-JmhReaderBench.bench                                         10000       circe-jawn  thrpt    8           13.993 ±          1.692   ops/s
-JmhReaderBench.bench                                         10000     pure-jackson  thrpt    8           24.367 ±          0.361   ops/s
-JmhReaderBench.bench                                         10000   json4s-jackson  thrpt    8            4.432 ±          0.134   ops/s
-JmhReaderBench.bench                                         10000    json4s-native  thrpt    8            2.727 ±          0.049   ops/s
-JmhReaderBench.bench                                         10000        play-json  thrpt    8            5.909 ±          0.047   ops/s
-JmhReaderBench.bench                                         10000       spray-json  thrpt    8           10.815 ±          0.720   ops/s
-JmhReaderBench.bench                                         50000   tethys-jackson  thrpt    8            4.481 ±          0.163   ops/s
-JmhReaderBench.bench                                         50000       circe-jawn  thrpt    8            2.833 ±          0.078   ops/s
-JmhReaderBench.bench                                         50000     pure-jackson  thrpt    8            5.491 ±          0.046   ops/s
-JmhReaderBench.bench                                         50000   json4s-jackson  thrpt    8            0.908 ±          0.038   ops/s
-JmhReaderBench.bench                                         50000    json4s-native  thrpt    8            0.193 ±          0.004   ops/s
-JmhReaderBench.bench                                         50000        play-json  thrpt    8            1.224 ±          0.016   ops/s
-JmhReaderBench.bench                                         50000       spray-json  thrpt    8            1.961 ±          0.046   ops/s
-JmhReaderBench.bench                                        100000   tethys-jackson  thrpt    8            2.245 ±          0.072   ops/s
-JmhReaderBench.bench                                        100000       circe-jawn  thrpt    8            1.244 ±          0.019   ops/s
-JmhReaderBench.bench                                        100000     pure-jackson  thrpt    8            2.663 ±          0.113   ops/s
-JmhReaderBench.bench                                        100000   json4s-jackson  thrpt    8            0.432 ±          0.031   ops/s
-JmhReaderBench.bench                                        100000    json4s-native  thrpt    8            0.057 ±          0.001   ops/s
-JmhReaderBench.bench                                        100000        play-json  thrpt    8            0.540 ±          0.015   ops/s
-JmhReaderBench.bench                                        100000       spray-json  thrpt    8            0.910 ±          0.074   ops/s
-```
+name \ size|10|100|1000|10000|100000
+---|---|---|---|---|---
+tethys-jackson|21912.30857181242|2430.3618150847387|242.66503036654123|20.60845710393601|2.367511464490856
+pure-jackson|25710.12040622012|2722.6724522379295|274.0592980864133|24.68480754951757|2.84386037316985
+circe-jawn|13678.148316773311|1605.8679596969962|154.0787907371746|14.996837359372718|1.327086676259104
+json4s-jackson|4354.6423400799895|537.379915006532|49.14593070694368|4.484903832390187|0.4611140787890526
+json4s-native|4610.139646032448|483.0530412840814|45.28402746789135|2.813517938954405|0.05659590119785897
+play-json|7173.052854005642|775.2802517220084|70.57244448019578|6.010039987991498|0.5785593510513877
+spray-json|11264.115874286314|1170.7893731600002|106.13327680203524|10.726197642133013|0.9808634010691272
 
-# write
+![ParsingPerformance](./images/ParsingPerformance.png)
+     
+         
 
-```text
-Benchmark                                              (arraySize)  (processorName)   Mode  Cnt            Score            Error   Units
-JmhWriterBench.bench                                            10   tethys-jackson  thrpt    8        58726.322 ±       3387.821   ops/s
-JmhWriterBench.bench                                            10       circe-jawn  thrpt    8        19304.978 ±        199.893   ops/s
-JmhWriterBench.bench                                            10    StringBuilder  thrpt    8        45838.890 ±        248.894   ops/s
-JmhWriterBench.bench                                            10     pure-jackson  thrpt    8        43536.608 ±        115.022   ops/s
-JmhWriterBench.bench                                            10   json4s-jackson  thrpt    8         5129.888 ±        110.653   ops/s
-JmhWriterBench.bench                                            10    json4s-native  thrpt    8        11511.215 ±        159.982   ops/s
-JmhWriterBench.bench                                            10        play-json  thrpt    8         3295.809 ±        125.626   ops/s
-JmhWriterBench.bench                                            10       spray-json  thrpt    8        14724.930 ±        330.543   ops/s
-JmhWriterBench.bench                                            10           pushka  thrpt    8        14143.540 ±        350.526   ops/s
-JmhWriterBench.bench                                           100   tethys-jackson  thrpt    8         6016.780 ±        326.293   ops/s
-JmhWriterBench.bench                                           100       circe-jawn  thrpt    8         2033.939 ±         77.782   ops/s
-JmhWriterBench.bench                                           100    StringBuilder  thrpt    8         5199.731 ±        109.446   ops/s
-JmhWriterBench.bench                                           100     pure-jackson  thrpt    8         6236.041 ±         62.721   ops/s
-JmhWriterBench.bench                                           100   json4s-jackson  thrpt    8          605.616 ±          5.184   ops/s
-JmhWriterBench.bench                                           100    json4s-native  thrpt    8         1252.696 ±         27.990   ops/s
-JmhWriterBench.bench                                           100        play-json  thrpt    8          371.122 ±          7.248   ops/s
-JmhWriterBench.bench                                           100       spray-json  thrpt    8         1523.961 ±         71.879   ops/s
-JmhWriterBench.bench                                           100           pushka  thrpt    8         1570.292 ±          5.752   ops/s
-JmhWriterBench.bench                                          1000   tethys-jackson  thrpt    8          520.132 ±         14.182   ops/s
-JmhWriterBench.bench                                          1000       circe-jawn  thrpt    8          170.821 ±          1.426   ops/s
-JmhWriterBench.bench                                          1000    StringBuilder  thrpt    8          435.241 ±          4.721   ops/s
-JmhWriterBench.bench                                          1000     pure-jackson  thrpt    8          555.361 ±          5.305   ops/s
-JmhWriterBench.bench                                          1000   json4s-jackson  thrpt    8           57.352 ±          2.025   ops/s
-JmhWriterBench.bench                                          1000    json4s-native  thrpt    8          132.510 ±          2.552   ops/s
-JmhWriterBench.bench                                          1000        play-json  thrpt    8           35.469 ±          2.525   ops/s
-JmhWriterBench.bench                                          1000       spray-json  thrpt    8          128.216 ±          8.660   ops/s
-JmhWriterBench.bench                                          1000           pushka  thrpt    8          131.264 ±          0.940   ops/s
-JmhWriterBench.bench                                         10000   tethys-jackson  thrpt    8           50.724 ±          4.632   ops/s
-JmhWriterBench.bench                                         10000       circe-jawn  thrpt    8           17.148 ±          0.396   ops/s
-JmhWriterBench.bench                                         10000    StringBuilder  thrpt    8           42.100 ±          0.343   ops/s
-JmhWriterBench.bench                                         10000     pure-jackson  thrpt    8           47.841 ±          0.665   ops/s
-JmhWriterBench.bench                                         10000   json4s-jackson  thrpt    8            5.735 ±          0.061   ops/s
-JmhWriterBench.bench                                         10000    json4s-native  thrpt    8           12.405 ±          0.716   ops/s
-JmhWriterBench.bench                                         10000        play-json  thrpt    8            3.691 ±          0.113   ops/s
-JmhWriterBench.bench                                         10000       spray-json  thrpt    8           13.208 ±          0.661   ops/s
-JmhWriterBench.bench                                         10000           pushka  thrpt    8           14.130 ±          0.113   ops/s
-JmhWriterBench.bench                                        100000   tethys-jackson  thrpt    8            4.957 ±          0.488   ops/s
-JmhWriterBench.bench                                        100000       circe-jawn  thrpt    8            1.689 ±          0.036   ops/s
-JmhWriterBench.bench                                        100000    StringBuilder  thrpt    8            4.623 ±          0.069   ops/s
-JmhWriterBench.bench                                        100000     pure-jackson  thrpt    8            4.971 ±          0.037   ops/s
-JmhWriterBench.bench                                        100000   json4s-jackson  thrpt    8            0.565 ±          0.008   ops/s
-JmhWriterBench.bench                                        100000    json4s-native  thrpt    8            1.341 ±          0.128   ops/s
-JmhWriterBench.bench                                        100000        play-json  thrpt    8            0.347 ±          0.014   ops/s
-JmhWriterBench.bench                                        100000       spray-json  thrpt    8            1.221 ±          0.085   ops/s
-JmhWriterBench.bench                                        100000           pushka  thrpt    8            1.291 ±          0.025   ops/s
-```
+
+# Writing
+
+name \ size|10|100|1000|10000|100000
+---|---|---|---|---|---
+tethys-jackson|66068.81752788043|6733.206494876751|616.4323693579456|49.89687328160004|4.8467002595713975
+pure-jackson|45598.410949956|6597.214780858092|624.1955824245683|50.82682525949039|5.021347823401014
+circe-jawn|20047.094570567082|2188.5676275325995|187.44163276965006|17.470937087180918|1.7105506849207808
+StringBuilder|47838.94155216076|5430.129736803008|465.5845453982611|44.59001049009675|4.655304292356193
+json4s-jackson|5295.3631812170715|650.6818949344844|59.78605807706992|6.012592258615015|0.5670607150563273
+json4s-native|12289.606436986121|1421.371919825574|133.38266808858947|13.479961618782049|1.3239250827303626
+play-json|3355.7825294226845|392.7094142931635|37.62488821401761|3.7984760533876214|0.3607470409299431
+spray-json|15528.971969302236|1635.6563217542243|146.06454968490343|13.483187910774209|1.2446822612235338
+pushka|14405.185211461763|1645.6573923033181|136.74795216149295|14.072260186570883|1.290592906165876
+
+![WritingPerformance](./images/WritingPerformance.png)
+     
+         
