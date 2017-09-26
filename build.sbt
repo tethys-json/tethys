@@ -48,7 +48,9 @@ lazy val benchmarks = project.in(file("./modules/benchmarks"))
       "com.github.fomkin" %% "pushka-json" % "0.8.0",
       "io.circe" %% "circe-core" % "0.9.0-M1",
       "io.circe" %% "circe-generic" % "0.9.0-M1",
-      "io.circe" %% "circe-parser" % "0.9.0-M1"
+      "io.circe" %% "circe-parser" % "0.9.0-M1",
+
+      "org.knowm.xchart" % "xchart" % "3.5.0" exclude("de.erichseifert.vectorgraphics2d", "VectorGraphics2D") withSources()
     ),
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
   )
