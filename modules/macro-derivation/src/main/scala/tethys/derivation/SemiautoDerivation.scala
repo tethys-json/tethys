@@ -1,7 +1,7 @@
 package tethys.derivation
 
-import tethys.derivation.builder.{WriterBuilder, WriterDescription}
-import tethys.derivation.impl.builder.WriterDescriptorMacro
+import tethys.derivation.builder.{ReaderBuilder, ReaderDescription, WriterBuilder, WriterDescription}
+import tethys.derivation.impl.builder.{ReaderDescriptionMacro, WriterDescriptorMacro}
 import tethys.derivation.impl.derivation.SemiautoDerivationMacro
 import tethys.{JsonObjectWriter, JsonReader}
 
@@ -14,4 +14,6 @@ trait SemiautoDerivation {
   def describe[A](builder: WriterBuilder[A]): WriterDescription[A] = macro WriterDescriptorMacro.simpleDescription[A]
 
   def jsonReader[A]: JsonReader[A] = macro SemiautoDerivationMacro.simpleJsonReader[A]
+
+  def describe[A](builder: ReaderBuilder[A]): ReaderDescription[A] = macro ReaderDescriptionMacro.readerDescription[A]
 }
