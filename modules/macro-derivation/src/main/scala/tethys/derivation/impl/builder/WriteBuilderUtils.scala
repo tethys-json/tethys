@@ -13,14 +13,14 @@ trait WriteBuilderUtils extends MacroUtils {
 
   case class MacroWriteDescription(tpe: Type, operations: Seq[BuilderMacroOperation])
 
-  implicit lazy val simpleMacroWriteDescriptionLiftable: Liftable[MacroWriteDescription] = {
+  implicit lazy val macroWriteDescriptionLiftable: Liftable[MacroWriteDescription] = {
     Liftable[MacroWriteDescription] {
       case MacroWriteDescription(tpe, operations) =>
         q"$buildersPack.WriterDescription[$tpe](_root_.scala.Seq(..$operations))"
     }
   }
 
-  implicit lazy val simpleMacroWriteDescriptionUnliftable: Unliftable[MacroWriteDescription] = {
+  implicit lazy val macroWriteDescriptionUnliftable: Unliftable[MacroWriteDescription] = {
     Unliftable[MacroWriteDescription] {
       case q"$pack.WriterDescription.apply[${tpe: Tree}]($col.Seq.apply[$_](..${operations: Seq[BuilderMacroOperation]}))" =>
         MacroWriteDescription(tpe.tpe, operations)
