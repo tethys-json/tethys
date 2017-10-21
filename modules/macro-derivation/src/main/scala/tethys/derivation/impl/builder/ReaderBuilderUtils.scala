@@ -12,7 +12,9 @@ trait ReaderBuilderUtils extends MacroUtils {
 
   final case class Field(name: String, tpe: Type)
 
-  sealed trait ReaderMacroOperation
+  sealed trait ReaderMacroOperation {
+    def field: String
+  }
   object ReaderMacroOperation {
     final case class ExtractFieldAs(field: String, tpe: Type, as: Type, fun: Tree) extends ReaderMacroOperation
     final case class ExtractFieldValue(field: String, from: Seq[Field], fun: Tree) extends ReaderMacroOperation
@@ -25,7 +27,7 @@ trait ReaderBuilderUtils extends MacroUtils {
   }
 
   implicit lazy val readerMacroDescriptionUnliftable: Unliftable[ReaderMacroDescription] = Unliftable[ReaderMacroDescription] {
-    case q"$pack.ReaderDescription.apply($col.Seq.apply[$_](..${operations: Seq[ReaderMacroOperation]}))" =>
+    case q"$_.ReaderDescription.apply[$_]($_.Seq.apply[$_](..${operations: Seq[ReaderMacroOperation]}))" =>
       ReaderMacroDescription(operations)
   }
 
@@ -35,16 +37,16 @@ trait ReaderBuilderUtils extends MacroUtils {
   }
 
   implicit lazy val fieldUnliftable: Unliftable[Field] = Unliftable[Field] {
-    case q"$pack.ReaderDescription.Field.apply[${tpe: Tree}](${name: String})" =>
+    case q"$_.ReaderDescription.Field.apply[${tpe: Tree}](${name: String})" =>
       Field(name, tpe.tpe)
 
     case q"${f: BuilderField}" =>
       Field(f.name, f.tpe)
 
-    case q"$pack.ReaderField.ReaderFieldStringOps(${name: String}).as[${tpe: Tree}]" =>
+    case q"$_.ReaderFieldStringOps(${name: String}).as[${tpe: Tree}]" =>
       Field(name, tpe.tpe)
 
-    case q"$pack.ReaderField.ReaderFieldSymbolOps(scala.Symbol.apply(${name: String})).as[${tpe: Tree}]" =>
+    case q"$_.ReaderFieldSymbolOps(scala.Symbol.apply(${name: String})).as[${tpe: Tree}]" =>
       Field(name, tpe.tpe)
   }
 
@@ -59,14 +61,15 @@ trait ReaderBuilderUtils extends MacroUtils {
       q"$buildersPack.ReaderDescription.BuilderOperation.ExtractFieldReader($field, _root_.scala.Seq(..$from), $fun)"
   }
 
+
   implicit lazy val readerMacroOperationUnliftable: Unliftable[ReaderMacroOperation] = Unliftable[ReaderMacroOperation] {
-    case q"$pack.ReaderDescription.BuilderOperation.ExtractFieldAs[${as: Tree}, ${tpe: Tree}](${field: String}, ${fun: Tree})" =>
+    case q"$_.ReaderDescription.BuilderOperation.ExtractFieldAs.apply[${as: Tree}, ${tpe: Tree}](${field: String}, ${fun: Tree})" =>
       ReaderMacroOperation.ExtractFieldAs(field, tpe.tpe, as.tpe, fun)
 
-    case q"$pack.ReaderDescription.BuilderOperation.ExtractFieldValue(${field: String}, _root_.scala.Seq.apply[$_](..${from: Seq[Field]}), ${fun: Tree})" =>
+    case q"$_.ReaderDescription.BuilderOperation.ExtractFieldValue.apply(${field: String}, $_.Seq.apply[$_](..${from: Seq[Field]}), ${fun: Tree})" =>
       ReaderMacroOperation.ExtractFieldValue(field, from, fun)
 
-    case q"$pack.ReaderDescription.BuilderOperation.ExtractFieldReader(${field: String}, _root_.scala.Seq.apply[$_](..${from: Seq[Field]}), ${fun: Tree})" =>
+    case q"$_.ReaderDescription.BuilderOperation.ExtractFieldReader.apply(${field: String}, $_.Seq.apply[$_](..${from: Seq[Field]}), ${fun: Tree})" =>
       ReaderMacroOperation.ExtractFieldReader(field, from, fun)
   }
 }

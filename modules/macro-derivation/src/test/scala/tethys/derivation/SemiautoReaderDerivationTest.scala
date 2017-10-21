@@ -2,19 +2,19 @@ package tethys.derivation
 
 import org.scalatest.{FlatSpec, Matchers}
 import tethys.JsonReader
-import tethys.commons.{Token, TokenNode}
 import tethys.commons.TokenNode._
+import tethys.commons.{Token, TokenNode}
+import tethys.derivation.builder.ReaderBuilder
 import tethys.derivation.semiauto._
-import tethys.readers.ReaderError
 import tethys.readers.tokens.QueueIterator
 
 class SemiautoReaderDerivationTest extends FlatSpec with Matchers {
 
-  def read[A: JsonReader](nodes: List[TokenNode]): Either[ReaderError, A] = {
+  def read[A: JsonReader](nodes: List[TokenNode]): A = {
     val it = QueueIterator(nodes)
     val res = it.readJson[A]
     it.currentToken() shouldBe Token.Empty
-    res
+    res.fold(throw _, identity)
   }
 
 
@@ -32,11 +32,11 @@ class SemiautoReaderDerivationTest extends FlatSpec with Matchers {
           "a" -> 2
         )
       )
-    )) shouldBe Right(JsonTreeTestData(
+    )) shouldBe JsonTreeTestData(
       a = 1,
       b = true,
       c = C(D(2))
-    ))
+    )
   }
 
   it should "derive reader for recursive type" in {
@@ -54,11 +54,11 @@ class SemiautoReaderDerivationTest extends FlatSpec with Matchers {
           "children" -> arr()
         )
       )
-    )) shouldBe Right(RecursiveType(1, Seq(RecursiveType(2), RecursiveType(3))))
+    )) shouldBe RecursiveType(1, Seq(RecursiveType(2), RecursiveType(3)))
 
   }
 
-  it should "derive writer for A => B => A cycle" in {
+  it should "derive reader for A => B => A cycle" in {
     implicit lazy val testReader1: JsonReader[ComplexRecursionA] = jsonReader[ComplexRecursionA]
     implicit lazy val testReader2: JsonReader[ComplexRecursionB] = jsonReader[ComplexRecursionB]
 
@@ -70,6 +70,94 @@ class SemiautoReaderDerivationTest extends FlatSpec with Matchers {
           "a" -> 3
         )
       )
-    )) shouldBe Right(ComplexRecursionA(1, Some(ComplexRecursionB(2, ComplexRecursionA(3, None)))))
+    )) shouldBe ComplexRecursionA(1, Some(ComplexRecursionB(2, ComplexRecursionA(3, None))))
+  }
+
+  it should "derive reader for extract as description" in {
+    implicit val reader: JsonReader[SimpleType] = jsonReader[SimpleType] {
+      describe {
+        ReaderBuilder[SimpleType]
+          .extract(_.i).as[Option[Int]](_.getOrElse(2))
+      }
+    }
+
+    read[SimpleType](obj(
+      "i" -> 1,
+      "s" -> "str",
+      "d" -> 1.0
+    )) shouldBe SimpleType(1, "str", 1.0)
+
+    read[SimpleType](obj(
+      "s" -> "str",
+      "d" -> 1.0
+    )) shouldBe SimpleType(2, "str", 1.0)
+  }
+
+  it should "derive reader for extract from description" in {
+    implicit val reader: JsonReader[SimpleType] = jsonReader[SimpleType] {
+      describe {
+        ReaderBuilder[SimpleType]
+          .extract(_.i).from(_.s, _.d)((s, d) => 2)
+      }
+    }
+
+    read[SimpleType](obj(
+      "i" -> 1,
+      "s" -> "str",
+      "d" -> 1.0
+    )) shouldBe SimpleType(2, "str", 1.0)
+
+    read[SimpleType](obj(
+      "s" -> "str",
+      "d" -> 1.0
+    )) shouldBe SimpleType(2, "str", 1.0)
+  }
+
+  it should "derive reader for extract from description with synthetic field" in {
+    implicit val reader: JsonReader[SimpleType] = jsonReader[SimpleType] {
+      describe {
+        ReaderBuilder[SimpleType]
+          .extract(_.i).from(_.d).and('e.as[Double])((d, e) => (d + e).toInt)
+      }
+    }
+
+    read[SimpleType](obj(
+      "i" -> 1,
+      "s" -> "str",
+      "d" -> 1.0,
+      "e" -> 2.0
+    )) shouldBe SimpleType(3, "str", 1.0)
+
+    read[SimpleType](obj(
+      "s" -> "str",
+      "d" -> 1.0,
+      "e" -> 3.0
+    )) shouldBe SimpleType(4, "str", 1.0)
+  }
+
+  it should "derive reader for extract reader from description" in {
+    implicit val reader: JsonReader[SimpleTypeWithAny] = jsonReader[SimpleTypeWithAny] {
+      describe {
+        ReaderBuilder[SimpleTypeWithAny]
+          .extractReader(_.any).from(_.d) {
+          case 1.0 => JsonReader[String]
+          case 2.0 => JsonReader[Int]
+        }
+      }
+    }
+
+    read[SimpleTypeWithAny](obj(
+      "i" -> 1,
+      "s" -> "str",
+      "d" -> 1.0,
+      "any" -> "anyStr"
+    )) shouldBe SimpleTypeWithAny(1, "str", 1.0, "anyStr")
+
+    read[SimpleTypeWithAny](obj(
+      "i" -> 1,
+      "s" -> "str",
+      "d" -> 2.0,
+      "any" -> 2
+    )) shouldBe SimpleTypeWithAny(1, "str", 2.0, 2)
   }
 }
