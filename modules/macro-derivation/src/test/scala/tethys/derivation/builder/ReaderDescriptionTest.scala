@@ -3,7 +3,6 @@ package tethys.derivation.builder
 import org.scalatest.{FlatSpec, Matchers}
 import tethys.JsonReader
 import tethys.derivation.builder.ReaderDescriptionTest.Foo
-import tethys.derivation.builder.ReaderField._
 import tethys.derivation.semiauto._
 
 class ReaderDescriptionTest extends FlatSpec with Matchers {
