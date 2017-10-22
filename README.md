@@ -3,7 +3,7 @@ tethys is a JSON parsing/writing library for Scala
 
 # benchmarks
 
-[see here](https://github.com/tethys-json/tethys/tree/master/modules/benchmarks)
+[see here](./modules/benchmarks)
 
 # Quick start
 

@@ -41,6 +41,18 @@ class WriterDescriptionTest extends FlatSpec with Matchers {
     u.fun(1) shouldBe "1"
   }
 
+  it should "extract update from root operations" in {
+    val description = describe {
+      WriterBuilder[BuilderTestData]()
+        .update(_.a).fromRoot(_.a.toString)
+    }
+
+    val Seq(u: BuilderOperation.UpdateFromRoot[BuilderTestData, String]) = description.operations
+
+    u.field shouldBe "a"
+    u.fun(BuilderTestData(1, "s", c = true, 1L, InnerCls(2))) shouldBe "1"
+  }
+
   it should "extract update partial operations" in {
     val description = describe {
       WriterBuilder[BuilderTestData]()
@@ -57,6 +69,26 @@ class WriterDescriptionTest extends FlatSpec with Matchers {
     up.fun(1) shouldBe "uno!"
     up.fun(2) shouldBe 4
     up.fun(3) shouldBe 9
+  }
+
+  it should "extract update partial from root operations" in {
+    val description = describe {
+      WriterBuilder[BuilderTestData]()
+        .updatePartial(_.a).fromRoot {
+          case d if d.a == 1 => "uno!"
+          case d if d.a == 2 => 4
+          case d => d.a * 3
+        }
+    }
+
+    val Seq(up: BuilderOperation.UpdatePartialFromRoot[BuilderTestData]) = description.operations
+
+    up.field shouldBe "a"
+
+    val data = BuilderTestData(1, "s", c = true, 1L, InnerCls(2))
+    up.fun(data) shouldBe "uno!"
+    up.fun(data.copy(a = 2)) shouldBe 4
+    up.fun(data.copy(a = 3)) shouldBe 9
   }
 
   it should "extract complex case" in {

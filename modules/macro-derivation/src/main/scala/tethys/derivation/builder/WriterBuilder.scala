@@ -26,10 +26,12 @@ object WriterBuilder {
 
   sealed trait FunApply[A, B] {
     def apply[C](fun: B => C): WriterBuilder[A]
+    def fromRoot[C](fun: A => C): WriterBuilder[A]
   }
 
   sealed trait PartialFunApply[A, B] {
     def apply[C](partial: PartialFunction[B, C]): WriterBuilder[A]
+    def fromRoot[C](partial: PartialFunction[A, C]): WriterBuilder[A]
   }
 }
 
