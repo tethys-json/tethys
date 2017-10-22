@@ -86,7 +86,7 @@ private[tethys] trait LowPriorityIterableReaders extends LowPriorityJsonReaders 
     private def recRead(i: Int, it: TokenIterator, builder: mutable.Builder[A, C[A]])
                        (implicit fieldName: FieldName): C[A] = {
       it.currentToken() match {
-        case token if token.isEmpty => ReaderError.wrongJson
+        case token if token.isEmpty => ReaderError.wrongJson("Unexpected end of input")
         case token if token.isArrayEnd =>
           it.nextToken()
           builder.result()

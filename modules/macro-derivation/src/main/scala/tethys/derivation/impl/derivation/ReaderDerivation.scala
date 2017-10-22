@@ -20,6 +20,7 @@ trait ReaderDerivation
 
   private val fieldNameTerm = TermName(c.freshName("fieldName"))
   private val fieldNameType = tq"${weakTypeOf[FieldName]}"
+  private val fieldNameTmp = TermName(c.freshName("fieldNameTmp"))
 
   private val tokenIteratorTerm = TermName(c.freshName("it"))
   private val tokenIteratorType = tq"${typeOf[TokenIterator]}"
@@ -40,19 +41,18 @@ trait ReaderDerivation
     implicit val context: ReaderContext = new ReaderContext
 
     val name = TermName(c.freshName("name"))
-    val fieldNameTmp = TermName(c.freshName("fieldNameTmp"))
 
     val definitions = classDef.fields.map(field => FieldDefinitions(field.name, field.tpe))
     val syntheticDefinitions = extractSyntheticDefintions(description, classDef)
-    val transformedDefinition = transformDefinitions(description, definitions)
+    val transformedDefinitions = transformDefinitions(description, definitions)
 
-    val allDefinitions = transformedDefinition ++ syntheticDefinitions
+    val allDefinitions = transformedDefinitions ++ syntheticDefinitions
     allDefinitions.foreach(context.addDefinition)
 
     val vars = allDefinitions.flatMap(_.definitions)
     val cases = allDefinitions.flatMap(_.fieldCase) :+ cq"_ => $tokenIteratorTerm.skipExpression()"
     val isAllInitialized: Tree = {
-      val trees = transformedDefinition.map(d => q"${d.isInitialized}")
+      val trees = transformedDefinitions.map(d => q"${d.isInitialized}")
       if(trees.size < 2) trees.headOption.getOrElse(q"true")
       else trees.reduceLeft[Tree] {
         case (left, right) => q"$left && $right"
@@ -63,21 +63,31 @@ trait ReaderDerivation
       q"""
           ..${syntheticDefinitions.map(_.defaultValueExtraction)}
 
-          ..${transformedDefinition.filter(_.extractionType == Direct).map(_.defaultValueExtraction)}
+          ..${transformedDefinitions.filter(_.extractionType == Direct).map(_.defaultValueExtraction)}
        """
 
     val transformations = {
-      if(!transformedDefinition.exists(_.extractionType != Direct)) EmptyTree
+      if(!transformedDefinitions.exists(_.extractionType != Direct)) EmptyTree
       else
         q"""
            var $somethingChanged = true
            while($somethingChanged) {
              $somethingChanged = false
-             ..${transformedDefinition.filter(_.extractionType != Direct).map(_.transformation)}
+             ..${transformedDefinitions.filter(_.extractionType != Direct).map(_.transformation)}
            }
 
-           ..${transformedDefinition.filter(_.extractionType == FromFields).map(_.defaultValueExtraction)}
+           ..${transformedDefinitions.filter(_.extractionType == FromFields).map(_.defaultValueExtraction)}
          """
+    }
+
+    val uninitializedFieldsReason: Tree = {
+      val uninitializedFields = TermName(c.freshName("uninitializedFields"))
+      val fields = transformedDefinitions.map(d => q"""if(!${d.isInitialized}) $uninitializedFields += ${d.name} """)
+      q"""
+         val $uninitializedFields = scala.collection.mutable.ArrayBuffer.empty[String]
+         ..$fields
+         "Can not extract fields " + $uninitializedFields.mkString("'", "', '", "'")
+       """
     }
 
     c.Expr[JsonReader[A]] {
@@ -111,8 +121,8 @@ trait ReaderDerivation
 
                   $transformations
 
-                  if(!($isAllInitialized)) $readerErrorCompanion.wrongJson
-                  else new ${weakTypeOf[A]}(..${transformedDefinition.map(_.value)})
+                  if(!($isAllInitialized)) $readerErrorCompanion.wrongJson($uninitializedFieldsReason)
+                  else new ${weakTypeOf[A]}(..${transformedDefinitions.map(_.value)})
                 }
               }
            }: $jsonReaderType[$tpe]
@@ -318,6 +328,7 @@ trait ReaderDerivation
 
         q"""
            if($canTransform) {
+              implicit val $fieldNameTerm: $fieldNameType = $fieldNameTmp.appendFieldName($name)
               $value = ${readerContext.registerFunction(op.fun)}.apply(..$args)
               $isInitialized = true
               $somethingChanged = true
@@ -336,6 +347,7 @@ trait ReaderDerivation
            if($canTransform) {
               val $reader = ${readerContext.registerFunction(op.fun)}.apply(..$args)
               if($valueTree != null) {
+                implicit val $fieldNameTerm: $fieldNameType = $fieldNameTmp.appendFieldName($name)
                 $value = $reader.read($valueTree)
                 $isInitialized = true
                 $somethingChanged = true

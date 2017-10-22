@@ -119,7 +119,7 @@ private[tethys] trait LowPriorityMapReaders extends IterableReaders {
           appendBuilder(it.next(), builder, keyReader.read(name))(fieldName.appendFieldName(name))
           recRead(it, builder)(fieldName)
 
-        case _ => ReaderError.wrongJson(fieldName)
+        case token => ReaderError.wrongJson(s"Expect end of object or field name but '$token' found")(fieldName)
       }
     }
   }
