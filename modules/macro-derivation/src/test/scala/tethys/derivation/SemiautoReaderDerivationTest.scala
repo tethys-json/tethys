@@ -160,4 +160,52 @@ class SemiautoReaderDerivationTest extends FlatSpec with Matchers {
       "any" -> 2
     )) shouldBe SimpleTypeWithAny(1, "str", 2.0, 2)
   }
+
+  it should "derive reader for complex extraction case" in {
+    implicit val reader: JsonReader[SimpleTypeWithAny] = jsonReader[SimpleTypeWithAny] {
+      describe {
+        ReaderBuilder[SimpleTypeWithAny]
+          .extractReader(_.any).from(_.i) {
+            case 1 => JsonReader[String]
+            case 2 => JsonReader[Int]
+            case _ => JsonReader[Option[Boolean]]
+          }
+          .extract(_.i).from(_.d).and('e.as[Int])((d, e) => d.toInt + e)
+          .extract(_.d).as[Option[Double]](_.getOrElse(1.0))
+      }
+    }
+
+    read[SimpleTypeWithAny](obj(
+      "s" -> "str",
+      "d" -> 1.0,
+      "e" -> 0,
+      "any" -> "anyStr"
+    )) shouldBe SimpleTypeWithAny(1, "str", 1.0, "anyStr")
+
+    read[SimpleTypeWithAny](obj(
+      "s" -> "str",
+      "e" -> 0,
+      "any" -> "anyStr"
+    )) shouldBe SimpleTypeWithAny(1, "str", 1.0, "anyStr")
+
+    read[SimpleTypeWithAny](obj(
+      "s" -> "str",
+      "d" -> 1.0,
+      "e" -> 1,
+      "any" -> 3
+    )) shouldBe SimpleTypeWithAny(2, "str", 1.0, 3)
+
+    read[SimpleTypeWithAny](obj(
+      "s" -> "str",
+      "d" -> 1.0,
+      "e" -> 2,
+      "any" -> true
+    )) shouldBe SimpleTypeWithAny(3, "str", 1.0, Some(true))
+
+    read[SimpleTypeWithAny](obj(
+      "s" -> "str",
+      "d" -> 1.0,
+      "e" -> 2
+    )) shouldBe SimpleTypeWithAny(3, "str", 1.0, None)
+  }
 }

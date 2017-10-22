@@ -11,8 +11,8 @@ final class WrongTypeError(message: String, field: String) extends ReaderError(
   field = field
 )
 
-final class WrongJsonError(field: String) extends ReaderError(
-  message = s"Json is not properly formatted: '$field'",
+final class WrongJsonError(message: String, field: String) extends ReaderError(
+  message = message,
   cause = null,
   field = field
 )
@@ -26,7 +26,10 @@ object ReaderError {
     )
   }
 
-  def wrongJson(implicit fieldName: FieldName): Nothing = throw new WrongJsonError(fieldName.value())
+  def wrongJson(reason: String)(implicit fieldName: FieldName): Nothing = {
+    val field = fieldName.value()
+    throw new WrongJsonError(s"Json is not properly formatted '$field': $reason", field)
+  }
 
   def catchNonFatal[A](fun: => A)(implicit fieldName: FieldName): Either[ReaderError, A] = {
     try Right(fun) catch {
