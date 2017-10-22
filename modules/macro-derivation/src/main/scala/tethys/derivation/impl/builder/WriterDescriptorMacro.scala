@@ -41,9 +41,6 @@ object WriterDescriptorMacro {
           BuilderMacroOperation.Remove(description.tpe, f.name)
         )
 
-      case q"${rest: Tree}.remove[$tpe](${field: Tree})" =>
-        abort(s"remove function should be simple getter from first level like '_.a', but '${show(field)}' found")
-
       // ===== update =====
       case q"${rest: Tree}.update[${a: Tree}](${f: BuilderField}).apply[${b: Tree}](${updater: Tree})" =>
         val description = extractSimpleDescription(rest)
@@ -51,9 +48,12 @@ object WriterDescriptorMacro {
           BuilderMacroOperation.Update(description.tpe, f.name, updater, a.tpe, b.tpe)
         )
 
-
-      case q"${rest: Tree}.update[$tpe](${field: Tree}).apply[$_]($_)" =>
-        abort(s"field of update function should be simple getter from first level like '_.a', but '${show(field)}' found")
+      // ===== update from root =====
+      case q"${rest: Tree}.update[$_](${f: BuilderField}).fromRoot[${b: Tree}](${updater: Tree})" =>
+        val description = extractSimpleDescription(rest)
+        description.copy(operations = description.operations :+
+          BuilderMacroOperation.UpdateFromRoot(description.tpe, f.name, updater, b.tpe)
+        )
 
       // ===== add =====
       case q"${rest: Tree}.add(${f: String}).apply[${a: Tree}](${updater: Tree})" =>
@@ -62,10 +62,18 @@ object WriterDescriptorMacro {
           BuilderMacroOperation.Add(description.tpe, f, updater, a.tpe)
         )
 
+      // ===== update partial =====
       case q"${rest: Tree}.updatePartial[${a: Tree}](${f: BuilderField}).apply[$_](${updater: Tree})" =>
         val description = extractSimpleDescription(rest)
         description.copy(operations = description.operations :+
           BuilderMacroOperation.UpdatePartial(description.tpe, f.name, updater, a.tpe)
+        )
+
+      // ===== update partial from root =====
+      case q"${rest: Tree}.updatePartial[${a: Tree}](${f: BuilderField}).fromRoot[$_](${updater: Tree})" =>
+        val description = extractSimpleDescription(rest)
+        description.copy(operations = description.operations :+
+          BuilderMacroOperation.UpdatePartialFromRoot(description.tpe, f.name, updater)
         )
 
       // ===== NOPE =====

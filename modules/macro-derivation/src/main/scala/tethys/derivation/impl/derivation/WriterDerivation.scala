@@ -122,10 +122,25 @@ trait WriterDerivation
           case d => d
         }
 
+      case (data, o: BuilderMacroOperation.UpdateFromRoot) =>
+        data.map {
+          case (name, _, _) if name == o.field =>
+            val fun = context.addFunction(description.tpe, o.to, o.fun)
+            (name, Left(o.to), q"$fun($valueTerm)")
+          case d => d
+        }
+
       case (data, o: BuilderMacroOperation.UpdatePartial) =>
         data.map {
           case (name, _, _) if name == o.field =>
             (name, Right(o.fun), q"${simpleGetter(name)}")
+          case d => d
+        }
+
+      case (data, o: BuilderMacroOperation.UpdatePartialFromRoot) =>
+        data.map {
+          case (name, _, _) if name == o.field =>
+            (name, Right(o.fun), q"$valueTerm")
           case d => d
         }
 

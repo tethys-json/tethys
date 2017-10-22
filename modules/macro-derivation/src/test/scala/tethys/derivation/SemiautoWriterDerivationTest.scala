@@ -22,7 +22,7 @@ class SemiautoWriterDerivationTest extends FlatSpec with Matchers {
       describe {
         WriterBuilder[JsonTreeTestData]()
           .remove(_.b)
-          .update(_.a)(_ + 1.0)
+          .update(_.a).fromRoot(d => d.a.toDouble + d.c.d.a)
           .update(_.c)(_.d)
           .add("d")(_.a * 2)
           .add("e")(_.b)
@@ -46,6 +46,28 @@ class SemiautoWriterDerivationTest extends FlatSpec with Matchers {
             case 1 => "uno!"
             case 2 => 1
             case v if v > 0 => v * 2
+            case _ => throw new IllegalArgumentException("Wrong value!")
+          }
+      }
+    }
+
+    D(1).asTokenList shouldBe obj("a" -> "uno!")
+    D(2).asTokenList shouldBe obj("a" -> 1)
+    D(3).asTokenList shouldBe obj("a" -> 6)
+
+    intercept[IllegalArgumentException] {
+      D(0).asTokenList
+    }.getMessage shouldBe "Wrong value!"
+  }
+
+  it should "derive writer for update partial from root" in {
+    implicit val partialWriter: JsonWriter[D] = jsonWriter {
+      describe {
+        WriterBuilder[D]()
+          .updatePartial(_.a).fromRoot {
+            case d if d.a == 1 => "uno!"
+            case d if d.a == 2 => 1
+            case d if d.a > 0 => d.a * 2
             case _ => throw new IllegalArgumentException("Wrong value!")
           }
       }
