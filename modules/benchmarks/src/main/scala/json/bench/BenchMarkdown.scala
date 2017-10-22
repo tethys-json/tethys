@@ -40,7 +40,7 @@ object BenchMarkdown {
 
   implicit val mbScore: JsonReader[Either[String, Double]] = new JsonReader[Either[String, Double]] {
     override def read(it: TokenIterator)(implicit fieldName: FieldName): Either[String, Double] = {
-      if(it.currentToken().isNumberValue) Right(JsonReader.doubleReader.read(it))
+      if(it.currentToken().isNumberValue) Right(Math.round(JsonReader.doubleReader.read(it) * 1000) / 1000.0)
       else Left(JsonReader.stringReader.read(it))
     }
   }
