@@ -31,7 +31,10 @@ object WriterDescriptorMacro {
 
     private def extractSimpleDescription(tree: Tree): MacroWriteDescription = tree match {
       // ===== ROOT =====
-      case q"$builder.apply[${tpe: Tree}]()" =>
+      case q"WriterBuilder.apply[${tpe: Tree}]" =>
+      MacroWriteDescription(tpe.tpe, Seq())
+
+      case q"$_.WriterBuilder.apply[${tpe: Tree}]" =>
         MacroWriteDescription(tpe.tpe, Seq())
 
       // ===== remove =====

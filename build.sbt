@@ -1,11 +1,37 @@
-val commonSettings = Seq(
-  version := "0.6.1-SNAPSHOT",
+lazy val commonSettings = Seq(
+  version := "0.6.2",
   organization := "com.tethys-json",
   scalaVersion := "2.11.8",
   crossScalaVersions := Seq("2.11.8", "2.12.2"),
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.0.1" % "test"
-  )
+  ),
+
+  licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0")),
+  homepage := Some(url("https://github.com/tethys-json/tethys")),
+  scmInfo := Some(
+    ScmInfo(
+      url("https://github.com/tethys-json/tethys"),
+      "scm:git@github.com:tethys-json/tethys.git"
+    )
+  ),
+  developers := List(
+    Developer(
+      id = "eld0727",
+      name = "Aleksei Otts",
+      email = "eld0727@gmail.com",
+      url = url("https://github.com/eld0727")
+    )
+  ),
+  publishMavenStyle := true,
+  publishTo := {
+    val nexus = "https://oss.sonatype.org/"
+    if (isSnapshot.value)
+      Some("snapshots" at nexus + "content/repositories/snapshots")
+    else
+      Some("releases" at nexus + "service/local/staging/deploy/maven2")
+  },
+  publishArtifact in Test := false
 )
 
 lazy val tethys = project.in(file("."))
@@ -16,8 +42,8 @@ lazy val tethys = project.in(file("."))
 lazy val core = project.in(file("./modules/core"))
   .settings(commonSettings)
   .settings(
-  name := "tethys-core"
-)
+    name := "tethys-core"
+  )
 
 lazy val `macro-derivation` = project.in(file("./modules/macro-derivation"))
   .settings(commonSettings)
@@ -40,6 +66,7 @@ lazy val `jackson-backend` = project.in(file("./modules/jackson-backend"))
 lazy val benchmarks = project.in(file("./modules/benchmarks"))
   .settings(commonSettings)
   .settings(
+    publishTo := None,
     libraryDependencies ++= Seq(
       "io.spray" %% "spray-json" % "1.3.3",
       "org.json4s" %% "json4s-native" % "3.5.1",

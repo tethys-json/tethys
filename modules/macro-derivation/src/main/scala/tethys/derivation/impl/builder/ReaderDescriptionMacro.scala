@@ -28,7 +28,7 @@ object ReaderDescriptionMacro {
       case q"ReaderBuilder.apply[$_]" =>
         ReaderMacroDescription(Seq())
 
-      case q"$builder.ReaderBuilder.apply[$_]" =>
+      case q"$_.ReaderBuilder.apply[$_]" =>
         ReaderMacroDescription(Seq())
 
       // ===== FieldAs =====

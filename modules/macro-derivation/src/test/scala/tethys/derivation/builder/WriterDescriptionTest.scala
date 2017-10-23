@@ -10,7 +10,7 @@ class WriterDescriptionTest extends FlatSpec with Matchers {
   behavior of "Json.describe"
   it should "extract remove operations" in {
     describe {
-      WriterBuilder[BuilderTestData]()
+      WriterBuilder[BuilderTestData]
         .remove(_.a)
         .remove(_.inner)
     } shouldBe WriterDescription(Seq(
@@ -22,7 +22,7 @@ class WriterDescriptionTest extends FlatSpec with Matchers {
   it should "not compile if we try to remove field from inner class" in {
     """
       |    extract {
-      |      new JsonWriterBuilder[BuilderTestData]
+      |      new JsonWriterBuilder[
       |        .remove(_.a)
       |        .remove(_.inner.a)
       |    }
@@ -31,7 +31,7 @@ class WriterDescriptionTest extends FlatSpec with Matchers {
 
   it should "extract update operations" in {
     val description = describe {
-      WriterBuilder[BuilderTestData]()
+      WriterBuilder[BuilderTestData]
         .update(_.a)(_.toString)
     }
 
@@ -43,7 +43,7 @@ class WriterDescriptionTest extends FlatSpec with Matchers {
 
   it should "extract update from root operations" in {
     val description = describe {
-      WriterBuilder[BuilderTestData]()
+      WriterBuilder[BuilderTestData]
         .update(_.a).fromRoot(_.a.toString)
     }
 
@@ -55,7 +55,7 @@ class WriterDescriptionTest extends FlatSpec with Matchers {
 
   it should "extract update partial operations" in {
     val description = describe {
-      WriterBuilder[BuilderTestData]()
+      WriterBuilder[BuilderTestData]
         .updatePartial(_.a) {
           case 1 => "uno!"
           case 2 => 4
@@ -73,7 +73,7 @@ class WriterDescriptionTest extends FlatSpec with Matchers {
 
   it should "extract update partial from root operations" in {
     val description = describe {
-      WriterBuilder[BuilderTestData]()
+      WriterBuilder[BuilderTestData]
         .updatePartial(_.a).fromRoot {
           case d if d.a == 1 => "uno!"
           case d if d.a == 2 => 4
@@ -96,7 +96,7 @@ class WriterDescriptionTest extends FlatSpec with Matchers {
     val testData = BuilderTestData(1, "a", c = true, 4L, InnerCls(2))
 
     val WriterDescription(operations) = describe {
-      WriterBuilder[BuilderTestData]()
+      WriterBuilder[BuilderTestData]
         .remove(_.a)
         .update(_.c)(c => !c)
         .add("e")(_.a * 2)
