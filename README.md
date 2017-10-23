@@ -37,20 +37,22 @@ JsonWriter writes json tokens to `TokenWriter`
 
 ```scala
 import tethys._
+import tethys.jackson._
 
 List(1, 2, 3, 4).asJson
 
-//or writer directly to TokenWriter
+//or write directly to TokenWriter
 
 val tokenWriter = YourWriter
 
 tokenWriter.writeJson(List(1, 2, 3, 4))
 ```
 
-New writers could be created with object builder and combine them
+New writers could be created with object builder or with combination of few writers
 
 ```scala
 import tethys._
+import tethys.jackson._
 import scala.reflect.ClassTag
 
 case class Foo(bar: Int)
@@ -81,6 +83,7 @@ JsonWriter.stringWriter.contramap[Foo](_.bar.toString)
 JsonReader converts json token from `TokenIterator` to it value
 ```scala
 import tethys._
+import tethys.jackson._
 
 "[1, 2, 3, 4]".jsonAs[List[Int]]
 ```
@@ -89,6 +92,7 @@ New readers could be created with builder
 
 ```scala
 import tethys._
+import tethys.jackson._
 
 case class Foo(bar: Int)
 
@@ -103,6 +107,7 @@ Also you can select existing reader that depends on other json fields
 
 ```scala
 import tethys._
+import tethys.jackson._
 
 trait FooBar
 case class Foo(foo: Int) extends FooBar
@@ -135,6 +140,7 @@ In common case you should prefer semiauto derivation because it's more precise, 
 
 ```scala
 import tethys._
+import tethys.jackson._
 import tethys.derivation.auto._
 import tethys.derivation.semiauto._
 
@@ -147,7 +153,7 @@ implicit val barReader: JsonReader[Bar] = jsonReader[Bar]
 """{"bar":{"seq":[1,2,3]}}""".jsonAs[Foo] //Foo reader auto derived
 ``` 
 
-In complex cases you could provide some additional information to `jsonWriter` and `jsonReader` methods
+In complex cases you could provide some additional information to `jsonWriter` and `jsonReader` functions
 
 ```scala
 import tethys._
@@ -180,7 +186,7 @@ implicit val fooWriter = jsonWriter[Foo] {
   }
 }
 
-implicit val fooReader = jsonWriter[Foo] {
+implicit val fooReader = jsonReader[Foo] {
   describe {
     //Any functions are allowed in lambdas 
     ReaderBuilder[Foo]
