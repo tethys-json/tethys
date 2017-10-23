@@ -1,6 +1,9 @@
 package tethys
 
 package object derivation {
+  case class SimpleType(i: Int, s: String, d: Double)
+  case class SimpleTypeWithAny(i: Int, s: String, d: Double, any: Any)
+
   case class JsonTreeTestData(a: Int, b: Boolean, c: C)
   case class C(d: D)
   case class D(a: Int)

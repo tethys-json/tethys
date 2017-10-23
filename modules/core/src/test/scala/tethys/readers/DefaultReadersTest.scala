@@ -22,7 +22,6 @@ class DefaultReadersTest extends FlatSpec {
 
   private val cases: List[(TestDefinition[_], List[TokenNode])] = List[(TestDefinition[_], List[TokenNode])](
     test("1") -> value("1"),
-    test('1') -> value("1"),
     test(1) -> value(1),
     test(1: Short) -> value(1: Short),
     test(1L) -> value(1L),
@@ -51,7 +50,7 @@ class DefaultReadersTest extends FlatSpec {
     case (TestDefinition(result, jsonReader, name), nodes) =>
       it should s"correctly read $name" in {
         val iterator = QueueIterator(nodes)
-        iterator.readJson(jsonReader) shouldBe Right(result)
+        iterator.readJson(jsonReader).fold(throw _, identity) shouldBe result
         iterator.currentToken() shouldBe Token.Empty
       }
 

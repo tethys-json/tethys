@@ -1,4 +1,4 @@
-package json.bench.tethys
+package json.bench.tethysjson
 
 import json.bench.model.Data
 import tethys._

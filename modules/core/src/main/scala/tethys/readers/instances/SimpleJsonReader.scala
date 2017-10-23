@@ -20,7 +20,8 @@ class SimpleJsonReader[A: ClassTag](fields: Map[String, JsonReader[_]])(mapper: 
       it.nextToken()
       val extracted: Map[String, Any] = recRead(it, defaults)
 
-      if(!names.forall(extracted.contains)) ReaderError.wrongJson
+      val notExtracted = names.filterNot(extracted.contains)
+      if(notExtracted.nonEmpty) ReaderError.wrongJson(s"Can not extract fields ${notExtracted.mkString("'", "', '", "'")}")
       else mapper(extracted)
     }
   }
@@ -43,7 +44,7 @@ class SimpleJsonReader[A: ClassTag](fields: Map[String, JsonReader[_]])(mapper: 
             it.skipExpression()
             recRead(it, extracted)
         }
-      case _ => ReaderError.wrongJson
+      case token => ReaderError.wrongJson(s"Expect end of object or field name but '$token' found")
     }
   }
 }

@@ -4,7 +4,11 @@ import tethys.readers.{FieldName, ReaderError}
 import tethys.readers.tokens.{TokenIterator, TokenIteratorProducer}
 import tethys.writers.tokens.{TokenWriter, TokenWriterProducer}
 
+import scala.Specializable.Group
+
 package object tethys {
+
+  final val specializations = new Group((Short, Int, Long, Float, Double, Boolean))
 
   implicit class JsonWriterOps[A](val a: A) extends AnyVal {
     def asJson(implicit jsonWriter: JsonWriter[A], tokenWriterProducer: TokenWriterProducer): String = {

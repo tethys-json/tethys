@@ -3,15 +3,14 @@ tethys is a JSON parsing/writing library for Scala
 
 # benchmarks
 
-[see here](https://github.com/tethys-json/tethys/tree/master/modules/benchmarks)
+[see here](./modules/benchmarks)
 
 # Quick start
 
 Add dependencies to your `build.sbt`  
-(waiting groupId on [maven central](https://issues.sonatype.org/browse/OSSRH-34678))
 
 ```scala
-val tethysVersion = "0.6.0"
+val tethysVersion = "0.6.2"
 libraryDependecies ++= Seq(
   "com.tethys-json" %% "tethys-core" % tethysVersion,
   "com.tethys-json" %% "tethys-jackson" % tethysVersion,
@@ -23,7 +22,7 @@ or just
 
 ```scala
 libraryDependecies ++= Seq(
-  "com.tethys-json" %% "tethys" % "0.6.0"
+  "com.tethys-json" %% "tethys" % "0.6.2"
 )
 ```
 
@@ -131,7 +130,8 @@ Please check out `tethys` package object for all available syntax Ops classes
 
 # derivation
 
-`tethys-derivation` provides semiauto and auto macro derivation JsonReader and JsonWriter instances
+`tethys-derivation` provides semiauto and auto macro derivation JsonReader and JsonWriter instances.  
+In common case you should prefer semiauto derivation because it's more precise, faster in compile and flexible.
 
 ```scala
 import tethys._
@@ -147,18 +147,19 @@ implicit val barReader: JsonReader[Bar] = jsonReader[Bar]
 """{"bar":{"seq":[1,2,3]}}""".jsonAs[Foo] //Foo reader auto derived
 ``` 
 
-In complex cases you could provide some additional information to `jsonWriter` method
+In complex cases you could provide some additional information to `jsonWriter` and `jsonReader` methods
 
 ```scala
 import tethys._
+import tethys.derivation.builder._
 import tethys.derivation.semiauto._
 
-case class Foo(a: Int, b: String, c: Any)
+case class Foo(a: Int, b: String, c: Any, d: Boolean, e: Double)
 
 implicit val fooWriter = jsonWriter[Foo] {
   describe {
     //Any functions are allowed in lambdas 
-    WriterBuilder[Foo]()
+    WriterBuilder[Foo]
       .remove(_.b)
       .add("d")(_.b.trim)
       .update(_.a)(_ + 1)
@@ -170,6 +171,26 @@ implicit val fooWriter = jsonWriter[Foo] {
         case i: Int => i + 1
         case other => other.toString 
       }
+      .update(_.d).fromRoot(foo => if(foo.d) foo.a else foo.a / 2) //same as update but function accepts root element
+      .updatePartial(_.e).fromRoot { //same as updatePartial but function accepts root element
+        case Foo(1, _, _, _, e) => e
+        case Foo(2, _, _, _, e) => e % 2
+        case foo => e.toString
+      }
+  }
+}
+
+implicit val fooReader = jsonWriter[Foo] {
+  describe {
+    //Any functions are allowed in lambdas 
+    ReaderBuilder[Foo]
+      .extractReader(_.c).from(_.a)('otherField].as[String]) { // provide reader for Any field
+        case (1, "str") => JsonReader[String]
+        case (_, "int") => JsonReader[Int]
+        case _ => JsonReader[Option[Boolean]]
+      }
+      .extract(_.a).from(_.b).and("otherField2".as[Int])((b, other) => d.toInt + other) // calculate field that depends on other fields
+      .extract(_.e).as[Option[Double]](_.getOrElse(1.0)) // extract field from value of specific type
   }
 }
 ```
