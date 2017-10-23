@@ -22,7 +22,7 @@ sealed trait WriterBuilder[A] {
 object WriterBuilder {
   
   @compileTimeOnly("ReaderBuilder should be defined in describe block")
-  def apply[A <: Product](): WriterBuilder[A] = throw new NotDescribedException
+  def apply[A <: Product]: WriterBuilder[A] = throw new NotDescribedException
 
   sealed trait FunApply[A, B] {
     def apply[C](fun: B => C): WriterBuilder[A]

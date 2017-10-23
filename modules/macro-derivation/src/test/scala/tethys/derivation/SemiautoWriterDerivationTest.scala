@@ -20,7 +20,7 @@ class SemiautoWriterDerivationTest extends FlatSpec with Matchers {
 
     implicit val testWriter: JsonWriter[JsonTreeTestData] = jsonWriter {
       describe {
-        WriterBuilder[JsonTreeTestData]()
+        WriterBuilder[JsonTreeTestData]
           .remove(_.b)
           .update(_.a).fromRoot(d => d.a.toDouble + d.c.d.a)
           .update(_.c)(_.d)
@@ -41,7 +41,7 @@ class SemiautoWriterDerivationTest extends FlatSpec with Matchers {
   it should "derive writer for update partial" in {
     implicit val partialWriter: JsonWriter[D] = jsonWriter {
       describe {
-        WriterBuilder[D]()
+        WriterBuilder[D]
           .updatePartial(_.a) {
             case 1 => "uno!"
             case 2 => 1
@@ -63,7 +63,7 @@ class SemiautoWriterDerivationTest extends FlatSpec with Matchers {
   it should "derive writer for update partial from root" in {
     implicit val partialWriter: JsonWriter[D] = jsonWriter {
       describe {
-        WriterBuilder[D]()
+        WriterBuilder[D]
           .updatePartial(_.a).fromRoot {
             case d if d.a == 1 => "uno!"
             case d if d.a == 2 => 1
