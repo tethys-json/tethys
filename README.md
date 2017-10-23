@@ -184,7 +184,7 @@ implicit val fooReader = jsonWriter[Foo] {
   describe {
     //Any functions are allowed in lambdas 
     ReaderBuilder[Foo]
-      .extractReader(_.c).from(_.a)('otherField].as[String]) { // provide reader for Any field
+      .extractReader(_.c).from(_.a)('otherField.as[String]) { // provide reader for Any field
         case (1, "str") => JsonReader[String]
         case (_, "int") => JsonReader[Int]
         case _ => JsonReader[Option[Boolean]]
