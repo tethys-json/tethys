@@ -21,3 +21,8 @@ out
 
 #gpg
 gpg.sbt
+
+modules/benchmarks/target
+modules/core/target
+modules/jackson-backend/target
+modules/macro-derivation/target
