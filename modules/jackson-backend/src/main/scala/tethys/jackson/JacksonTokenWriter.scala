@@ -80,4 +80,6 @@ class JacksonTokenWriter(jsonGenerator: JsonGenerator) extends TokenWriter {
   }
 
   override def close(): Unit = jsonGenerator.close()
+
+  override def flush(): Unit = jsonGenerator.flush()
 }
