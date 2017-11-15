@@ -19,7 +19,7 @@ package object tethys {
 
     def writeJson(tokenWriter: TokenWriter)(implicit jsonWriter: JsonWriter[A]): Unit = {
       try jsonWriter.write(a, tokenWriter) finally {
-        tokenWriter.close()
+        tokenWriter.flush()
       }
     }
   }

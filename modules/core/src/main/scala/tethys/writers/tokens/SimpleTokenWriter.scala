@@ -40,6 +40,8 @@ class SimpleTokenWriter extends TokenWriter {
 
   override def close(): Unit = ()
 
+  override def flush(): Unit = ()
+
   private def append(node: TokenNode): this.type = {
     tokens += node
     this

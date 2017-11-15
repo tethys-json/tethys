@@ -21,3 +21,5 @@ out
 
 #gpg
 gpg.sbt
+
+modules/**/target

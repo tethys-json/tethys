@@ -32,4 +32,6 @@ trait TokenWriter {
   def writeNull(): this.type
 
   def close(): Unit
+
+  def flush(): Unit
 }
