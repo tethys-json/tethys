@@ -37,11 +37,6 @@ object AutoDerivationMacro {
         }
       }
 
-      c.typecheck(instance.tree, silent = true) match {
-        case EmptyTree => info(show(instance.tree))
-        case tree =>
-      }
-
       c.Expr[LowPriorityInstance[JsonObjectWriter[A]]] {
         c.untypecheck {
           q"new ${weakTypeOf[LowPriorityInstance[JsonObjectWriter[A]]]}($instance)"
