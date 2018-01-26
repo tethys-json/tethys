@@ -1,6 +1,7 @@
 package tethys.jackson
 
 import tethys._
+import tethys.commons.TokenNode._
 import org.scalatest.{FlatSpec, Matchers}
 
 class JacksonTokenIteratorTest extends FlatSpec with Matchers {
@@ -107,5 +108,22 @@ class JacksonTokenIteratorTest extends FlatSpec with Matchers {
 
     it.nextToken().isEmpty shouldBe true
 
+  }
+
+  it should "generate proper tokens seq" in {
+    val json = """{"a":1,"b":["s",true,{"a":null},1.0,false]}"""
+
+    json.jsonAsTokensList shouldBe obj(
+      "a" -> 1,
+      "b" -> arr(
+        "s",
+        true,
+        obj(
+          "a" -> null
+        ),
+        1.0,
+        false
+      )
+    )
   }
 }
