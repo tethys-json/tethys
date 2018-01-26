@@ -12,9 +12,9 @@ class SemiautoReaderDerivationTest extends FlatSpec with Matchers {
 
   def read[A: JsonReader](nodes: List[TokenNode]): A = {
     val it = QueueIterator(nodes)
-    val res = it.readJson[A]
+    val res = it.readJson[A].fold(throw _, identity)
     it.currentToken() shouldBe Token.Empty
-    res.fold(throw _, identity)
+    res
   }
 
 

@@ -186,6 +186,16 @@ trait ReaderDerivation
       readersMapping.getOrElseUpdate(unwrapType(tpe), TermName(c.freshName("reader")))
     }
 
+    def provideReaderDefaultValue(tpe: Type): Tree = {
+      c.typecheck(q"implicitly[$jsonReaderType[$tpe]]", silent = true) match {
+        case EmptyTree if !readersMapping.contains(unwrapType(tpe)) => // reader could not be found, so just return None
+          q"None"
+
+        case _ =>
+          q"${provideReader(tpe)}.defaultValue"
+      }
+    }
+
     def provideDefaultValue(tpe: Type): TermName = {
       defaultValuesMapping.getOrElseUpdate(unwrapType(tpe), TermName(c.freshName("defaultValue")))
     }
@@ -269,7 +279,7 @@ trait ReaderDerivation
       case Some(op: ReaderMacroOperation.ExtractFieldAs) =>
         q"""
            if(!$isInitialized) {
-             val $defaultValue: Option[${op.as}] = ${readerContext.provideReader(op.as)}.defaultValue
+             val $defaultValue: Option[${op.as}] = ${readerContext.provideReaderDefaultValue(op.as)}
              if($defaultValue.nonEmpty) {
                 $value = ${readerContext.registerFunction(op.fun)}.apply($defaultValue.get)
                 $isInitialized = true
@@ -280,7 +290,7 @@ trait ReaderDerivation
       case _ =>
         q"""
            if(!$isInitialized) {
-             val $defaultValue: Option[$tpe] = ${readerContext.provideReader(tpe)}.defaultValue
+             val $defaultValue: Option[$tpe] = ${readerContext.provideReaderDefaultValue(tpe)}
              if($defaultValue.nonEmpty) {
                 $value = $defaultValue.get
                 $isInitialized = true
