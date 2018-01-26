@@ -12,9 +12,11 @@ import scala.annotation.compileTimeOnly
 sealed trait WriterBuilder[A] {
   def remove[B](field: A => B): WriterBuilder[A]
 
-  def update[B](field: A => B): FunApply[A, B]
+  def rename[B](field: A => B)(rename: String): WriterBuilder[A]
 
-  def updatePartial[B](field: A => B): PartialFunApply[A, B]
+  def update[B](field: A => B): FunApply[A, B] with WithRename[FunApply[A, B]]
+
+  def updatePartial[B](field: A => B): PartialFunApply[A, B] with WithRename[PartialFunApply[A, B]]
 
   def add(name: String): FunApply[A, A]
 }
@@ -23,6 +25,10 @@ object WriterBuilder {
   
   @compileTimeOnly("ReaderBuilder should be defined in describe block")
   def apply[A <: Product]: WriterBuilder[A] = throw new NotDescribedException
+
+  sealed trait WithRename[Res] {
+    def withRename(rename: String): Res
+  }
 
   sealed trait FunApply[A, B] {
     def apply[C](fun: B => C): WriterBuilder[A]

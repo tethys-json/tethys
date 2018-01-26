@@ -118,7 +118,7 @@ trait WriterDerivation
         data.map {
           case (name, _, _) if name == o.field =>
             val fun = context.addFunction(o.from, o.to, o.fun)
-            (name, Left(o.to), q"$fun(${simpleGetter(name)})")
+            (o.name, Left(o.to), q"$fun(${simpleGetter(name)})")
           case d => d
         }
 
@@ -126,21 +126,21 @@ trait WriterDerivation
         data.map {
           case (name, _, _) if name == o.field =>
             val fun = context.addFunction(description.tpe, o.to, o.fun)
-            (name, Left(o.to), q"$fun($valueTerm)")
+            (o.name, Left(o.to), q"$fun($valueTerm)")
           case d => d
         }
 
       case (data, o: BuilderMacroOperation.UpdatePartial) =>
         data.map {
           case (name, _, _) if name == o.field =>
-            (name, Right(o.fun), q"${simpleGetter(name)}")
+            (o.name, Right(o.fun), q"${simpleGetter(name)}")
           case d => d
         }
 
       case (data, o: BuilderMacroOperation.UpdatePartialFromRoot) =>
         data.map {
           case (name, _, _) if name == o.field =>
-            (name, Right(o.fun), q"$valueTerm")
+            (o.name, Right(o.fun), q"$valueTerm")
           case d => d
         }
 

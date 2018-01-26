@@ -117,6 +117,38 @@ class WriterDescriptionTest extends FlatSpec with Matchers {
     add.field shouldBe "e"
     add.fun(testData) shouldBe 2
   }
+
+  it should "extract rename" in {
+    val WriterDescription(Seq(op: BuilderOperation.Update[BuilderTestData, Int, Int])) = describe {
+      WriterBuilder[BuilderTestData].rename(_.a)("aa")
+    }
+
+    op.field shouldBe "a"
+    op.name shouldBe "aa"
+    op.fun(1) shouldBe 1
+  }
+
+  it should "extract update with rename" in {
+    val fun: Int => Int = _ + 1
+
+    describe {
+      WriterBuilder[BuilderTestData].update(_.a).withRename("aa")(fun)
+    }.operations shouldBe Seq(
+      BuilderOperation.Update("a", "aa", fun)
+    )
+  }
+
+  it should "extract update from root with rename" in {
+    val fun: PartialFunction[BuilderTestData, Int] = {
+      case d => d.a
+    }
+
+    describe {
+      WriterBuilder[BuilderTestData].update(_.a).withRename("aa").fromRoot(fun)
+    }.operations shouldBe Seq(
+      BuilderOperation.UpdateFromRoot("a", "aa", fun)
+    )
+  }
 }
 
 object WriterDescriptionTest {

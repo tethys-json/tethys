@@ -44,18 +44,39 @@ object WriterDescriptorMacro {
           BuilderMacroOperation.Remove(description.tpe, f.name)
         )
 
+      // ===== rename =====
+      case q"${rest: Tree}.rename[${a: Tree}](${f: BuilderField})(${rename: String})" =>
+        val description = extractSimpleDescription(rest)
+        description.copy(operations = description.operations :+
+          BuilderMacroOperation.Update(description.tpe, f.name, rename, q"identity[${a.tpe}]", a.tpe, a.tpe)
+        )
+
       // ===== update =====
       case q"${rest: Tree}.update[${a: Tree}](${f: BuilderField}).apply[${b: Tree}](${updater: Tree})" =>
         val description = extractSimpleDescription(rest)
         description.copy(operations = description.operations :+
-          BuilderMacroOperation.Update(description.tpe, f.name, updater, a.tpe, b.tpe)
+          BuilderMacroOperation.Update(description.tpe, f.name, f.name, updater, a.tpe, b.tpe)
+        )
+
+      // ===== update with rename =====
+      case q"${rest: Tree}.update[${a: Tree}](${f: BuilderField}).withRename(${rename: String}).apply[${b: Tree}](${updater: Tree})" =>
+        val description = extractSimpleDescription(rest)
+        description.copy(operations = description.operations :+
+          BuilderMacroOperation.Update(description.tpe, f.name, rename, updater, a.tpe, b.tpe)
         )
 
       // ===== update from root =====
       case q"${rest: Tree}.update[$_](${f: BuilderField}).fromRoot[${b: Tree}](${updater: Tree})" =>
         val description = extractSimpleDescription(rest)
         description.copy(operations = description.operations :+
-          BuilderMacroOperation.UpdateFromRoot(description.tpe, f.name, updater, b.tpe)
+          BuilderMacroOperation.UpdateFromRoot(description.tpe, f.name, f.name, updater, b.tpe)
+        )
+
+      // ===== update from root with rename =====
+      case q"${rest: Tree}.update[$_](${f: BuilderField}).withRename(${rename: String}).fromRoot[${b: Tree}](${updater: Tree})" =>
+        val description = extractSimpleDescription(rest)
+        description.copy(operations = description.operations :+
+          BuilderMacroOperation.UpdateFromRoot(description.tpe, f.name, rename, updater, b.tpe)
         )
 
       // ===== add =====
@@ -69,14 +90,28 @@ object WriterDescriptorMacro {
       case q"${rest: Tree}.updatePartial[${a: Tree}](${f: BuilderField}).apply[$_](${updater: Tree})" =>
         val description = extractSimpleDescription(rest)
         description.copy(operations = description.operations :+
-          BuilderMacroOperation.UpdatePartial(description.tpe, f.name, updater, a.tpe)
+          BuilderMacroOperation.UpdatePartial(description.tpe, f.name, f.name, updater, a.tpe)
+        )
+
+      // ===== update partial with rename =====
+      case q"${rest: Tree}.updatePartial[${a: Tree}](${f: BuilderField}).withRename(${rename: String}).apply[$_](${updater: Tree})" =>
+        val description = extractSimpleDescription(rest)
+        description.copy(operations = description.operations :+
+          BuilderMacroOperation.UpdatePartial(description.tpe, f.name, rename, updater, a.tpe)
         )
 
       // ===== update partial from root =====
       case q"${rest: Tree}.updatePartial[${a: Tree}](${f: BuilderField}).fromRoot[$_](${updater: Tree})" =>
         val description = extractSimpleDescription(rest)
         description.copy(operations = description.operations :+
-          BuilderMacroOperation.UpdatePartialFromRoot(description.tpe, f.name, updater)
+          BuilderMacroOperation.UpdatePartialFromRoot(description.tpe, f.name, f.name, updater)
+        )
+
+      // ===== update partial from root with rename =====
+      case q"${rest: Tree}.updatePartial[${a: Tree}](${f: BuilderField}).withRename(${rename: String}).fromRoot[$_](${updater: Tree})" =>
+        val description = extractSimpleDescription(rest)
+        description.copy(operations = description.operations :+
+          BuilderMacroOperation.UpdatePartialFromRoot(description.tpe, f.name, rename, updater)
         )
 
       // ===== NOPE =====
