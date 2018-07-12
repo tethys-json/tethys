@@ -1,7 +1,9 @@
 package tethys.commons
 
+import tethys.JsonReader
 import tethys.commons.Token._
-import tethys.readers.tokens.TokenIteratorProducer
+import tethys.readers.ReaderError
+import tethys.readers.tokens.{QueueIterator, TokenIteratorProducer}
 
 sealed trait TokenNode {
   def token: Token
@@ -75,7 +77,9 @@ object TokenNode {
   def value(v: Float): List[TokenNode] = FloatValueNode(v) :: Nil
   def value(v: Double): List[TokenNode] = DoubleValueNode(v) :: Nil
   def value(v: BigInt): List[TokenNode] = NumberValueNode(v) :: Nil
+  def value(v: java.math.BigInteger): List[TokenNode] = NumberValueNode(v) :: Nil
   def value(v: BigDecimal): List[TokenNode] = NumberValueNode(v) :: Nil
+  def value(v: java.math.BigDecimal): List[TokenNode] = NumberValueNode(v) :: Nil
 
   private def anyToTokens(any: Any): List[TokenNode] = any match {
     case v: TokenNode => v :: Nil
@@ -127,5 +131,9 @@ object TokenNode {
 
       builder.result()
     }
+  }
+
+  implicit class TokenListOps(val tokens: Seq[TokenNode]) extends AnyVal {
+    def tokensAs[A: JsonReader]: A = QueueIterator(tokens).readJson[A].fold(throw _, identity)
   }
 }

@@ -1,8 +1,10 @@
+lazy val scalaTestVersion = "3.0.5"
+
 lazy val commonSettings = Seq(
-  version := "0.6.3.2",
+  version := "0.7.0-SNAPSHOT",
   organization := "com.tethys-json",
   scalaVersion := "2.11.12",
-  crossScalaVersions := Seq("2.11.12", "2.12.6"),
+  crossScalaVersions := Seq("2.11.12", "2.12.6", "2.13.0-M2"),
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.0.1" % "test"
   ),
@@ -37,12 +39,15 @@ lazy val commonSettings = Seq(
 lazy val tethys = project.in(file("."))
   .settings(commonSettings)
   .dependsOn(core, `macro-derivation`, `jackson-backend`)
-  .aggregate(core, `macro-derivation`, `jackson-backend`)
+  .aggregate(core, `macro-derivation`, `jackson-backend`, json4s)
 
 lazy val core = project.in(file("./modules/core"))
   .settings(commonSettings)
   .settings(
-    name := "tethys-core"
+    name := "tethys-core",
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
+    )
   )
 
 lazy val `macro-derivation` = project.in(file("./modules/macro-derivation"))
@@ -50,7 +55,9 @@ lazy val `macro-derivation` = project.in(file("./modules/macro-derivation"))
   .settings(
     name := "tethys-derivation",
     libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided"
+      "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided",
+
+      "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
     )
   ).dependsOn(core)
 
@@ -59,13 +66,28 @@ lazy val `jackson-backend` = project.in(file("./modules/jackson-backend"))
   .settings(
     name := "tethys-jackson",
     libraryDependencies ++= Seq(
-      "com.fasterxml.jackson.core" % "jackson-core" % "2.9.1"
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.9.1",
+
+      "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
+    )
+  ).dependsOn(core)
+
+lazy val json4s = project.in(file("./modules/json4s"))
+  .settings(commonSettings)
+  .settings(
+    name := "tethys-json4s",
+    libraryDependencies ++= Seq(
+      "org.json4s" %% "json4s-core" % "3.5.3",
+
+      "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
     )
   ).dependsOn(core)
 
 lazy val benchmarks = project.in(file("./modules/benchmarks"))
   .settings(commonSettings)
   .settings(
+    scalaVersion := "2.11.11",
+    crossScalaVersions := Seq("2.11.11"),
     publishTo := None,
     libraryDependencies ++= Seq(
       "io.spray" %% "spray-json" % "1.3.3",
