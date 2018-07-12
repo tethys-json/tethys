@@ -1,6 +1,7 @@
 package tethys.derivation
 
 import org.scalatest.{FlatSpec, Matchers}
+import tethys.commons.TokenNode
 import tethys.commons.TokenNode._
 import tethys.derivation.ADTWithType._
 import tethys.derivation.auto._
@@ -92,5 +93,19 @@ class AutoWriterDerivationTest extends FlatSpec with Matchers {
 
   it should "not auto derive writer for sealed cyclic trait with type parameter if one of subclasses has additional type" in {
     "tethys.JsonWriter[ADTWithWrongType[Int]]" shouldNot compile
+  }
+
+  it should "auto derive writer for simple sealed trait with hierarchy" in {
+    implicit val simpleClassWriter: JsonObjectWriter[SimpleSealedType.SimpleClass] = JsonWriter.obj[SimpleSealedType.SimpleClass].addField("b")(_.b)
+    implicit val justObjectWriter: JsonObjectWriter[SimpleSealedType.JustObject.type] = JsonWriter.obj.addField("type")(_ => "JustObject")
+
+    implicit val sealedWriter: JsonWriter[SimpleSealedType] = jsonWriter[SimpleSealedType]
+
+    def write(simpleSealedType: SimpleSealedType): List[TokenNode] = simpleSealedType.asTokenList
+
+    write(SimpleSealedType.CaseClass(1)) shouldBe obj("a" -> 1)
+    write(new SimpleSealedType.SimpleClass(2)) shouldBe obj("b" -> 2)
+    write(SimpleSealedType.JustObject) shouldBe obj("type" -> "JustObject")
+    write(SimpleSealedType.SubChild(3)) shouldBe obj("c" -> 3)
   }
 }

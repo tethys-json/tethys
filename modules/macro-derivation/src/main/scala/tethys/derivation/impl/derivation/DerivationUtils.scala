@@ -41,9 +41,8 @@ trait DerivationUtils extends LoggingUtils {
     classSym.knownDirectSubclasses.toList.flatMap { child0 =>
       val child = child0.asClass
       child.typeSignature // Workaround for <https://issues.scala-lang.org/browse/SI-7755>
-      if (child.isCaseClass) List(child)
-      else if (child.isSealed) collectSubclasses(child)
-      else fail(s"$child is not case class or a sealed trait")
+      if (child.isSealed && (child.isAbstract || child.isTrait)) collectSubclasses(child)
+      else List(child)
     }
   }
 

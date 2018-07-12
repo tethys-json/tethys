@@ -1,6 +1,7 @@
 package tethys.derivation
 
 import org.scalatest.{FlatSpec, Matchers}
+import tethys.commons.TokenNode
 import tethys.{JsonObjectWriter, JsonWriter}
 import tethys.derivation.builder.WriterBuilder
 import tethys.writers.tokens.SimpleTokenWriter._
@@ -155,5 +156,21 @@ class SemiautoWriterDerivationTest extends FlatSpec with Matchers {
       implicit def recursionTraitWithTypeAWriter[A: JsonWriter]: JsonWriter[ADTWithWrongType.ADTWithWrongTypeA[A]] = jsonWriter[ADTWithWrongType.ADTWithWrongTypeA[A]]
       implicit def recursionTraitWithTypeAWriter[A: JsonWriter, B: JsonWriter]: JsonWriter[ADTWithWrongType.ADTWithWrongTypeB[A]] = jsonWriter[ADTWithWrongType.ADTWithWrongTypeB[A]]
     """ shouldNot compile
+  }
+
+  it should "derive writer for simple sealed trait with hierarchy" in {
+    implicit val caseClassWriter: JsonObjectWriter[SimpleSealedType.CaseClass] = jsonWriter[SimpleSealedType.CaseClass]
+    implicit val simpleClassWriter: JsonObjectWriter[SimpleSealedType.SimpleClass] = JsonWriter.obj[SimpleSealedType.SimpleClass].addField("b")(_.b)
+    implicit val justObjectWriter: JsonObjectWriter[SimpleSealedType.JustObject.type] = JsonWriter.obj.addField("type")(_ => "JustObject")
+    implicit val subChildWriter: JsonObjectWriter[SimpleSealedType.SubChild] = jsonWriter[SimpleSealedType.SubChild]
+
+    implicit val sealedWriter: JsonWriter[SimpleSealedType] = jsonWriter[SimpleSealedType]
+
+    def write(simpleSealedType: SimpleSealedType): List[TokenNode] = simpleSealedType.asTokenList
+
+    write(SimpleSealedType.CaseClass(1)) shouldBe obj("a" -> 1)
+    write(new SimpleSealedType.SimpleClass(2)) shouldBe obj("b" -> 2)
+    write(SimpleSealedType.JustObject) shouldBe obj("type" -> "JustObject")
+    write(SimpleSealedType.SubChild(3)) shouldBe obj("c" -> 3)
   }
 }
