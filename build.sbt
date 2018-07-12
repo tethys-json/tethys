@@ -1,5 +1,5 @@
 lazy val commonSettings = Seq(
-  version := "0.6.3",
+  version := "0.6.3.1-SNAPSHOT",
   organization := "com.tethys-json",
   scalaVersion := "2.11.8",
   crossScalaVersions := Seq("2.11.8", "2.12.2"),
@@ -48,7 +48,7 @@ lazy val core = project.in(file("./modules/core"))
 lazy val `macro-derivation` = project.in(file("./modules/macro-derivation"))
   .settings(commonSettings)
   .settings(
-    name := "tethys-macro-derivation",
+    name := "tethys-derivation",
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided"
     )
@@ -57,7 +57,7 @@ lazy val `macro-derivation` = project.in(file("./modules/macro-derivation"))
 lazy val `jackson-backend` = project.in(file("./modules/jackson-backend"))
   .settings(commonSettings)
   .settings(
-    name := "tethys-jackson-backend",
+    name := "tethys-jackson",
     libraryDependencies ++= Seq(
       "com.fasterxml.jackson.core" % "jackson-core" % "2.9.1"
     )
