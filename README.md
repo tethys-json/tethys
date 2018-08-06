@@ -10,10 +10,10 @@ tethys is a JSON parsing/writing library for Scala
 Add dependencies to your `build.sbt`  
 
 ```scala
-val tethysVersion = "0.6.3.1"
+val tethysVersion = "0.6.3.2"
 libraryDependecies ++= Seq(
   "com.tethys-json" %% "tethys-core" % tethysVersion,
-  "com.tethys-json" %% "tethys-jackson" % tethysVersion,
+  "com.tethys-json" %% "tethys-jackson" % tethysVchrersion,
   "com.tethys-json" %% "tethys-derivation" % tethysVersion
 )
 ```
