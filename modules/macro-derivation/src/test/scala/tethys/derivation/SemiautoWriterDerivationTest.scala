@@ -17,6 +17,7 @@ class SemiautoWriterDerivationTest extends FlatSpec with Matchers {
 
   behavior of "semiauto derivation"
   it should "generate proper writer from WriterDescription" in {
+    def freeVariable: String = "e"
     implicit val dWriter: JsonWriter[D] = jsonWriter[D]
 
     implicit val testWriter: JsonWriter[JsonTreeTestData] = jsonWriter {
@@ -26,7 +27,7 @@ class SemiautoWriterDerivationTest extends FlatSpec with Matchers {
           .update(_.a).fromRoot(d => d.a.toDouble + d.c.d.a)
           .update(_.c)(_.d)
           .add("d")(_.a * 2)
-          .add("e")(_.b)
+          .add(freeVariable)(_.b)
       }
     }
     JsonTreeTestData(5, b = false, C(D(1))).asTokenList shouldBe obj(
@@ -159,18 +160,18 @@ class SemiautoWriterDerivationTest extends FlatSpec with Matchers {
   }
 
   it should "derive writer for simple sealed trait with hierarchy" in {
-    implicit val caseClassWriter: JsonObjectWriter[SimpleSealedType.CaseClass] = jsonWriter[SimpleSealedType.CaseClass]
-    implicit val simpleClassWriter: JsonObjectWriter[SimpleSealedType.SimpleClass] = JsonWriter.obj[SimpleSealedType.SimpleClass].addField("b")(_.b)
-    implicit val justObjectWriter: JsonObjectWriter[SimpleSealedType.JustObject.type] = JsonWriter.obj.addField("type")(_ => "JustObject")
-    implicit val subChildWriter: JsonObjectWriter[SimpleSealedType.SubChild] = jsonWriter[SimpleSealedType.SubChild]
+    implicit val caseClassWriter: JsonObjectWriter[CaseClass] = jsonWriter[CaseClass]
+    implicit val simpleClassWriter: JsonObjectWriter[SimpleClass] = JsonWriter.obj[SimpleClass].addField("b")(_.b)
+    implicit val justObjectWriter: JsonObjectWriter[JustObject.type] = JsonWriter.obj.addField("type")(_ => "JustObject")
+    implicit val subChildWriter: JsonObjectWriter[SubChild] = jsonWriter[SubChild]
 
     implicit val sealedWriter: JsonWriter[SimpleSealedType] = jsonWriter[SimpleSealedType]
 
     def write(simpleSealedType: SimpleSealedType): List[TokenNode] = simpleSealedType.asTokenList
 
-    write(SimpleSealedType.CaseClass(1)) shouldBe obj("a" -> 1)
-    write(new SimpleSealedType.SimpleClass(2)) shouldBe obj("b" -> 2)
-    write(SimpleSealedType.JustObject) shouldBe obj("type" -> "JustObject")
-    write(SimpleSealedType.SubChild(3)) shouldBe obj("c" -> 3)
+    write(CaseClass(1)) shouldBe obj("a" -> 1)
+    write(new SimpleClass(2)) shouldBe obj("b" -> 2)
+    write(JustObject) shouldBe obj("type" -> "JustObject")
+    write(SubChild(3)) shouldBe obj("c" -> 3)
   }
 }

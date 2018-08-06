@@ -35,6 +35,23 @@ class WriterRenamingSyntaxTest extends FlatSpec with Matchers {
     )
   }
 
+  it should "rename field on update with free variable" in {
+    def freeVariableRenaming(name: String): JsonWriter[D] = jsonWriter[D] {
+      describe {
+        WriterBuilder[D]
+          .update(_.a).withRename(name)(_.toString)
+      }
+    }
+
+    D(a = 1).asTokenList(freeVariableRenaming("b")) shouldBe obj(
+      "b" -> "1"
+    )
+
+    D(a = 1).asTokenList(freeVariableRenaming("c")) shouldBe obj(
+      "c" -> "1"
+    )
+  }
+
   it should "rename field on update from root" in {
     implicit val writer: JsonWriter[D] = jsonWriter[D] {
       describe {

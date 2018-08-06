@@ -1,6 +1,6 @@
 package tethys.derivation.impl.derivation
 
-import tethys.{JsonObjectWriter, JsonWriter}
+import tethys.JsonObjectWriter
 import tethys.derivation.impl.builder.WriteBuilderUtils
 import tethys.derivation.impl.{BaseMacroDefinitions, CaseClassUtils}
 import tethys.writers.tokens.TokenWriter
@@ -99,7 +99,7 @@ trait WriterDerivation
     def simpleGetter(name: String) = q"$valueTerm.${TermName(name)}"
 
     val classDef = caseClassDefinition(description.tpe)
-    val fieldsData: Seq[(String, Either[Type, Tree] , Tree)] = classDef.fields.map(f => (f.name, Left(f.tpe), simpleGetter(f.name)))
+    val fieldsData: Seq[(String, Expr[String], Either[Type, Tree] , Tree)] = classDef.fields.map(f => (f.name, c.Expr(q"${f.name}"), Left(f.tpe), simpleGetter(f.name)))
 
     val allFields = orderOperations(description.operations).foldLeft(fieldsData) {
       case (data, o: BuilderMacroOperation.Remove) =>
@@ -107,48 +107,43 @@ trait WriterDerivation
 
       case (data, o: BuilderMacroOperation.Add) =>
         val fun = context.addFunction(classDef.tpe, o.to, o.fun)
-        val newData = (o.field, Left(o.to), q"$fun($valueTerm)")
-        if(!data.exists(_._1 == o.field)) data :+ newData
-        else data.map {
-          case (name, _, _) if name == o.field => newData
-          case d => d
-        }
+        data :+ (("__---nope---__", c.Expr(q"${o.field}"), Left(o.to), q"$fun($valueTerm)"))
 
       case (data, o: BuilderMacroOperation.Update) =>
         data.map {
-          case (name, _, _) if name == o.field =>
+          case (field, _, _, _) if field == o.field =>
             val fun = context.addFunction(o.from, o.to, o.fun)
-            (o.name, Left(o.to), q"$fun(${simpleGetter(name)})")
+            (o.field, o.name, Left(o.to), q"$fun(${simpleGetter(field)})")
           case d => d
         }
 
       case (data, o: BuilderMacroOperation.UpdateFromRoot) =>
         data.map {
-          case (name, _, _) if name == o.field =>
+          case (field, _, _, _) if field == o.field =>
             val fun = context.addFunction(description.tpe, o.to, o.fun)
-            (o.name, Left(o.to), q"$fun($valueTerm)")
+            (o.field, o.name, Left(o.to), q"$fun($valueTerm)")
           case d => d
         }
 
       case (data, o: BuilderMacroOperation.UpdatePartial) =>
         data.map {
-          case (name, _, _) if name == o.field =>
-            (o.name, Right(o.fun), q"${simpleGetter(name)}")
+          case (field, _, _, _) if field == o.field =>
+            (o.field, o.name, Right(o.fun), q"${simpleGetter(field)}")
           case d => d
         }
 
       case (data, o: BuilderMacroOperation.UpdatePartialFromRoot) =>
         data.map {
-          case (name, _, _) if name == o.field =>
-            (o.name, Right(o.fun), q"$valueTerm")
+          case (field, _, _, _) if field == o.field =>
+            (o.field, o.name, Right(o.fun), q"$valueTerm")
           case d => d
         }
 
     }
 
     allFields.map {
-      case (name, Left(tpe), expr) => SimpleJsonField(name, context.provideWriter(tpe), expr)
-      case (name, Right(fun), expr) =>
+      case (_, name, Left(tpe), expr) => SimpleJsonField(name, context.provideWriter(tpe), expr)
+      case (_, name, Right(fun), expr) =>
         val cases = fun match {
           case q"{ case ..$cases }" =>
             cases.map {
@@ -199,7 +194,7 @@ trait WriterDerivation
     @tailrec
     private def unwrapType(tpe: Type): Type = tpe match {
       case ConstantType(const) => unwrapType(const.tpe)
-      case _ => dealiasType(tpe)
+      case _ => tpe
     }
 
     @tailrec
@@ -210,17 +205,17 @@ trait WriterDerivation
   }
 
   sealed trait JsonField
-  case class SimpleJsonField(name: String, writer: TermName, expression: Tree) extends JsonField
-  case class PartialJsonField(name: String, cases: Seq[(TermName, CaseDef)], expression: Tree) extends JsonField
+  case class SimpleJsonField(resultName: Expr[String], writer: TermName, expression: Tree) extends JsonField
+  case class PartialJsonField(resultName: Expr[String], cases: Seq[(TermName, CaseDef)], expression: Tree) extends JsonField
 
   implicit val jsonFieldLiftable: Liftable[JsonField] = Liftable {
-    case SimpleJsonField(name, writer, expression) =>
-      q"$writer.write($name, $expression, $tokenWriterTerm)"
+    case SimpleJsonField(resultName, writer, expression) =>
+      q"$writer.write(${resultName.tree}, $expression, $tokenWriterTerm)"
 
-    case PartialJsonField(name, cases, expression) =>
+    case PartialJsonField(resultName, cases, expression) =>
       val resultCases = cases.map {
         case (writer, CaseDef(d, g, body)) =>
-          CaseDef(d, g, q"$writer.write($name, $body, $tokenWriterTerm)")
+          CaseDef(d, g, q"$writer.write(${resultName.tree}, $body, $tokenWriterTerm)")
       }
       q"$expression match { case ..$resultCases }"
   }

@@ -96,16 +96,16 @@ class AutoWriterDerivationTest extends FlatSpec with Matchers {
   }
 
   it should "auto derive writer for simple sealed trait with hierarchy" in {
-    implicit val simpleClassWriter: JsonObjectWriter[SimpleSealedType.SimpleClass] = JsonWriter.obj[SimpleSealedType.SimpleClass].addField("b")(_.b)
-    implicit val justObjectWriter: JsonObjectWriter[SimpleSealedType.JustObject.type] = JsonWriter.obj.addField("type")(_ => "JustObject")
+    implicit val simpleClassWriter: JsonObjectWriter[SimpleClass] = JsonWriter.obj[SimpleClass].addField("b")(_.b)
+    implicit val justObjectWriter: JsonObjectWriter[JustObject.type] = JsonWriter.obj.addField("type")(_ => "JustObject")
 
     implicit val sealedWriter: JsonWriter[SimpleSealedType] = jsonWriter[SimpleSealedType]
 
     def write(simpleSealedType: SimpleSealedType): List[TokenNode] = simpleSealedType.asTokenList
 
-    write(SimpleSealedType.CaseClass(1)) shouldBe obj("a" -> 1)
-    write(new SimpleSealedType.SimpleClass(2)) shouldBe obj("b" -> 2)
-    write(SimpleSealedType.JustObject) shouldBe obj("type" -> "JustObject")
-    write(SimpleSealedType.SubChild(3)) shouldBe obj("c" -> 3)
+    write(CaseClass(1)) shouldBe obj("a" -> 1)
+    write(new SimpleClass(2)) shouldBe obj("b" -> 2)
+    write(JustObject) shouldBe obj("type" -> "JustObject")
+    write(SubChild(3)) shouldBe obj("c" -> 3)
   }
 }
