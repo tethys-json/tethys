@@ -10,7 +10,12 @@ object JsonReaderBuilder {
     new JsonReaderBuilder1[B](name, jsonReader)
   }
 
-  final class JsonReaderBuilder1[A1] private[JsonReaderBuilder](name: String, jsonReader: JsonReader[A1]) {
+  trait SingleJsonValueReader[A1] {
+    def fields(): Map[String, JsonReader[_]]
+    def value(extracted: Map[String, Any]): A1
+  }
+
+  final class JsonReaderBuilder1[A1] private[JsonReaderBuilder](name: String, jsonReader: JsonReader[A1]) extends SingleJsonValueReader[A1] {
     def fields(): Map[String, JsonReader[_]] = Map(name -> jsonReader)
 
     def value(extracted: Map[String, Any]): A1 = extracted(name).asInstanceOf[A1]
@@ -29,7 +34,7 @@ object JsonReaderBuilder {
     }
   }
 
-  final class JsonReaderBuilder2[A1, A2] private[JsonReaderBuilder](prev: JsonReaderBuilder1[A1], name: String, jsonReader: JsonReader[A2]) {
+  final class JsonReaderBuilder2[A1, A2] private[JsonReaderBuilder](prev: SingleJsonValueReader[A1], name: String, jsonReader: JsonReader[A2]) {
 
     def fields(): Map[String, JsonReader[_]] = prev.fields() + (name -> jsonReader)
 
@@ -468,11 +473,25 @@ object JsonReaderBuilder {
   }
 
   final class JsonReaderBuilder22[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22] private[JsonReaderBuilder](prev: JsonReaderBuilder21[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21], name: String, jsonReader: JsonReader[A22]) {
+    self =>
 
     def fields(): Map[String, JsonReader[_]] = prev.fields() + (name -> jsonReader)
 
     def value(extracted: Map[String, Any]): (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22) = prev.value(extracted) match {
       case (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21) => (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, extracted(name).asInstanceOf[A22])
+    }
+
+    def addField[B](name: String)(implicit jsonReader: JsonReader[B]): JsonReaderBuilder2[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22), B] = {
+      val singleJsonValueReader: SingleJsonValueReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22)] = {
+        new SingleJsonValueReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22)] {
+          override def fields(): Map[String, JsonReader[_]] = self.fields()
+
+          override def value(extracted: Map[String, Any]): (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22) = {
+            self.value(extracted)
+          }
+        }
+      }
+      new JsonReaderBuilder2[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22), B](singleJsonValueReader, name, jsonReader)
     }
 
     def buildReader[Res: ClassTag](fun: (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22) => Res): JsonReader[Res] = {

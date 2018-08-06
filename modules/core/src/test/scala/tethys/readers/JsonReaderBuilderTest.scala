@@ -80,6 +80,64 @@ class JsonReaderBuilderTest extends FlatSpec with Matchers {
       opt = None
     )
   }
+
+  it should "allow to build reader with more than 22 fields" in {
+    implicit val reader: JsonReader[((Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int), Int, Int)] = {
+      JsonReader.builder
+        .addField[Int]("f1")
+        .addField[Int]("f2")
+        .addField[Int]("f3")
+        .addField[Int]("f4")
+        .addField[Int]("f5")
+        .addField[Int]("f6")
+        .addField[Int]("f7")
+        .addField[Int]("f8")
+        .addField[Int]("f9")
+        .addField[Int]("f10")
+        .addField[Int]("f11")
+        .addField[Int]("f12")
+        .addField[Int]("f13")
+        .addField[Int]("f14")
+        .addField[Int]("f15")
+        .addField[Int]("f16")
+        .addField[Int]("f17")
+        .addField[Int]("f18")
+        .addField[Int]("f19")
+        .addField[Int]("f20")
+        .addField[Int]("f21")
+        .addField[Int]("f22")
+        .addField[Int]("f23")
+        .addField[Int]("f24")
+        .buildReader((tuple, f23, f24) => (tuple, f23, f24))
+    }
+
+    read(obj(
+      "f1" -> 1,
+      "f2" -> 2,
+      "f3" -> 3,
+      "f4" -> 4,
+      "f5" -> 5,
+      "f6" -> 6,
+      "f7" -> 7,
+      "f8" -> 8,
+      "f9" -> 9,
+      "f10" -> 10,
+      "f11" -> 11,
+      "f12" -> 12,
+      "f13" -> 13,
+      "f14" -> 14,
+      "f15" -> 15,
+      "f16" -> 16,
+      "f17" -> 17,
+      "f18" -> 18,
+      "f19" -> 19,
+      "f20" -> 20,
+      "f21" -> 21,
+      "f22" -> 22,
+      "f23" -> 23,
+      "f24" -> 24
+    ))(reader) shouldBe ((1 ,2 ,3 ,4 ,5 ,6 ,7 ,8 ,9 ,10 ,11 ,12 ,13 ,14 ,15 ,16 ,17 ,18 ,19 ,20 ,21 ,22), 23, 24)
+  }
 }
 
 object JsonReaderBuilderTest {
