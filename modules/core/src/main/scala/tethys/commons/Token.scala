@@ -1,6 +1,6 @@
 package tethys.commons
 
-trait Token {
+sealed trait Token {
   def isStringValue: Boolean = false
 
   def isNumberValue: Boolean = false

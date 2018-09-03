@@ -69,6 +69,11 @@ class JacksonTokenWriter(jsonGenerator: JsonGenerator) extends TokenWriter {
     this
   }
 
+  override def writeRawJson(json: String): JacksonTokenWriter.this.type = {
+    jsonGenerator.writeRawValue(json)
+    this
+  }
+
   override def writeBoolean(v: Boolean): JacksonTokenWriter.this.type = {
     jsonGenerator.writeBoolean(v)
     this
