@@ -7,11 +7,11 @@ import tethys.readers.{FieldName, ReaderError}
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
 
-class SingleValueObjectReader[A: ClassTag](name: String, reader: JsonReader[A]) extends JsonReader[A] {
+class SingleValueObjectReader[A](name: String, reader: JsonReader[A], strict: Boolean) extends JsonReader[A] {
 
 
   override def read(it: TokenIterator)(implicit fieldName: FieldName): A = {
-    if(!it.currentToken().isObjectStart) ReaderError.wrongType[A]
+    if(!it.currentToken().isObjectStart) ReaderError.wrongJson(s"Expected object start, but '${it.currentToken()}' token found")
     else readField(it)
   }
 
@@ -20,7 +20,8 @@ class SingleValueObjectReader[A: ClassTag](name: String, reader: JsonReader[A]) 
     it.currentToken() match {
       case token if token.isObjectEnd =>
         it.nextToken()
-        reader.defaultValue.getOrElse(ReaderError.wrongJson(s"'$name' field is missing"))
+        if(strict) fieldIsMissing
+        else reader.defaultValue.getOrElse(fieldIsMissing)
       case token if token.isFieldName =>
         val currentName = it.fieldName()
         it.nextToken()
@@ -34,6 +35,10 @@ class SingleValueObjectReader[A: ClassTag](name: String, reader: JsonReader[A]) 
 
       case token => ReaderError.wrongJson(s"Expect end of object or field name but '$token' found")
     }
+  }
+
+  private def fieldIsMissing()(implicit fieldName: FieldName): Nothing = {
+    ReaderError.wrongJson(s"'$name' field is missing")
   }
 
   @tailrec

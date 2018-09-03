@@ -1,5 +1,6 @@
 package tethys.readers.instances
 
+import tethys.readers.instances.IterableReaders.IterableForApply
 import tethys.{JsonReader, specializations}
 import tethys.readers.{FieldName, ReaderError}
 import tethys.readers.tokens.TokenIterator
@@ -63,6 +64,8 @@ private[tethys] trait IterableReaders extends LowPriorityIterableReaders {
 
 private[tethys] trait LowPriorityIterableReaders extends LowPriorityJsonReaders {
 
+  def iterableReaderFor[C[X] <: Traversable[X]]: IterableForApply[C] = new IterableForApply[C](())
+
   implicit def iterableReader[A, C[X] <: Traversable[X]](implicit
                                                          jsonReader: JsonReader[A],
                                                          cbf: CanBuildFrom[Nothing, A, C[A]],
@@ -97,4 +100,15 @@ private[tethys] trait LowPriorityIterableReaders extends LowPriorityJsonReaders 
     }
   }
 
+}
+
+object IterableReaders {
+  class IterableForApply[C[X] <: Traversable[X]](val u: Unit) extends AnyVal {
+    def apply[A](jsonReader: JsonReader[A])
+                (implicit
+                 cbf: CanBuildFrom[Nothing, A, C[A]],
+                 classTag: ClassTag[C[A]]): JsonReader[C[A]] = {
+      JsonReader.iterableReader[A, C](jsonReader, cbf, classTag)
+    }
+  }
 }
