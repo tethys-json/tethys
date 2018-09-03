@@ -48,7 +48,7 @@ object JsonReaderBuilder {
       new SimpleJsonReader[Res](fields())(m => fun.tupled(value(m)))
     }
 
-    def selectReader[Res: ClassTag](fun: PartialFunction[(A1, A2), JsonReader[_ <: Res]]): JsonReader[Res] = {
+    def selectReader[Res: ClassTag](fun: ((A1, A2)) => JsonReader[_ <: Res]): JsonReader[Res] = {
       val simpleJsonReader = new SimpleJsonReader[(A1, A2)](fields())(m => value(m))
       new SelectingJsonReader[(A1, A2), Res](simpleJsonReader)(fun)
     }
@@ -70,7 +70,7 @@ object JsonReaderBuilder {
       new SimpleJsonReader[Res](fields())(m => fun.tupled(value(m)))
     }
 
-    def selectReader[Res: ClassTag](fun: PartialFunction[(A1, A2, A3), JsonReader[_ <: Res]]): JsonReader[Res] = {
+    def selectReader[Res: ClassTag](fun: ((A1, A2, A3)) => JsonReader[_ <: Res]): JsonReader[Res] = {
       val simpleJsonReader = new SimpleJsonReader[(A1, A2, A3)](fields())(m => value(m))
       new SelectingJsonReader[(A1, A2, A3), Res](simpleJsonReader)(fun)
     }
@@ -92,7 +92,7 @@ object JsonReaderBuilder {
       new SimpleJsonReader[Res](fields())(m => fun.tupled(value(m)))
     }
 
-    def selectReader[Res: ClassTag](fun: PartialFunction[(A1, A2, A3, A4), JsonReader[_ <: Res]]): JsonReader[Res] = {
+    def selectReader[Res: ClassTag](fun: ((A1, A2, A3, A4)) => JsonReader[_ <: Res]): JsonReader[Res] = {
       val simpleJsonReader = new SimpleJsonReader[(A1, A2, A3, A4)](fields())(m => value(m))
       new SelectingJsonReader[(A1, A2, A3, A4), Res](simpleJsonReader)(fun)
     }
@@ -114,7 +114,7 @@ object JsonReaderBuilder {
       new SimpleJsonReader[Res](fields())(m => fun.tupled(value(m)))
     }
 
-    def selectReader[Res: ClassTag](fun: PartialFunction[(A1, A2, A3, A4, A5), JsonReader[_ <: Res]]): JsonReader[Res] = {
+    def selectReader[Res: ClassTag](fun: ((A1, A2, A3, A4, A5)) => JsonReader[_ <: Res]): JsonReader[Res] = {
       val simpleJsonReader = new SimpleJsonReader[(A1, A2, A3, A4, A5)](fields())(m => value(m))
       new SelectingJsonReader[(A1, A2, A3, A4, A5), Res](simpleJsonReader)(fun)
     }
@@ -136,7 +136,7 @@ object JsonReaderBuilder {
       new SimpleJsonReader[Res](fields())(m => fun.tupled(value(m)))
     }
 
-    def selectReader[Res: ClassTag](fun: PartialFunction[(A1, A2, A3, A4, A5, A6), JsonReader[_ <: Res]]): JsonReader[Res] = {
+    def selectReader[Res: ClassTag](fun: ((A1, A2, A3, A4, A5, A6)) => JsonReader[_ <: Res]): JsonReader[Res] = {
       val simpleJsonReader = new SimpleJsonReader[(A1, A2, A3, A4, A5, A6)](fields())(m => value(m))
       new SelectingJsonReader[(A1, A2, A3, A4, A5, A6), Res](simpleJsonReader)(fun)
     }
@@ -158,7 +158,7 @@ object JsonReaderBuilder {
       new SimpleJsonReader[Res](fields())(m => fun.tupled(value(m)))
     }
 
-    def selectReader[Res: ClassTag](fun: PartialFunction[(A1, A2, A3, A4, A5, A6, A7), JsonReader[_ <: Res]]): JsonReader[Res] = {
+    def selectReader[Res: ClassTag](fun: ((A1, A2, A3, A4, A5, A6, A7)) => JsonReader[_ <: Res]): JsonReader[Res] = {
       val simpleJsonReader = new SimpleJsonReader[(A1, A2, A3, A4, A5, A6, A7)](fields())(m => value(m))
       new SelectingJsonReader[(A1, A2, A3, A4, A5, A6, A7), Res](simpleJsonReader)(fun)
     }
@@ -180,7 +180,7 @@ object JsonReaderBuilder {
       new SimpleJsonReader[Res](fields())(m => fun.tupled(value(m)))
     }
 
-    def selectReader[Res: ClassTag](fun: PartialFunction[(A1, A2, A3, A4, A5, A6, A7, A8), JsonReader[_ <: Res]]): JsonReader[Res] = {
+    def selectReader[Res: ClassTag](fun: ((A1, A2, A3, A4, A5, A6, A7, A8)) => JsonReader[_ <: Res]): JsonReader[Res] = {
       val simpleJsonReader = new SimpleJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8)](fields())(m => value(m))
       new SelectingJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8), Res](simpleJsonReader)(fun)
     }
@@ -202,7 +202,7 @@ object JsonReaderBuilder {
       new SimpleJsonReader[Res](fields())(m => fun.tupled(value(m)))
     }
 
-    def selectReader[Res: ClassTag](fun: PartialFunction[(A1, A2, A3, A4, A5, A6, A7, A8, A9), JsonReader[_ <: Res]]): JsonReader[Res] = {
+    def selectReader[Res: ClassTag](fun: ((A1, A2, A3, A4, A5, A6, A7, A8, A9)) => JsonReader[_ <: Res]): JsonReader[Res] = {
       val simpleJsonReader = new SimpleJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9)](fields())(m => value(m))
       new SelectingJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9), Res](simpleJsonReader)(fun)
     }
@@ -224,7 +224,7 @@ object JsonReaderBuilder {
       new SimpleJsonReader[Res](fields())(m => fun.tupled(value(m)))
     }
 
-    def selectReader[Res: ClassTag](fun: PartialFunction[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10), JsonReader[_ <: Res]]): JsonReader[Res] = {
+    def selectReader[Res: ClassTag](fun: ((A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)) => JsonReader[_ <: Res]): JsonReader[Res] = {
       val simpleJsonReader = new SimpleJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)](fields())(m => value(m))
       new SelectingJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10), Res](simpleJsonReader)(fun)
     }
@@ -246,7 +246,7 @@ object JsonReaderBuilder {
       new SimpleJsonReader[Res](fields())(m => fun.tupled(value(m)))
     }
 
-    def selectReader[Res: ClassTag](fun: PartialFunction[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11), JsonReader[_ <: Res]]): JsonReader[Res] = {
+    def selectReader[Res: ClassTag](fun: ((A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)) => JsonReader[_ <: Res]): JsonReader[Res] = {
       val simpleJsonReader = new SimpleJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)](fields())(m => value(m))
       new SelectingJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11), Res](simpleJsonReader)(fun)
     }
@@ -268,7 +268,7 @@ object JsonReaderBuilder {
       new SimpleJsonReader[Res](fields())(m => fun.tupled(value(m)))
     }
 
-    def selectReader[Res: ClassTag](fun: PartialFunction[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12), JsonReader[_ <: Res]]): JsonReader[Res] = {
+    def selectReader[Res: ClassTag](fun: ((A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)) => JsonReader[_ <: Res]): JsonReader[Res] = {
       val simpleJsonReader = new SimpleJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)](fields())(m => value(m))
       new SelectingJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12), Res](simpleJsonReader)(fun)
     }
@@ -290,7 +290,7 @@ object JsonReaderBuilder {
       new SimpleJsonReader[Res](fields())(m => fun.tupled(value(m)))
     }
 
-    def selectReader[Res: ClassTag](fun: PartialFunction[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13), JsonReader[_ <: Res]]): JsonReader[Res] = {
+    def selectReader[Res: ClassTag](fun: ((A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13)) => JsonReader[_ <: Res]): JsonReader[Res] = {
       val simpleJsonReader = new SimpleJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13)](fields())(m => value(m))
       new SelectingJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13), Res](simpleJsonReader)(fun)
     }
@@ -312,7 +312,7 @@ object JsonReaderBuilder {
       new SimpleJsonReader[Res](fields())(m => fun.tupled(value(m)))
     }
 
-    def selectReader[Res: ClassTag](fun: PartialFunction[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14), JsonReader[_ <: Res]]): JsonReader[Res] = {
+    def selectReader[Res: ClassTag](fun: ((A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14)) => JsonReader[_ <: Res]): JsonReader[Res] = {
       val simpleJsonReader = new SimpleJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14)](fields())(m => value(m))
       new SelectingJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14), Res](simpleJsonReader)(fun)
     }
@@ -334,7 +334,7 @@ object JsonReaderBuilder {
       new SimpleJsonReader[Res](fields())(m => fun.tupled(value(m)))
     }
 
-    def selectReader[Res: ClassTag](fun: PartialFunction[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15), JsonReader[_ <: Res]]): JsonReader[Res] = {
+    def selectReader[Res: ClassTag](fun: ((A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15)) => JsonReader[_ <: Res]): JsonReader[Res] = {
       val simpleJsonReader = new SimpleJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15)](fields())(m => value(m))
       new SelectingJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15), Res](simpleJsonReader)(fun)
     }
@@ -356,7 +356,7 @@ object JsonReaderBuilder {
       new SimpleJsonReader[Res](fields())(m => fun.tupled(value(m)))
     }
 
-    def selectReader[Res: ClassTag](fun: PartialFunction[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16), JsonReader[_ <: Res]]): JsonReader[Res] = {
+    def selectReader[Res: ClassTag](fun: ((A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16)) => JsonReader[_ <: Res]): JsonReader[Res] = {
       val simpleJsonReader = new SimpleJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16)](fields())(m => value(m))
       new SelectingJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16), Res](simpleJsonReader)(fun)
     }
@@ -378,7 +378,7 @@ object JsonReaderBuilder {
       new SimpleJsonReader[Res](fields())(m => fun.tupled(value(m)))
     }
 
-    def selectReader[Res: ClassTag](fun: PartialFunction[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17), JsonReader[_ <: Res]]): JsonReader[Res] = {
+    def selectReader[Res: ClassTag](fun: ((A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17)) => JsonReader[_ <: Res]): JsonReader[Res] = {
       val simpleJsonReader = new SimpleJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17)](fields())(m => value(m))
       new SelectingJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17), Res](simpleJsonReader)(fun)
     }
@@ -400,7 +400,7 @@ object JsonReaderBuilder {
       new SimpleJsonReader[Res](fields())(m => fun.tupled(value(m)))
     }
 
-    def selectReader[Res: ClassTag](fun: PartialFunction[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18), JsonReader[_ <: Res]]): JsonReader[Res] = {
+    def selectReader[Res: ClassTag](fun: ((A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18)) => JsonReader[_ <: Res]): JsonReader[Res] = {
       val simpleJsonReader = new SimpleJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18)](fields())(m => value(m))
       new SelectingJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18), Res](simpleJsonReader)(fun)
     }
@@ -422,7 +422,7 @@ object JsonReaderBuilder {
       new SimpleJsonReader[Res](fields())(m => fun.tupled(value(m)))
     }
 
-    def selectReader[Res: ClassTag](fun: PartialFunction[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19), JsonReader[_ <: Res]]): JsonReader[Res] = {
+    def selectReader[Res: ClassTag](fun: ((A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19)) => JsonReader[_ <: Res]): JsonReader[Res] = {
       val simpleJsonReader = new SimpleJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19)](fields())(m => value(m))
       new SelectingJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19), Res](simpleJsonReader)(fun)
     }
@@ -444,7 +444,7 @@ object JsonReaderBuilder {
       new SimpleJsonReader[Res](fields())(m => fun.tupled(value(m)))
     }
 
-    def selectReader[Res: ClassTag](fun: PartialFunction[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20), JsonReader[_ <: Res]]): JsonReader[Res] = {
+    def selectReader[Res: ClassTag](fun: ((A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20)) => JsonReader[_ <: Res]): JsonReader[Res] = {
       val simpleJsonReader = new SimpleJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20)](fields())(m => value(m))
       new SelectingJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20), Res](simpleJsonReader)(fun)
     }
@@ -466,7 +466,7 @@ object JsonReaderBuilder {
       new SimpleJsonReader[Res](fields())(m => fun.tupled(value(m)))
     }
 
-    def selectReader[Res: ClassTag](fun: PartialFunction[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21), JsonReader[_ <: Res]]): JsonReader[Res] = {
+    def selectReader[Res: ClassTag](fun: ((A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21)) => JsonReader[_ <: Res]): JsonReader[Res] = {
       val simpleJsonReader = new SimpleJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21)](fields())(m => value(m))
       new SelectingJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21), Res](simpleJsonReader)(fun)
     }
@@ -498,7 +498,7 @@ object JsonReaderBuilder {
       new SimpleJsonReader[Res](fields())(m => fun.tupled(value(m)))
     }
 
-    def selectReader[Res: ClassTag](fun: PartialFunction[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22), JsonReader[_ <: Res]]): JsonReader[Res] = {
+    def selectReader[Res: ClassTag](fun: ((A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22)) => JsonReader[_ <: Res]): JsonReader[Res] = {
       val simpleJsonReader = new SimpleJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22)](fields())(m => value(m))
       new SelectingJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22), Res](simpleJsonReader)(fun)
     }

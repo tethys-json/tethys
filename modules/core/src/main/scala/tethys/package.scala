@@ -17,6 +17,10 @@ package object tethys {
       stringWriter.toString
     }
 
+    def asJsonWith(jsonWriter: JsonWriter[A])(implicit tokenWriterProducer: TokenWriterProducer): String = {
+      asJson(jsonWriter, tokenWriterProducer)
+    }
+
     def writeJson(tokenWriter: TokenWriter)(implicit jsonWriter: JsonWriter[A]): Unit = {
       try jsonWriter.write(a, tokenWriter) finally {
         tokenWriter.flush()
@@ -41,6 +45,10 @@ package object tethys {
   implicit class ReaderReaderOps(val reader: Reader) extends AnyVal {
     def readJson[A](implicit jsonReader: JsonReader[A], producer: TokenIteratorProducer): Either[ReaderError, A] = {
       producer.fromReader(reader).readJson[A]
+    }
+
+    def readJsonWith[A](jsonReader: JsonReader[A])(implicit producer: TokenIteratorProducer): Either[ReaderError, A] = {
+      readJson[A](jsonReader, producer)
     }
 
     def toTokenIterator(implicit producer: TokenIteratorProducer): TokenIterator = {

@@ -70,6 +70,10 @@ class JacksonTokenWriterTest extends FlatSpec with Matchers {
     iterate(_.writeArrayStart().writeArrayEnd()) shouldBe """[]"""
   }
 
+  it should "write raw json" in {
+    iterate(_.writeRawJson("""{"some" : "raw json"}""")) shouldBe """{"some" : "raw json"}"""
+  }
+
   it should "write complex object structure" in {
     iterate {
       _.writeObjectStart()
@@ -78,14 +82,17 @@ class JacksonTokenWriterTest extends FlatSpec with Matchers {
         .writeFieldName("b")
         .writeArrayStart()
         .writeString("s")
+        .writeRawJson("false")
         .writeBoolean(true)
         .writeObjectStart()
         .writeFieldName("a")
         .writeNull()
         .writeObjectEnd()
         .writeArrayEnd()
+        .writeFieldName("c")
+        .writeRawJson("""{"some" : "raw json"}""")
         .writeObjectEnd()
-    } shouldBe """{"a":1,"b":["s",true,{"a":null}]}"""
+    } shouldBe """{"a":1,"b":["s",false,true,{"a":null}],"c":{"some" : "raw json"}}"""
   }
 
 }

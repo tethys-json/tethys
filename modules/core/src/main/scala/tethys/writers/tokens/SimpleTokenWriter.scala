@@ -1,7 +1,10 @@
 package tethys.writers.tokens
 
+import tethys.JsonStreaming
 import tethys.commons.TokenNode
 import tethys.commons.TokenNode._
+import tethys.readers.FieldName
+import tethys.readers.tokens.TokenIteratorProducer
 
 import scala.collection.mutable
 
@@ -38,6 +41,8 @@ class SimpleTokenWriter extends TokenWriter {
 
   override def writeNull(): SimpleTokenWriter.this.type = append(NullValueNode)
 
+  override def writeRawJson(json: String): SimpleTokenWriter.this.type = throw new UnsupportedOperationException("SimpleTokenWriter.writeRawJson")
+
   override def close(): Unit = ()
 
   override def flush(): Unit = ()
@@ -45,6 +50,14 @@ class SimpleTokenWriter extends TokenWriter {
   private def append(node: TokenNode): this.type = {
     tokens += node
     this
+  }
+
+  def withRawJsonSupport(implicit producer: TokenIteratorProducer): TokenWriter = new SimpleTokenWriter {
+    import tethys._
+    override def writeRawJson(json: String): this.type = {
+      JsonStreaming.streamValue(json.toTokenIterator, this)(FieldName())
+      this
+    }
   }
 }
 
