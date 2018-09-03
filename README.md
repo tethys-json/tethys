@@ -10,7 +10,7 @@ tethys is a JSON parsing/writing library for Scala
 Add dependencies to your `build.sbt`  
 
 ```scala
-val tethysVersion = "0.6.3.2"
+val tethysVersion = "0.7.0"
 libraryDependecies ++= Seq(
   "com.tethys-json" %% "tethys-core" % tethysVersion,
   "com.tethys-json" %% "tethys-jackson" % tethysVchrersion,
@@ -22,8 +22,15 @@ or just
 
 ```scala
 libraryDependecies ++= Seq(
-  "com.tethys-json" %% "tethys" % "0.6.3.1"
+  "com.tethys-json" %% "tethys" % "0.7.0"
 )
+```
+
+Also tethys has following integrations:
+#### Json4s
+[see project page](https://github.com/json4s/json4s)
+```scala
+libraryDependencies += "com.tethys-json" %% "tethys-json4s" % tethysVersion
 ```
 
 # core
@@ -224,4 +231,25 @@ case class Bar(seq: Seq[Int])
 
 val foo = """{"bar":{"seq":[1,2,3]}}""".jsonAs[Foo].fold(throw _, identity)
 val json = foo.asJson
+```
+
+# json4s AST support
+
+In some cases, you may need to work with raw AST,
+so tethys can offer you json4s AST support:
+```scala
+import tethys._
+import tethys.jackson._
+import tethys.derivation.semiauto._
+import tethys.json4s._
+
+import org.json4s.JsonAST._
+
+case class Foo(bar: Int, baz: JValue)
+
+val json = """{"bar": 1, "baz": ["some", {"arbitrary": "json"}]"""
+val foo = json.jsonAs[Foo].fold(throw _, identity)
+
+foo.bar // 1
+foo.baz // JArray(List(JString("some), JObject("arbitrary" -> JString("json"))))
 ```

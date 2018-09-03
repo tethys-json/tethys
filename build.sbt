@@ -5,9 +5,6 @@ lazy val commonSettings = Seq(
   organization := "com.tethys-json",
   scalaVersion := "2.11.12",
   crossScalaVersions := Seq("2.11.12", "2.12.6", "2.13.0-M2"),
-  libraryDependencies ++= Seq(
-    "org.scalatest" %% "scalatest" % "3.0.1" % "test"
-  ),
 
   licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0")),
   homepage := Some(url("https://github.com/tethys-json/tethys")),
@@ -46,7 +43,7 @@ lazy val core = project.in(file("./modules/core"))
   .settings(
     name := "tethys-core",
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
+      "org.scalatest" %% "scalatest" % scalaTestVersion % Test
     )
   )
 
@@ -57,7 +54,7 @@ lazy val `macro-derivation` = project.in(file("./modules/macro-derivation"))
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided",
 
-      "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
+      "org.scalatest" %% "scalatest" % scalaTestVersion % Test
     )
   ).dependsOn(core)
 
@@ -68,7 +65,7 @@ lazy val `jackson-backend` = project.in(file("./modules/jackson-backend"))
     libraryDependencies ++= Seq(
       "com.fasterxml.jackson.core" % "jackson-core" % "2.9.1",
 
-      "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
+      "org.scalatest" %% "scalatest" % scalaTestVersion % Test
     )
   ).dependsOn(core)
 
@@ -79,7 +76,7 @@ lazy val json4s = project.in(file("./modules/json4s"))
     libraryDependencies ++= Seq(
       "org.json4s" %% "json4s-core" % "3.5.3",
 
-      "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
+      "org.scalatest" %% "scalatest" % scalaTestVersion % Test
     )
   ).dependsOn(core)
 

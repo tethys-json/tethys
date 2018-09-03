@@ -91,6 +91,7 @@ trait Json4sSupport {
 
         case x: java.math.BigDecimal=> JDecimal(x)
         case x: BigDecimal => JDecimal(x)
+        case x => JDecimal(x.doubleValue())
       }
       else if (token.isNullValue) {
         it.next()

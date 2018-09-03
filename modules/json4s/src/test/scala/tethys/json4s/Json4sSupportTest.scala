@@ -3,6 +3,7 @@ package tethys.json4s
 import org.json4s.JsonAST._
 import org.scalatest.{FlatSpec, Matchers}
 import tethys.commons.TokenNode.{value => token, _}
+import tethys.writers.tokens.SimpleTokenWriter._
 
 class Json4sSupportTest extends FlatSpec with Matchers {
   behavior of "Json4s ast JsonReader"
@@ -36,11 +37,11 @@ class Json4sSupportTest extends FlatSpec with Matchers {
   }
 
   it should "parse JArray" in {
-    arr(1, 2, 3).tokensAs[JArray] shouldBe JArray(List(JLong(1), JLong(2), JLong(3)))
+    arr(1, 2L, 3).tokensAs[JArray] shouldBe JArray(List(JLong(1), JLong(2), JLong(3)))
   }
 
   it should "parse JSet" in {
-    arr(1, 2, 3).tokensAs[JSet] shouldBe JSet(Set(JLong(1), JLong(2), JLong(3)))
+    arr(1, 2L, 3).tokensAs[JSet] shouldBe JSet(Set(JLong(1), JLong(2), JLong(3)))
   }
 
   it should "parse JObject" in {
@@ -50,4 +51,51 @@ class Json4sSupportTest extends FlatSpec with Matchers {
     )
   }
 
+  behavior of "Json4s ast JsonWriter"
+  it should "write JLong" in {
+    JLong(100L).asTokenList shouldBe token(100L)
+  }
+
+  it should "write JInt" in {
+    JInt(100).asTokenList shouldBe token(BigInt(100L))
+  }
+
+  it should "write JDouble" in {
+    JDouble(100.0D).asTokenList shouldBe token(100.0D)
+  }
+
+  it should "write JDecimal" in {
+    JDecimal(100.0D).asTokenList shouldBe token(BigDecimal(100.0D))
+  }
+
+  it should "write JString" in {
+    JString("str").asTokenList shouldBe token("str")
+  }
+
+  it should "write JBool.True" in {
+    JBool.True.asTokenList shouldBe token(true)
+  }
+
+  it should "write JBool.False" in {
+    JBool.False.asTokenList shouldBe token(false)
+  }
+
+  it should "write JArray" in {
+    JArray(List(JLong(1), JLong(2), JLong(3))).asTokenList shouldBe arr(1L, 2L, 3L)
+  }
+
+  it should "write JSet" in {
+    JSet(Set(JLong(1), JLong(2), JLong(3))).asTokenList shouldBe arr(1L, 2L, 3L)
+  }
+
+  it should "write JObject" in {
+    val jobj = JObject(
+      "a" -> JArray(List(JLong(1L))),
+      "b" -> JObject("c" -> JNull)
+    )
+    jobj.asTokenList shouldBe obj(
+      "a" -> arr(1L),
+      "b" -> obj("c" -> null)
+    )
+  }
 }
