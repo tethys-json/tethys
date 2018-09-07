@@ -40,6 +40,10 @@ class Json4sSupportTest extends FlatSpec with Matchers {
     arr(1, 2L, 3).tokensAs[JArray] shouldBe JArray(List(JLong(1), JLong(2), JLong(3)))
   }
 
+  it should "parse JArray of JObject" in {
+    arr(obj("a" -> "b", "c" -> "d")).tokensAs[JValue] shouldBe JArray(List(JObject("a" -> JString("b"), "c" -> JString("d"))))
+  }
+
   it should "parse JSet" in {
     arr(1, 2L, 3).tokensAs[JSet] shouldBe JSet(Set(JLong(1), JLong(2), JLong(3)))
   }

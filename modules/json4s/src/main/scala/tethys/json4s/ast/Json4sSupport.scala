@@ -68,6 +68,7 @@ trait Json4sSupport {
             ReaderError.wrongType[JObject]
           }
         }
+        it.next()
         JObject(builder.result())
       }
     }
