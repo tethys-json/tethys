@@ -28,7 +28,7 @@ object JsonReaderBuilder {
       new SimpleJsonReader[Res](fields())(m => fun(value(m)))
     }
 
-    def selectReader[Res](fun: PartialFunction[A1, JsonReader[_ <: Res]])(implicit Res: ClassTag[Res], A1: ClassTag[A1]): JsonReader[Res] = {
+    def selectReader[Res](fun: A1 => JsonReader[_ <: Res])(implicit Res: ClassTag[Res], A1: ClassTag[A1]): JsonReader[Res] = {
       val simpleJsonReader = new SimpleJsonReader[A1](fields())(m => value(m))
       new SelectingJsonReader[A1, Res](simpleJsonReader)(fun)
     }
