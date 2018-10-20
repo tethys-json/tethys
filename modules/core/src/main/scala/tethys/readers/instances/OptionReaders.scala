@@ -54,8 +54,6 @@ private[tethys] trait LowPriorityOptionReaders extends MapReaders {
 
     protected def readSomeValue(it: TokenIterator)(implicit fieldName: FieldName): Option[A]
 
-    override val defaultValue: Option[Option[A]] = Some(None)
-
     override def read(it: TokenIterator)(implicit fieldName: FieldName): Option[A] = {
       if (it.currentToken().isNullValue) {
         it.nextToken()

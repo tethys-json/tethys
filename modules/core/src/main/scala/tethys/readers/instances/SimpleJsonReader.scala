@@ -1,50 +1,78 @@
 package tethys.readers.instances
 
 import tethys.JsonReader
+import tethys.readers.instances.SimpleJsonReader.FieldDefinition
 import tethys.readers.{FieldName, ReaderError}
 import tethys.readers.tokens.TokenIterator
 
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
 
-class SimpleJsonReader[A: ClassTag](fields: Map[String, JsonReader[_]])(mapper: Map[String, Any] => A) extends JsonReader[A] {
+private[readers] class SimpleJsonReader[A: ClassTag](fields: Array[FieldDefinition[_]], mapper: Array[Any] => A) extends JsonReader[A] {
 
-  private val names: List[String] = fields.keys.toList
-  private val defaults: Map[String, Any] = fields.flatMap {
-    case (name, jsonReader) => jsonReader.defaultValue.map(name -> _)
-  }
+  private val defaults: Array[Any] = fields.map(_.defaultValue)
 
   override def read(it: TokenIterator)(implicit fieldName: FieldName): A = {
     if(!it.currentToken().isObjectStart) ReaderError.wrongType[A]
     else {
       it.nextToken()
-      val extracted: Map[String, Any] = recRead(it, defaults)
+      val extracted: Array[Any] = recRead(it, defaults.clone())
 
-      val notExtracted = names.filterNot(extracted.contains)
-      if(notExtracted.nonEmpty) ReaderError.wrongJson(s"Can not extract fields ${notExtracted.mkString("'", "', '", "'")}")
+      val notExtracted = collectNotExtracted(0, hasErrors = false, extracted, new StringBuilder())
+      if(notExtracted.nonEmpty) ReaderError.wrongJson(s"Can not extract fields $notExtracted")
       else mapper(extracted)
     }
   }
 
   @tailrec
-  private def recRead(it: TokenIterator, extracted: Map[String, Any])(implicit fieldName: FieldName): Map[String, Any] = {
+  private def collectNotExtracted(i: Int, hasErrors: Boolean, extracted: Array[Any], builder: StringBuilder): String = {
+    if(i >= extracted.length) {
+      if(hasErrors) builder.append('\'').result()
+      else ""
+    } else if(extracted(i) == null) {
+      if(!hasErrors) collectNotExtracted(i + 1, hasErrors = true, extracted, builder.append('\'').append(fields(i).name))
+      else collectNotExtracted(i + 1, hasErrors = true, extracted, builder.append("', '").append(fields(i).name))
+    } else {
+      collectNotExtracted(i + 1, hasErrors, extracted, builder)
+    }
+  }
+
+  @tailrec
+  private def recRead(it: TokenIterator, extracted: Array[Any])(implicit fieldName: FieldName): Array[Any] = {
     it.currentToken() match {
       case token if token.isObjectEnd =>
         it.nextToken()
         extracted
       case token if token.isFieldName =>
         val name = it.fieldName()
-        it.nextToken()
-        fields.get(name) match {
-          case Some(reader) =>
-            val value = reader.read(it)(fieldName.appendFieldName(name))
-            recRead(it, extracted.updated(name, value))
-
-          case _ =>
-            it.skipExpression()
-            recRead(it, extracted)
-        }
-      case token => ReaderError.wrongJson(s"Expect end of object or field name but '$token' found")
+        recRead(it, extractField(0, name, it.next(), extracted))
+      case token =>
+        ReaderError.wrongJson(s"Expect end of object or field name but '$token' found")
     }
   }
+
+  @tailrec
+  private def extractField(i: Int,
+                           name: String,
+                           it: TokenIterator,
+                           extracted: Array[Any])
+                          (implicit
+                           fieldName: FieldName): Array[Any] = {
+    if(i >= extracted.length) {
+      it.skipExpression()
+      extracted
+    } else {
+      val field = fields(i)
+      if(field.name == name) {
+        extracted(i) = field.reader.read(it)(fieldName.appendFieldName(name))
+        extracted
+      } else {
+        extractField(i + 1, name, it, extracted)
+      }
+    }
+  }
+}
+
+private[readers] object SimpleJsonReader {
+  case class FieldDefinition[A](name: String, defaultValue: Any, reader: JsonReader[A])
 }
