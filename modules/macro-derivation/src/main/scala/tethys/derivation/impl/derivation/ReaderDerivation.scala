@@ -104,7 +104,7 @@ trait ReaderDerivation
               ..${context.functions}
 
               override def read($tokenIteratorTerm: $tokenIteratorType)(implicit $fieldNameTerm: $fieldNameType): $tpe = {
-                if(!$tokenIteratorTerm.currentToken().isObjectStart) $readerErrorCompanion.wrongType[$tpe]
+                if(!$tokenIteratorTerm.currentToken().isObjectStart) $readerErrorCompanion.wrongJson("Expected object start but found: "  + $tokenIteratorTerm.currentToken().toString)
                 else {
                   val $fieldNameTmp = $fieldNameTerm
                   $tokenIteratorTerm.nextToken()

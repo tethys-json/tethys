@@ -13,7 +13,7 @@ object PrimitiveReaders {
         it.nextToken()
         res
       } else {
-        ReaderError.wrongType[Short]
+        ReaderError.wrongJson(s"Expected short value but found: ${it.currentToken()}")
       }
     }
   }
@@ -27,7 +27,7 @@ object PrimitiveReaders {
         it.nextToken()
         res
       } else {
-        ReaderError.wrongType[Int]
+        ReaderError.wrongJson(s"Expected int value but found: ${it.currentToken()}")
       }
     }
   }
@@ -41,7 +41,7 @@ object PrimitiveReaders {
         it.nextToken()
         res
       } else {
-        ReaderError.wrongType[Long]
+        ReaderError.wrongJson(s"Expected long value but found: ${it.currentToken()}")
       }
     }
   }
@@ -55,7 +55,7 @@ object PrimitiveReaders {
         it.nextToken()
         res
       } else {
-        ReaderError.wrongType[Float]
+        ReaderError.wrongJson(s"Expected float value but found: ${it.currentToken()}")
       }
     }
   }
@@ -69,7 +69,7 @@ object PrimitiveReaders {
         it.nextToken()
         res
       } else {
-        ReaderError.wrongType[Double]
+        ReaderError.wrongJson(s"Expected double value but found: ${it.currentToken()}")
       }
     }
   }
@@ -83,7 +83,7 @@ object PrimitiveReaders {
         it.nextToken()
         res
       } else {
-        ReaderError.wrongType[Boolean]
+        ReaderError.wrongJson(s"Expected boolean value but found: ${it.currentToken()}")
       }
     }
   }

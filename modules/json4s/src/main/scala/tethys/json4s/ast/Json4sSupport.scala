@@ -54,7 +54,7 @@ trait Json4sSupport {
   implicit lazy val json4sJBoolReader: JsonReader[JBool] = JsonReader[Boolean].map(b => if(b) JBool.True else JBool.False)
   implicit lazy val json4sJObjectReader: JsonReader[JObject] = new JsonReader[JObject] {
     override def read(it: TokenIterator)(implicit fieldName: FieldName): JObject = {
-      if (!it.currentToken().isObjectStart) ReaderError.wrongType[JObject]
+      if (!it.currentToken().isObjectStart) ReaderError.wrongJson(s"Expected object start but found: ${it.currentToken()}")
       else {
         it.next()
         val builder = List.newBuilder[(String, JValue)]
@@ -65,7 +65,7 @@ trait Json4sSupport {
             val value = json4sJValueReader.read(it.next())(fieldName.appendFieldName(name))
             builder += name -> value
           } else {
-            ReaderError.wrongType[JObject]
+            ReaderError.wrongJson(s"Expect end of object or field name but '$token' found")(fieldName)
           }
         }
         it.next()
@@ -98,7 +98,7 @@ trait Json4sSupport {
         it.next()
         JNull
       }
-      else ReaderError.wrongType[JValue]
+      else ReaderError.wrongJson(s"Unexpected token found: $token")(fieldName)
     }
   }
 }

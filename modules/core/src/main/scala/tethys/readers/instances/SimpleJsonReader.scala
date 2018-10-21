@@ -2,18 +2,17 @@ package tethys.readers.instances
 
 import tethys.JsonReader
 import tethys.readers.instances.SimpleJsonReader.FieldDefinition
-import tethys.readers.{FieldName, ReaderError}
 import tethys.readers.tokens.TokenIterator
+import tethys.readers.{FieldName, ReaderError}
 
 import scala.annotation.tailrec
-import scala.reflect.ClassTag
 
-private[readers] class SimpleJsonReader[A: ClassTag](fields: Array[FieldDefinition[_]], mapper: Array[Any] => A) extends JsonReader[A] {
+private[readers] class SimpleJsonReader[A](fields: Array[FieldDefinition[_]], mapper: Array[Any] => A) extends JsonReader[A] {
 
   private val defaults: Array[Any] = fields.map(_.defaultValue)
 
   override def read(it: TokenIterator)(implicit fieldName: FieldName): A = {
-    if(!it.currentToken().isObjectStart) ReaderError.wrongType[A]
+    if(!it.currentToken().isObjectStart) ReaderError.wrongJson(s"Expected object start but found: ${it.currentToken()}")
     else {
       it.nextToken()
       val extracted: Array[Any] = recRead(it, defaults.clone())
