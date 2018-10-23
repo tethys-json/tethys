@@ -12,7 +12,7 @@ object JsonReaderDefaultValue extends LowPriorityDefaultValue {
   def apply[A](implicit dv: JsonReaderDefaultValue[A]): JsonReaderDefaultValue[A] = dv
 
   //Allow easy access of it value in macro
-  private[readers] class ReaderDefaultValue(value: Any) extends StaticAnnotation
+  private[tethys] class ReaderDefaultValue(value: Any) extends StaticAnnotation
 
   @ReaderDefaultValue(None)
   implicit object OptionDefaultValue extends JsonReaderDefaultValue[Option[Nothing]] {

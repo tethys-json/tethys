@@ -3,7 +3,7 @@ package tethys.derivation.impl.derivation
 import tethys.JsonReader
 import tethys.derivation.impl.builder.ReaderBuilderUtils
 import tethys.derivation.impl.{BaseMacroDefinitions, CaseClassUtils}
-import tethys.readers.FieldName
+import tethys.readers.{FieldName, JsonReaderDefaultValue}
 import tethys.readers.tokens.TokenIterator
 
 import scala.annotation.tailrec
@@ -62,9 +62,9 @@ trait ReaderDerivation
 
     val defaultValues =
       q"""
-          ..${syntheticDefinitions.map(_.defaultValueExtraction)}
+          ..${syntheticDefinitions.flatMap(_.defaultValueExtraction)}
 
-          ..${transformedDefinitions.filter(_.extractionType == Direct).map(_.defaultValueExtraction)}
+          ..${transformedDefinitions.filter(_.extractionType == Direct).flatMap(_.defaultValueExtraction)}
        """
 
     val transformations = {
@@ -187,10 +187,6 @@ trait ReaderDerivation
       readersMapping.getOrElseUpdate(unwrapType(tpe), TermName(c.freshName("reader")))
     }
 
-    def provideReaderDefaultValue(tpe: Type): Tree = {
-      q"implicitly[$jsonReaderDefaultValueType[$tpe]].defaultValue"
-    }
-
     def provideDefaultValue(tpe: Type): TermName = {
       defaultValuesMapping.getOrElseUpdate(unwrapType(tpe), TermName(c.freshName("defaultValue")))
     }
@@ -270,28 +266,21 @@ trait ReaderDerivation
       else defs
     }
 
-    def defaultValueExtraction: Tree = transformer match {
-      case Some(op: ReaderMacroOperation.ExtractFieldAs) =>
+    def defaultValueExtraction: Option[Tree] = {
+      val (valueTpe, valueFun) = transformer match {
+        case Some(op: ReaderMacroOperation.ExtractFieldAs) =>
+          (op.as, (defaultValue: Tree) => q"${readerContext.registerFunction(op.fun)}.apply($defaultValue.asInstanceOf[${op.as}])")
+        case _ =>
+          (tpe, (defaultValue: Tree) => q"$defaultValue.asInstanceOf[$tpe]")
+      }
+      extractDefaultValue(valueTpe).map { defaultValue =>
         q"""
            if(!$isInitialized) {
-             val $defaultValue: Any = ${readerContext.provideReaderDefaultValue(op.as)}
-             if($defaultValue != null) {
-                $value = ${readerContext.registerFunction(op.fun)}.apply($defaultValue.asInstanceOf[${op.as}])
-                $isInitialized = true
-             }
+              $value = ${valueFun(defaultValue)}
+              $isInitialized = true
            }
          """
-
-      case _ =>
-        q"""
-           if(!$isInitialized) {
-             val $defaultValue: Any = ${readerContext.provideReaderDefaultValue(tpe)}
-             if($defaultValue != null) {
-                $value = $defaultValue.asInstanceOf[$tpe]
-                $isInitialized = true
-             }
-           }
-         """
+      }
     }
 
     def fieldCase: Option[CaseDef] = transformer match {
@@ -348,27 +337,58 @@ trait ReaderDerivation
 
         val args = op.from.map(f => readerContext.definition(f.name).value)
         val reader = TermName(c.freshName(name + "Reader"))
-        q"""
-           if($canTransform) {
-              val $reader = ${readerContext.registerFunction(op.fun)}.apply(..$args)
-              if($valueTree != null) {
+        extractDefaultValue(tpe) match {
+          case Some(defaultValue) =>
+            q"""
+             if($canTransform) {
+                val $reader = ${readerContext.registerFunction(op.fun)}.apply(..$args)
+                if($valueTree != null) {
+                  implicit val $fieldNameTerm: $fieldNameType = $fieldNameTmp.appendFieldName($name)
+                  $value = $reader.read($valueTree)
+                  $isInitialized = true
+                  $somethingChanged = true
+                } else {
+                  $value = $defaultValue.asInstanceOf[$tpe]
+                  $isInitialized = true
+                }
+             }
+           """
+          case None =>
+            q"""
+             if($canTransform && $valueTree != null) {
+                val $reader = ${readerContext.registerFunction(op.fun)}.apply(..$args)
                 implicit val $fieldNameTerm: $fieldNameType = $fieldNameTmp.appendFieldName($name)
                 $value = $reader.read($valueTree)
                 $isInitialized = true
                 $somethingChanged = true
-              } else {
-                val $defaultValue: Any = implicitly[$jsonReaderDefaultValueType[$tpe]].defaultValue
-                if($defaultValue != null) {
-                   $value = $defaultValue.asInstanceOf[$tpe]
-                   $isInitialized = true
-                   $somethingChanged = true
-                }
-              }
-           }
-         """
+             }
+           """
+        }
+
 
       case _ =>
         EmptyTree
     }
+
+    def extractDefaultValue(tpe: Type): Option[Tree] = {
+      c.typecheck(q"implicitly[$jsonReaderDefaultValueType[$tpe]]") match {
+        case q"$_.implicitly[$_]($defaultValue)" =>
+          val mbValue = defaultValue.tpe.typeSymbol.annotations.map(_.tree).collectFirst {
+            case q"new $clazz(${value: Tree})" if clazz.tpe =:= typeOf[JsonReaderDefaultValue.ReaderDefaultValue] =>
+              value
+          }
+
+          mbValue match {
+            case None =>
+              abort(s"JsonReaderDefaultValue '${defaultValue.tpe}' is not annotated with 'ReaderDefaultValue'")
+            case Some(q"null") =>
+              None
+            case Some(value) =>
+              Some(value)
+          }
+
+      }
+    }
+
   }
 }

@@ -1,12 +1,12 @@
 package json.bench.handwritten
 
-import com.fasterxml.jackson.core.{JsonFactory, JsonGenerator, JsonParser, JsonToken}
+import com.fasterxml.jackson.core._
 import com.fasterxml.jackson.core.io.{IOContext, SegmentedStringWriter}
 import com.fasterxml.jackson.core.json.WriterBasedJsonGenerator
 import com.fasterxml.jackson.core.util.BufferRecycler
 import com.fasterxml.jackson.databind.ObjectMapper
-import json.bench.model.Data
-import json.bench.{DataReader, DataWriter}
+import _root_.json.bench.model.Data
+import _root_.json.bench.{DataReader, DataWriter}
 
 object HandwrittenBench {
 
@@ -202,6 +202,7 @@ object HandwrittenBench {
       require(parser.nextToken() == JsonToken.START_ARRAY)
       val builder = Seq.newBuilder[Int]
       while (parser.nextToken() != JsonToken.END_ARRAY) {
+        require(parser.currentToken().id() != JsonTokenId.ID_NO_TOKEN)
         builder += parser.getIntValue
       }
       builder.result()
@@ -211,6 +212,7 @@ object HandwrittenBench {
       require(parser.nextToken() == JsonToken.START_OBJECT)
       val builder = Map.newBuilder[String, Int]
       while (parser.nextToken() != JsonToken.END_OBJECT) {
+        require(parser.currentToken().id() == JsonTokenId.ID_FIELD_NAME)
         val name = parser.getCurrentName()
         parser.nextToken()
         val value = parser.getValueAsInt
