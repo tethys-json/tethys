@@ -11,6 +11,10 @@ trait MacroUtils extends BaseMacroDefinitions
   val c: blackbox.Context
   import c.universe._
 
+  def eval[T](expr: Expr[T]): Option[T] = {
+    util.Try(c.eval(c.Expr[T](c.untypecheck(expr.tree)))).toOption
+  }
+
   case class SelectChain(chain: Seq[String])
 
   implicit lazy val selectChainUnliftable: Unliftable[SelectChain] = Unliftable[SelectChain] {
