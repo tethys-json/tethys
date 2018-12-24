@@ -21,14 +21,12 @@ class SemiautoWriterDerivationTest extends FlatSpec with Matchers {
     implicit val dWriter: JsonWriter[D] = jsonWriter[D]
 
     implicit val testWriter: JsonWriter[JsonTreeTestData] = jsonWriter {
-      describe {
-        WriterBuilder[JsonTreeTestData]
-          .remove(_.b)
-          .update(_.a).fromRoot(d => d.a.toDouble + d.c.d.a)
-          .update(_.c)(_.d)
-          .add("d")(_.a * 2)
-          .add(freeVariable)(_.b)
-      }
+      WriterBuilder[JsonTreeTestData]
+        .remove(_.b)
+        .update(_.a).fromRoot(d => d.a.toDouble + d.c.d.a)
+        .update(_.c)(_.d)
+        .add("d")(_.a * 2)
+        .add(freeVariable)(_.b)
     }
     JsonTreeTestData(5, b = false, C(D(1))).asTokenList shouldBe obj(
       "a" -> 6.0,

@@ -163,16 +163,14 @@ class SemiautoReaderDerivationTest extends FlatSpec with Matchers {
 
   it should "derive reader for complex extraction case" in {
     implicit val reader: JsonReader[SimpleTypeWithAny] = jsonReader[SimpleTypeWithAny] {
-      describe {
-        ReaderBuilder[SimpleTypeWithAny]
-          .extractReader(_.any).from(_.i) {
-            case 1 => JsonReader[String]
-            case 2 => JsonReader[Int]
-            case _ => JsonReader[Option[Boolean]]
-          }
-          .extract(_.i).from(_.d).and('e.as[Int])((d, e) => d.toInt + e)
-          .extract(_.d).as[Option[Double]](_.getOrElse(1.0))
-      }
+      ReaderBuilder[SimpleTypeWithAny]
+        .extractReader(_.any).from(_.i) {
+          case 1 => JsonReader[String]
+          case 2 => JsonReader[Int]
+          case _ => JsonReader[Option[Boolean]]
+        }
+        .extract(_.i).from(_.d).and('e.as[Int])((d, e) => d.toInt + e)
+        .extract(_.d).as[Option[Double]](_.getOrElse(1.0))
     }
 
     read[SimpleTypeWithAny](obj(
