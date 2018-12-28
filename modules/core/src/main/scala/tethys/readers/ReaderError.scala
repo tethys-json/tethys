@@ -5,7 +5,7 @@ import scala.util.control.NonFatal
 final class ReaderError protected(message: String, cause: Throwable, field: String) extends Exception(message, cause)
 
 object ReaderError {
-  def wrongJson(reason: String)(implicit fieldName: FieldName): Nothing = {
+  def wrongJson(reason: String, cause: Throwable = null)(implicit fieldName: FieldName): Nothing = {
     val field = fieldName.value()
     throw new ReaderError(
       message = s"Json is not properly formatted '$field': $reason",
