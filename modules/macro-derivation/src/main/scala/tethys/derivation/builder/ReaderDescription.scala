@@ -3,7 +3,12 @@ package tethys.derivation.builder
 case class ReaderDescription[A](operations: Seq[ReaderDescription.BuilderOperation])
 
 object ReaderDescription {
-  final case class Field[A](name: String)
+  sealed trait Field[A]
+  object Field {
+    final case class ClassField[A](name: String) extends Field[A]
+    final case class RawField[A](name: String) extends Field[A]
+  }
+
 
   sealed trait BuilderOperation
 

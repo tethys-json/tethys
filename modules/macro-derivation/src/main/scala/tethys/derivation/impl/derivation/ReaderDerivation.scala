@@ -32,6 +32,176 @@ trait ReaderDerivation
   private val jsonReaderType = tq"$tethysPack.JsonReader"
   private val somethingChanged = TermName(c.freshName("somethingChanged"))
 
+
+
+  private trait ReaderField
+  private case class SimpleField(name: String,
+                                 tpe: Type,
+                                 jsonName: String,
+                                 value: TermName,
+                                 isInitialized: TermName) extends ReaderField
+  private case class ExtractedField(name: String,
+                                    tpe: Type,
+                                    functionName: TermName, args: List[Field], body: Tree) extends ReaderField
+  private case class FromExtractedReader(name: String, tpe: Type, jsonName: String, args: List[Field], body: Tree) extends ReaderField
+
+
+  private case class ReaderField1(name: String,
+                                 tpe: Type,
+                                 jsonFields: List[JsonField],
+                                 transformer: Option[DescriptorContext => Tree],
+                                 customJsonReader: Option[DescriptorContext => Tree])
+
+  private case class JsonField(name: String, tpe: Type)
+
+  private class DescriptorContext(typeReaders: Int,
+                                  readerVariables: Int,
+                                  jsonVariables: Int) {
+    def registerFunction(fun: Tree): TermName = ???
+
+    def readerFieldTerm(name: String): TermName = ???
+    def jsonFieldTerm(name: String, tpe: Type): TermName = ???
+  }
+
+  def deriveReader2[A: WeakTypeTag](description: ReaderMacroDescription): Expr[JsonReader[A]] = {
+    val tpe = weakTypeOf[A]
+    val classDef = caseClassDefinition(tpe)
+
+    val readerFields: List[ReaderField] = classDef.fields.map { field =>
+      SimpleField(
+        name = field.name,
+        tpe = field.tpe,
+        jsonName = field.name
+      )
+    }
+
+    val alteredFields = applyDescription(readerFields, description)
+
+    val (typeReaders, readerTrees) = allocateReaders(readerFields)
+    val (typeDefaultValues, defauleValuesTrees) = allocateDefaultValues(readerFields)
+    val (readerVariables, readerVariablesTree) = allocateReaderVariablesBlock(readerFields, typeDefaultValues)
+    val (jsonVariables, jsonVariablesTree) = allocateJsonVariablesBlock(readerFields, typeDefaultValues)
+
+    ???
+  }
+
+  private def applyDescription(readerFields: List[ReaderField], description: ReaderMacroDescription): List[ReaderField] = {
+    def mapField(fields: List[ReaderField], name: String)(f: SimpleField => ReaderField): List[ReaderField] = {
+      fields.map {
+        case field: SimpleField if field.name == name => f(field)
+        case field => field
+      }
+    }
+
+    description.operations.foldLeft(readerFields) {
+      case (fields, operation) =>
+        operation match {
+          case ReaderMacroOperation.ExtractFieldAs(field, tpe, as, fun) =>
+            mapField(fields, field)(_ => ExtractedField(
+              name = field,
+              tpe = tpe,
+              functionName = TermName(c.freshName(field + "Fun")),
+              args = List(Field.RawField(field, as)),
+              body = fun
+            ))
+
+          case ReaderMacroOperation.ExtractFieldValue(field, from, fun) =>
+            mapField(fields, field)(f => ExtractedField(
+              name = field,
+              tpe = f.tpe,
+              functionName = TermName(c.freshName(field + "Fun")),
+              args = from.toList,
+              body = fun
+            ))
+          case ReaderMacroOperation.ExtractFieldReader(field, from, fun) =>
+            mapField(fields, field)(_ => FromExtractedReader(
+              name = field,
+              tpe = ???,
+              jsonName = ???,
+              args = from.toList,
+              body = ???
+            ))
+        }
+    }
+  }
+
+  private def allocateReaders(readerFields: List[ReaderField]): (List[(Type, TermName)], List[Tree]) = {
+    val jsonTypes = readerFields.flatMap(_.jsonFields.map(_.tpe))
+    jsonTypes.foldLeft((List[(Type, TermName)](), List[Tree]())) {
+      case ((types, trees), tpe) if !types.exists(_._1 =:= tpe) =>
+        val term = TermName(c.freshName())
+        val reader = {
+          if (tpe =:= typeOf[Short]) q"private[this] val $term = $primitiveReadersCompanion.ShortJsonReader"
+          else if (tpe =:= typeOf[Int]) q"private[this] val $term = $primitiveReadersCompanion.IntJsonReader"
+          else if (tpe =:= typeOf[Long]) q"private[this] val $term = $primitiveReadersCompanion.LongJsonReader"
+          else if (tpe =:= typeOf[Float]) q"private[this] val $term = $primitiveReadersCompanion.FloatJsonReader"
+          else if (tpe =:= typeOf[Double]) q"private[this] val $term = $primitiveReadersCompanion.DoubleJsonReader"
+          else if (tpe =:= typeOf[Boolean]) q"private[this] val $term = $primitiveReadersCompanion.BooleanJsonReader"
+          else q"private[this] lazy val $term = implicitly[$jsonReaderType[$tpe]]"
+        }
+        (tpe -> term :: types, reader :: trees)
+
+      case (res, _) => res
+    }
+  }
+
+  private def allocateDefaultValues(readerFields: List[ReaderField]): (List[(Type, TermName)], List[Tree]) = {
+    val allTypes = readerFields.flatMap(f => f.tpe :: f.jsonFields.map(_.tpe))
+    allTypes.foldLeft((List[(Type, TermName)](), List[Tree]())) {
+      case ((types, trees), tpe) if !types.exists(_._1 =:= tpe) =>
+        val term = TermName(c.freshName())
+        val default = q"private[this] var $term: $tpe = _"
+
+        (tpe -> term :: types, default :: trees)
+
+      case (res, _) => res
+    }
+  }
+
+  private case class ReaderFieldVars(name: String, value: TermName, isInitialized: TermName, treeIterator: Option[TermName])
+  private def allocateReaderVariablesBlock(readerFields: List[ReaderField], typeDefaultValues: List[(Type, TermName)]): (List[ReaderFieldVars], List[Tree]) = {
+    readerFields.foldLeft(List[ReaderFieldVars](), List[Tree]()) {
+      case ((vars, trees), field) =>
+        val fieldVars = ReaderFieldVars(
+         name = field.name,
+         value = TermName(c.freshName(field.name + "Field")),
+         isInitialized = TermName(c.freshName(field.name + "Init")),
+         treeIterator = field.customJsonReader.map(_ => TermName(c.freshName(field.name + "Tree")))
+        )
+
+        val tree = q"var ${fieldVars.value}: ${field.tpe} = ${typeDefaultValues.find(_._1 =:= field.tpe).get}" ::
+          q"var ${fieldVars.isInitialized}: Boolean = false" ::
+          fieldVars.treeIterator.map(term => q"var $term: $tokenIteratorType = null").toList
+
+
+        (fieldVars :: vars, tree ::: trees)
+    }
+  }
+
+  private case class JsonFieldVars(name: String, tpe: Type, value: TermName, isInitialized: TermName)
+  private def allocateJsonVariablesBlock(readerFields: List[ReaderField], typeDefaultValues: List[(Type, TermName)]): (List[JsonFieldVars], List[Tree]) = {
+    readerFields.flatMap(_.jsonFields).foldLeft(List[JsonFieldVars](), List[Tree]()) {
+      case ((vars, trees), field) if !vars.exists(f => f.name == field.name && f.tpe =:= field.tpe) =>
+        val fieldVars = JsonFieldVars(
+         name = field.name,
+         tpe = field.tpe,
+         value = TermName(c.freshName(field.name + "FieldJson")),
+         isInitialized = TermName(c.freshName(field.name + "InitJson"))
+        )
+
+        val tree = q"var ${fieldVars.value}: ${field.tpe} = ${typeDefaultValues.find(_._1 =:= field.tpe).get}" ::
+          q"var ${fieldVars.isInitialized}: Boolean = false" ::
+          Nil
+
+
+        (fieldVars :: vars, tree ::: trees)
+
+      case (res, _) => res
+    }
+  }
+
+  private def allocateFieldCases(readerFields: List[ReaderField], )
+
   def deriveReader[A: WeakTypeTag]: Expr[JsonReader[A]] = {
     deriveReader(ReaderMacroDescription(Seq()))
   }
@@ -44,7 +214,7 @@ trait ReaderDerivation
     val name = TermName(c.freshName("name"))
 
     val definitions = classDef.fields.map(field => FieldDefinitions(field.name, field.tpe))
-    val syntheticDefinitions = extractSyntheticDefintions(description, classDef)
+    val syntheticDefinitions = extractSyntheticDefinitions(description, classDef)
     val transformedDefinitions = transformDefinitions(description, definitions)
 
     val allDefinitions = transformedDefinitions ++ syntheticDefinitions
@@ -132,8 +302,8 @@ trait ReaderDerivation
     }
   }
 
-  private def extractSyntheticDefintions(description: ReaderMacroDescription, classDef: CaseClassDefinition)
-                                        (implicit context: ReaderContext): Seq[FieldDefinitions] = {
+  private def extractSyntheticDefinitions(description: ReaderMacroDescription, classDef: CaseClassDefinition)
+                                         (implicit context: ReaderContext): Seq[FieldDefinitions] = {
     val names = classDef.fields.map(_.name).toSet
 
     val fields: Seq[Field] = description.operations.flatMap {

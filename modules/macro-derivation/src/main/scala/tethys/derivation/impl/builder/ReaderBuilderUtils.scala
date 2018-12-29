@@ -10,7 +10,11 @@ trait ReaderBuilderUtils extends MacroUtils {
 
   case class ReaderMacroDescription(operations: Seq[ReaderMacroOperation])
 
-  final case class Field(name: String, tpe: Type)
+  sealed trait Field
+  object Field {
+    final case class ClassField(name: String, tpe: Type) extends Field
+    final case class RawField(name: String, tpe: Type) extends Field
+  }
 
   sealed trait ReaderMacroOperation {
     def field: String
@@ -32,22 +36,28 @@ trait ReaderBuilderUtils extends MacroUtils {
   }
 
   implicit lazy val fieldLiftable: Liftable[Field] = Liftable[Field] {
-    case Field(name, tpe) =>
-      q"$buildersPack.ReaderDescription.Field[$tpe]($name)"
+    case Field.ClassField(name, tpe) =>
+      q"$buildersPack.ReaderDescription.Field.ClassField[$tpe]($name)"
+
+    case Field.RawField(name, tpe) =>
+      q"$buildersPack.ReaderDescription.Field.RawField[$tpe]($name)"
   }
 
   implicit lazy val fieldUnliftable: Unliftable[Field] = Unliftable[Field] {
-    case q"$_.ReaderDescription.Field.apply[${tpe: Tree}](${name: String})" =>
-      Field(name, tpe.tpe)
+    case q"$_.ReaderDescription.Field.ClassField.apply[${tpe: Tree}](${name: String})" =>
+      Field.ClassField(name, tpe.tpe)
+
+    case q"$_.ReaderDescription.Field.RawField.apply[${tpe: Tree}](${name: String})" =>
+      Field.RawField(name, tpe.tpe)
 
     case q"${f: BuilderField}" =>
-      Field(f.name, f.tpe)
+      Field.ClassField(f.name, f.tpe)
 
     case q"$_.ReaderFieldStringOps(${name: String}).as[${tpe: Tree}]" =>
-      Field(name, tpe.tpe)
+      Field.RawField(name, tpe.tpe)
 
     case q"$_.ReaderFieldSymbolOps(scala.Symbol.apply(${name: String})).as[${tpe: Tree}]" =>
-      Field(name, tpe.tpe)
+      Field.RawField(name, tpe.tpe)
   }
 
   implicit lazy val readerMacroOperationLiftable: Liftable[ReaderMacroOperation] = Liftable[ReaderMacroOperation] {
