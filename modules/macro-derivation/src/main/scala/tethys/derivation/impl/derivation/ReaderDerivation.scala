@@ -1,6 +1,7 @@
 package tethys.derivation.impl.derivation
 
 import tethys.JsonReader
+import tethys.derivation.builder.ReaderDescription.Field.RawField
 import tethys.derivation.impl.builder.ReaderBuilderUtils
 import tethys.derivation.impl.{BaseMacroDefinitions, CaseClassUtils}
 import tethys.readers.{FieldName, JsonReaderDefaultValue}
@@ -34,34 +35,33 @@ trait ReaderDerivation
 
 
 
-  private trait ReaderField
+  private sealed trait ReaderField
   private case class SimpleField(name: String,
                                  tpe: Type,
                                  jsonName: String,
                                  value: TermName,
                                  isInitialized: TermName) extends ReaderField
+
   private case class ExtractedField(name: String,
                                     tpe: Type,
-                                    functionName: TermName, args: List[Field], body: Tree) extends ReaderField
-  private case class FromExtractedReader(name: String, tpe: Type, jsonName: String, args: List[Field], body: Tree) extends ReaderField
+                                    functionName: TermName,
+                                    args: List[FunctionArgument],
+                                    body: Tree,
+                                    value: TermName,
+                                    isInitialized: TermName) extends ReaderField
 
+  private case class FromExtractedReader(name: String,
+                                         tpe: Type,
+                                         jsonName: String,
+                                         functionName: TermName,
+                                         args: List[FunctionArgument],
+                                         body: Tree,
+                                         value: TermName,
+                                         isInitialized: TermName,
+                                         tempIterator: TermName) extends ReaderField
 
-  private case class ReaderField1(name: String,
-                                 tpe: Type,
-                                 jsonFields: List[JsonField],
-                                 transformer: Option[DescriptorContext => Tree],
-                                 customJsonReader: Option[DescriptorContext => Tree])
+  private case class FunctionArgument(field: Field, value: TermName, isInitialized: TermName)
 
-  private case class JsonField(name: String, tpe: Type)
-
-  private class DescriptorContext(typeReaders: Int,
-                                  readerVariables: Int,
-                                  jsonVariables: Int) {
-    def registerFunction(fun: Tree): TermName = ???
-
-    def readerFieldTerm(name: String): TermName = ???
-    def jsonFieldTerm(name: String, tpe: Type): TermName = ???
-  }
 
   def deriveReader2[A: WeakTypeTag](description: ReaderMacroDescription): Expr[JsonReader[A]] = {
     val tpe = weakTypeOf[A]
@@ -71,7 +71,9 @@ trait ReaderDerivation
       SimpleField(
         name = field.name,
         tpe = field.tpe,
-        jsonName = field.name
+        jsonName = field.name,
+        value = TermName(c.freshName(field.name + "Value")),
+        isInitialized = TermName(c.freshName(field.name + "Init"))
       )
     }
 
@@ -93,16 +95,50 @@ trait ReaderDerivation
       }
     }
 
+    def buildArgument(field: Field, readerFields: List[ReaderField]): FunctionArgument = {
+
+
+      field match {
+        case Field.ClassField(name, _) =>
+          readerFields.collectFirst {
+            case f: SimpleField if f.name == name =>
+              FunctionArgument(field, f.value, f.isInitialized)
+            case f: ExtractedField if f.name == name =>
+              FunctionArgument(field, f.value, f.isInitialized)
+            case f: FromExtractedReader if f.name == name =>
+              FunctionArgument(field, f.value, f.isInitialized)
+          }.head
+        case Field.RawField(name, tpe) =>
+          readerFields.flatMap {
+            case f: SimpleField if f.jsonName == name && f.tpe =:= tpe =>
+              List(FunctionArgument(field, f.value, f.isInitialized))
+            case f: ExtractedField =>
+              f.args.collectFirst {
+                case FunctionArgument(rf: RawField, value, isInitialized)
+              }
+            case f: FromExtractedReader if f.name == name =>
+              FunctionArgument(field, f.value, f.isInitialized)
+            case _ =>
+              Nil
+          }
+
+          ???
+      }
+
+    }
+
     description.operations.foldLeft(readerFields) {
       case (fields, operation) =>
         operation match {
           case ReaderMacroOperation.ExtractFieldAs(field, tpe, as, fun) =>
-            mapField(fields, field)(_ => ExtractedField(
+            mapField(fields, field)(f => ExtractedField(
               name = field,
               tpe = tpe,
               functionName = TermName(c.freshName(field + "Fun")),
               args = List(Field.RawField(field, as)),
-              body = fun
+              body = fun,
+              value = f.value,
+              isInitialized = f.isInitialized
             ))
 
           case ReaderMacroOperation.ExtractFieldValue(field, from, fun) =>
@@ -114,19 +150,28 @@ trait ReaderDerivation
               body = fun
             ))
           case ReaderMacroOperation.ExtractFieldReader(field, from, fun) =>
-            mapField(fields, field)(_ => FromExtractedReader(
+            mapField(fields, field)(f => FromExtractedReader(
               name = field,
-              tpe = ???,
-              jsonName = ???,
+              tpe = f.tpe,
+              jsonName = f.jsonName,
+              functionName = TermName(c.freshName(field + "JsonFun")),
               args = from.toList,
-              body = ???
+              body = fun
             ))
         }
     }
   }
 
   private def allocateReaders(readerFields: List[ReaderField]): (List[(Type, TermName)], List[Tree]) = {
-    val jsonTypes = readerFields.flatMap(_.jsonFields.map(_.tpe))
+    val jsonTypes = readerFields.flatMap {
+      case SimpleField(_, tpe, _) =>
+        List(tpe)
+      case ExtractedField(_, _, _, args, _) =>
+        args.map(_.tpe)
+      case FromExtractedReader(_, _, _, _, args, _) =>
+        args.map(_.tpe)
+    }
+
     jsonTypes.foldLeft((List[(Type, TermName)](), List[Tree]())) {
       case ((types, trees), tpe) if !types.exists(_._1 =:= tpe) =>
         val term = TermName(c.freshName())
@@ -146,7 +191,14 @@ trait ReaderDerivation
   }
 
   private def allocateDefaultValues(readerFields: List[ReaderField]): (List[(Type, TermName)], List[Tree]) = {
-    val allTypes = readerFields.flatMap(f => f.tpe :: f.jsonFields.map(_.tpe))
+    val allTypes = readerFields.flatMap {
+      case SimpleField(_, tpe, _) =>
+        List(tpe)
+      case ExtractedField(_, tpe, _, args, _) =>
+        tpe :: args.map(_.tpe)
+      case FromExtractedReader(_, tpe, _, _, args, _) =>
+        tpe :: args.map(_.tpe)
+    }
     allTypes.foldLeft((List[(Type, TermName)](), List[Tree]())) {
       case ((types, trees), tpe) if !types.exists(_._1 =:= tpe) =>
         val term = TermName(c.freshName())

@@ -10,7 +10,10 @@ trait ReaderBuilderUtils extends MacroUtils {
 
   case class ReaderMacroDescription(operations: Seq[ReaderMacroOperation])
 
-  sealed trait Field
+  sealed trait Field {
+    def name: String
+    def tpe: Type
+  }
   object Field {
     final case class ClassField(name: String, tpe: Type) extends Field
     final case class RawField(name: String, tpe: Type) extends Field
