@@ -32,9 +32,12 @@ trait MacroUtils extends BaseMacroDefinitions
   case class BuilderField(name: String, tpe: Type)
 
   implicit lazy val builderFieldUnliftable: Unliftable[BuilderField] = Unliftable[BuilderField] {
-    case q"((${ValDef(_, name, t, _)}) => ${b: SelectChain})"
+    case lambda@q"((${ValDef(_, name, _, _)}) => ${b: SelectChain})"
       if b.chain.size == 2 && name.decodedName.toString == b.chain.head =>
-      BuilderField(b.chain(1), t.tpe)
+      val tpe = lambda match {
+        case q"($_ => ${body: Tree})" => body.tpe
+      }
+      BuilderField(b.chain(1), tpe)
   }
 
   object Untyped {

@@ -57,7 +57,9 @@ class SemiautoDerivationMacro(val c: blackbox.Context)
   def describedJsonReader[A: WeakTypeTag](description: Expr[ReaderDescription[A]]): Expr[JsonReader[A]] = {
     val tpe = weakTypeOf[A]
     if (isCaseClass(tpe)) {
-      deriveReader[A](unliftReaderMacroDescription(description))
+      val res = deriveReader[A](unliftReaderMacroDescription(description))
+      info(show(res.tree), true)
+      res
     } else {
       fail(s"Can't auto derive JsonWriter[$tpe]")
     }

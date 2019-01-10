@@ -38,8 +38,8 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
       ReaderDescription.BuilderOperation.ExtractFieldValue(
         field = "a",
         from = Seq(
-          ReaderDescription.Field[String]("b"),
-          ReaderDescription.Field[String]("c")
+          ReaderDescription.Field.ClassField[String]("b"),
+          ReaderDescription.Field.ClassField[Any]("c")
         ),
         fun = fun
       )
@@ -58,8 +58,8 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
       ReaderDescription.BuilderOperation.ExtractFieldValue(
         field = "a",
         from = Seq(
-          ReaderDescription.Field[String]("b"),
-          ReaderDescription.Field[String]("c")
+          ReaderDescription.Field.RawField[String]("b"),
+          ReaderDescription.Field.RawField[Any]("c")
         ),
         fun = fun
       )
@@ -78,8 +78,8 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
       ReaderDescription.BuilderOperation.ExtractFieldValue(
         field = "a",
         from = Seq(
-          ReaderDescription.Field[String]("b"),
-          ReaderDescription.Field[String]("c")
+          ReaderDescription.Field.ClassField[String]("b"),
+          ReaderDescription.Field.ClassField[Any]("c")
         ),
         fun = fun
       )
@@ -98,8 +98,8 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
       ReaderDescription.BuilderOperation.ExtractFieldValue(
         field = "a",
         from = Seq(
-          ReaderDescription.Field[String]("b"),
-          ReaderDescription.Field[String]("c")
+          ReaderDescription.Field.ClassField[String]("b"),
+          ReaderDescription.Field.RawField[Any]("c")
         ),
         fun = fun
       )
@@ -118,8 +118,8 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
       ReaderDescription.BuilderOperation.ExtractFieldValue(
         field = "a",
         from = Seq(
-          ReaderDescription.Field[String]("b"),
-          ReaderDescription.Field[String]("c")
+          ReaderDescription.Field.RawField[String]("b"),
+          ReaderDescription.Field.ClassField[Any]("c")
         ),
         fun = fun
       )
@@ -138,8 +138,8 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
       ReaderDescription.BuilderOperation.ExtractFieldValue(
         field = "a",
         from = Seq(
-          ReaderDescription.Field[String]("b"),
-          ReaderDescription.Field[String]("c")
+          ReaderDescription.Field.RawField[String]("b"),
+          ReaderDescription.Field.RawField[Any]("c")
         ),
         fun = fun
       )
@@ -158,8 +158,8 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
       ReaderDescription.BuilderOperation.ExtractFieldReader(
         field = "a",
         from = Seq(
-          ReaderDescription.Field[String]("b"),
-          ReaderDescription.Field[String]("c")
+          ReaderDescription.Field.ClassField[String]("b"),
+          ReaderDescription.Field.ClassField[Any]("c")
         ),
         fun = fun
       )
@@ -178,8 +178,8 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
       ReaderDescription.BuilderOperation.ExtractFieldReader(
         field = "a",
         from = Seq(
-          ReaderDescription.Field[String]("b"),
-          ReaderDescription.Field[String]("c")
+          ReaderDescription.Field.RawField[String]("b"),
+          ReaderDescription.Field.RawField[Any]("c")
         ),
         fun = fun
       )
@@ -198,8 +198,8 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
       ReaderDescription.BuilderOperation.ExtractFieldReader(
         field = "a",
         from = Seq(
-          ReaderDescription.Field[String]("b"),
-          ReaderDescription.Field[String]("c")
+          ReaderDescription.Field.ClassField[String]("b"),
+          ReaderDescription.Field.ClassField[Any]("c")
         ),
         fun = fun
       )
@@ -218,8 +218,8 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
       ReaderDescription.BuilderOperation.ExtractFieldReader(
         field = "a",
         from = Seq(
-          ReaderDescription.Field[String]("b"),
-          ReaderDescription.Field[String]("c")
+          ReaderDescription.Field.ClassField[String]("b"),
+          ReaderDescription.Field.RawField[Any]("c")
         ),
         fun = fun
       )
@@ -238,8 +238,8 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
       ReaderDescription.BuilderOperation.ExtractFieldReader(
         field = "a",
         from = Seq(
-          ReaderDescription.Field[String]("b"),
-          ReaderDescription.Field[String]("c")
+          ReaderDescription.Field.RawField[String]("b"),
+          ReaderDescription.Field.ClassField[Any]("c")
         ),
         fun = fun
       )
@@ -258,8 +258,8 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
       ReaderDescription.BuilderOperation.ExtractFieldReader(
         field = "a",
         from = Seq(
-          ReaderDescription.Field[String]("b"),
-          ReaderDescription.Field[String]("c")
+          ReaderDescription.Field.RawField[String]("b"),
+          ReaderDescription.Field.RawField[Any]("c")
         ),
         fun = fun
       )
