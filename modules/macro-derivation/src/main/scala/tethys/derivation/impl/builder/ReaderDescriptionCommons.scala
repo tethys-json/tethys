@@ -1,6 +1,6 @@
 package tethys.derivation.impl.builder
 
-import tethys.derivation.builder.{ReaderBuilder, ReaderDescription}
+import tethys.derivation.builder.{ReaderBuilder, ReaderDerivationConfig, ReaderDescription}
 
 import scala.reflect.macros.blackbox
 
@@ -18,13 +18,17 @@ trait ReaderDescriptionCommons extends ReaderBuilderUtils {
     }
   }
 
+  protected lazy val emptyReaderConfig: Expr[ReaderDerivationConfig] = c.Expr[ReaderDerivationConfig](c.untypecheck(
+    q"tethys.derivation.builder.ReaderDerivationConfig.apply()"
+  ))
+
   private def extractDescription(tree: Tree): ReaderMacroDescription = tree match {
     // ===== ROOT =====
     case q"ReaderBuilder.apply[$_]" =>
-      ReaderMacroDescription(Seq())
+      ReaderMacroDescription(emptyReaderConfig, Seq())
 
     case q"$_.ReaderBuilder.apply[$_]" =>
-      ReaderMacroDescription(Seq())
+      ReaderMacroDescription(emptyReaderConfig, Seq())
 
     // ===== FieldAs =====
     case q"${rest: Tree}.extract[${tpe: Tree}](${f: BuilderField}).as[${as: Tree}].apply(${fun: Tree})" =>
@@ -57,6 +61,13 @@ trait ReaderDescriptionCommons extends ReaderBuilderUtils {
       val description = extractDescription(rest)
       description.copy(operations = description.operations :+ ReaderMacroOperation.ExtractFieldReader(
         f.name, fs ++ ands, fun
+      ))
+
+    // ===== FieldStyle =====
+    case q"${rest: Tree}.fieldStyle(${style: Tree})" =>
+      val description = extractDescription(rest)
+      description.copy(config = c.Expr[ReaderDerivationConfig](
+        q"${description.config.tree}.copy(fieldStyle = _root_.scala.Some($style))"
       ))
 
     // ===== NOPE =====

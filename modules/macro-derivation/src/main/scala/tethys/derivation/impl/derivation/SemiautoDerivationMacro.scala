@@ -1,6 +1,6 @@
 package tethys.derivation.impl.derivation
 
-import tethys.derivation.builder.{ReaderBuilder, ReaderDescription, WriterBuilder, WriterDescription}
+import tethys.derivation.builder._
 import tethys.derivation.impl.builder.{ReaderDescriptionCommons, WriterBuilderCommons}
 import tethys.{JsonObjectWriter, JsonReader}
 
@@ -9,8 +9,7 @@ import scala.reflect.macros.blackbox
 class SemiautoDerivationMacro(val c: blackbox.Context)
   extends WriterDerivation
   with ReaderDerivation
-  with WriterBuilderCommons
-  with ReaderDescriptionCommons {
+  with WriterBuilderCommons {
 
   import c.universe._
 
@@ -57,9 +56,19 @@ class SemiautoDerivationMacro(val c: blackbox.Context)
   def describedJsonReader[A: WeakTypeTag](description: Expr[ReaderDescription[A]]): Expr[JsonReader[A]] = {
     val tpe = weakTypeOf[A]
     if (isCaseClass(tpe)) {
-      val res = deriveReader[A](unliftReaderMacroDescription(description))
-      info(show(res.tree), true)
-      res
+      deriveReader[A](unliftReaderMacroDescription(description))
+    } else {
+      fail(s"Can't auto derive JsonWriter[$tpe]")
+    }
+  }
+
+  def jsonReaderWithConfig[A: WeakTypeTag](config: Expr[ReaderDerivationConfig]): Expr[JsonReader[A]] = {
+    val tpe = weakTypeOf[A]
+    if (isCaseClass(tpe)) {
+      deriveReader[A](ReaderMacroDescription(
+        config = c.Expr[ReaderDerivationConfig](c.untypecheck(config.tree)),
+        operations = Seq()
+      ))
     } else {
       fail(s"Can't auto derive JsonWriter[$tpe]")
     }

@@ -1,5 +1,6 @@
 package tethys.derivation.impl.builder
 
+import tethys.derivation.builder.ReaderDerivationConfig
 import tethys.derivation.impl.MacroUtils
 
 import scala.reflect.macros.blackbox
@@ -8,7 +9,7 @@ trait ReaderBuilderUtils extends MacroUtils {
   val c: blackbox.Context
   import c.universe._
 
-  case class ReaderMacroDescription(operations: Seq[ReaderMacroOperation])
+  case class ReaderMacroDescription(config: c.Expr[ReaderDerivationConfig], operations: Seq[ReaderMacroOperation])
 
   sealed trait Field {
     def name: String
@@ -29,13 +30,13 @@ trait ReaderBuilderUtils extends MacroUtils {
   }
 
   implicit lazy val readerMacroDescriptionLiftable: Liftable[ReaderMacroDescription] = Liftable[ReaderMacroDescription] {
-    case ReaderMacroDescription(operations) =>
-      q"$buildersPack.ReaderDescription(_root_.scala.Seq(..$operations))"
+    case ReaderMacroDescription(config, operations) =>
+      q"$buildersPack.ReaderDescription(${config.tree} ,_root_.scala.Seq(..$operations))"
   }
 
   implicit lazy val readerMacroDescriptionUnliftable: Unliftable[ReaderMacroDescription] = Unliftable[ReaderMacroDescription] {
-    case q"$_.ReaderDescription.apply[$_]($_.Seq.apply[$_](..${operations: Seq[ReaderMacroOperation]}))" =>
-      ReaderMacroDescription(operations)
+    case q"$_.ReaderDescription.apply[$_](${config: Tree} ,$_.Seq.apply[$_](..${operations: Seq[ReaderMacroOperation]}))" =>
+      ReaderMacroDescription(c.Expr[ReaderDerivationConfig](c.untypecheck(config)), operations)
   }
 
   implicit lazy val fieldLiftable: Liftable[Field] = Liftable[Field] {

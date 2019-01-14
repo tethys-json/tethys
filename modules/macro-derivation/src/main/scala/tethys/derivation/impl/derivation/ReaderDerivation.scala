@@ -1,7 +1,9 @@
 package tethys.derivation.impl.derivation
 
 import tethys.JsonReader
-import tethys.derivation.impl.builder.ReaderBuilderUtils
+import tethys.derivation.builder.FieldStyle.StyleReference
+import tethys.derivation.builder.{FieldStyle, ReaderDerivationConfig}
+import tethys.derivation.impl.builder.{ReaderBuilderUtils, ReaderDescriptionCommons}
 import tethys.derivation.impl.{BaseMacroDefinitions, CaseClassUtils}
 import tethys.readers.tokens.TokenIterator
 import tethys.readers.{FieldName, JsonReaderDefaultValue}
@@ -12,7 +14,7 @@ trait ReaderDerivation
   extends BaseMacroDefinitions
     with CaseClassUtils
     with DerivationUtils
-    with ReaderBuilderUtils {
+    with ReaderDescriptionCommons {
   val c: blackbox.Context
   import c.universe._
 
@@ -62,32 +64,32 @@ trait ReaderDerivation
   private case class FunctionArgument(field: Field, value: TermName, isInitialized: TermName)
 
   def deriveReader[A: WeakTypeTag]: Expr[JsonReader[A]] = {
-    deriveReader(ReaderMacroDescription(Seq()))
+    deriveReader(ReaderMacroDescription(emptyReaderConfig, Seq()))
   }
 
   def deriveReader[A: WeakTypeTag](description: ReaderMacroDescription): Expr[JsonReader[A]] = {
     val tpe = weakTypeOf[A]
     val classDef = caseClassDefinition(tpe)
 
-    val readerFields: List[ReaderField] = classDef.fields.map { field =>
-      SimpleField(
-        name = field.name,
-        tpe = field.tpe,
-        jsonName = field.name,
-        value = TermName(c.freshName(field.name + "Value")),
-        isInitialized = TermName(c.freshName(field.name + "Init"))
-      )
-    }
+    val readerFields = applyReaderConfig(description.config)
+      .andThen(applyOperations(description.operations))
+      .apply(classDef.fields.map { field =>
+        SimpleField(
+          name = field.name,
+          tpe = field.tpe,
+          jsonName = field.name,
+          value = TermName(c.freshName(field.name + "Value")),
+          isInitialized = TermName(c.freshName(field.name + "Init"))
+        )
+      })
 
-    val alteredFields = applyDescription(readerFields, description)
-
-    val (typeReaders, readerTrees) = allocateReaders(alteredFields)
-    val (typeDefaultValues, defauleValuesTrees) = allocateDefaultValues(alteredFields)
-    val variablesTrees = allocateVariables(alteredFields, typeDefaultValues)
-    val functionsTrees = allocateFunctions(alteredFields)
-    val cases = allocateCases(alteredFields, typeReaders)
-    val rawPostProcessing = allocateRawFieldsPostProcessing(alteredFields)
-    val transformations = allocateTransformationsLoop(alteredFields)
+    val (typeReaders, readerTrees) = allocateReaders(readerFields)
+    val (typeDefaultValues, defaultValuesTrees) = allocateDefaultValues(readerFields)
+    val variablesTrees = allocateVariables(readerFields, typeDefaultValues)
+    val functionsTrees = allocateFunctions(readerFields)
+    val cases = allocateCases(readerFields, typeReaders)
+    val rawPostProcessing = allocateRawFieldsPostProcessing(readerFields)
+    val transformations = allocateTransformationsLoop(readerFields)
 
     val name = TermName(c.freshName("name"))
 
@@ -95,7 +97,7 @@ trait ReaderDerivation
       c.untypecheck {
         q"""
            new $jsonReaderType[$tpe] {
-              ..$defauleValuesTrees
+              ..$defaultValuesTrees
               ${provideThisReaderImplicit(tpe)}
               ..$readerTrees
               ..$functionsTrees
@@ -119,7 +121,7 @@ trait ReaderDerivation
 
                   $transformations
 
-                  new ${weakTypeOf[A]}(..${alteredFields.map(_.value)})
+                  new ${weakTypeOf[A]}(..${readerFields.map(_.value)})
                 }
               }
            }: $jsonReaderType[$tpe]
@@ -128,7 +130,14 @@ trait ReaderDerivation
     }
   }
 
-  private def applyDescription(readerFields: List[ReaderField], description: ReaderMacroDescription): List[ReaderField] = {
+  private def applyReaderConfig(configExpr: Expr[ReaderDerivationConfig]): List[SimpleField] => List[SimpleField] = readerFields => {
+    val config = c.eval(configExpr)
+    config.fieldStyle.fold(readerFields) { fieldStyle =>
+      readerFields.map(f => f.copy(jsonName = fieldStyle.applyStyle(f.jsonName)))
+    }
+  }
+
+  private def applyOperations(operations: Seq[ReaderMacroOperation]): List[ReaderField] => List[ReaderField] = readerFields => {
     def mapField(fields: List[ReaderField], name: String)(f: SimpleField => ReaderField): List[ReaderField] = {
       fields.map {
         case field: SimpleField if field.name == name => f(field)
@@ -173,7 +182,7 @@ trait ReaderDerivation
       }
     }
 
-    description.operations.foldLeft(readerFields) {
+    operations.foldLeft(readerFields) {
       case (fields, operation) =>
         operation match {
           case ReaderMacroOperation.ExtractFieldAs(field, tpe, as, fun) =>

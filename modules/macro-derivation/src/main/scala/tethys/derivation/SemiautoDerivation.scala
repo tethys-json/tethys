@@ -18,6 +18,7 @@ trait SemiautoDerivation {
   def jsonReader[A]: JsonReader[A] = macro SemiautoDerivationMacro.simpleJsonReader[A]
   def jsonReader[A](description: ReaderDescription[A]): JsonReader[A] = macro SemiautoDerivationMacro.describedJsonReader[A]
   def jsonReader[A](builder: ReaderBuilder[A]): JsonReader[A] = macro SemiautoDerivationMacro.jsonReaderWithBuilder[A]
+  def jsonReader[A](config: ReaderDerivationConfig): JsonReader[A] = macro SemiautoDerivationMacro.jsonReaderWithConfig[A]
 
   def describe[A](builder: ReaderBuilder[A]): ReaderDescription[A] = macro ReaderDescriptionMacro.readerDescription[A]
 

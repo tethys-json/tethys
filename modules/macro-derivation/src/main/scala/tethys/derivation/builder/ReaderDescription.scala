@@ -1,6 +1,8 @@
 package tethys.derivation.builder
 
-case class ReaderDescription[A](operations: Seq[ReaderDescription.BuilderOperation])
+case class ReaderDerivationConfig(fieldStyle: Option[FieldStyle] = None)
+
+case class ReaderDescription[A](config: ReaderDerivationConfig, operations: Seq[ReaderDescription.BuilderOperation])
 
 object ReaderDescription {
   sealed trait Field[A]

@@ -2,6 +2,8 @@ package tethys.derivation.builder
 
 import java.util.regex.Pattern
 
+import scala.annotation.StaticAnnotation
+
 trait FieldStyle  { self =>
   def applyStyle(field: String): String
 
@@ -17,9 +19,19 @@ trait FieldStyle  { self =>
   def >>(that: String => String): FieldStyle = andThen(that)
 }
 
-//statical annotation for aliasing
-// Names transformations adopted from scala enumeratum
+
 object FieldStyle {
+
+  def apply(fun: String => String): FieldStyle = new FieldStyle {
+    override def applyStyle(field: String): String = fun(field)
+  }
+
+  class Ref(fieldStyle: FieldStyle) extends StaticAnnotation
+  trait StyleReference extends FieldStyle {
+    final override def applyStyle(field: String): String = throw new RuntimeException("StyleReference should not be used at runtime")
+  }
+
+  // Names transformations adopted from scala enumeratum
   private val regexp1: Pattern = Pattern.compile("([A-Z]+)([A-Z][a-z])")
   private val regexp2: Pattern = Pattern.compile("([a-z\\d])([A-Z])")
   private val replacement: String = "$1_$2"
