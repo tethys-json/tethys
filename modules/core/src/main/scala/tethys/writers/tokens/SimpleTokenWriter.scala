@@ -1,6 +1,5 @@
 package tethys.writers.tokens
 
-import tethys.JsonStreaming
 import tethys.commons.TokenNode
 import tethys.commons.TokenNode._
 import tethys.readers.FieldName
@@ -55,7 +54,8 @@ class SimpleTokenWriter extends TokenWriter {
   def withRawJsonSupport(implicit producer: TokenIteratorProducer): TokenWriter = new SimpleTokenWriter {
     import tethys._
     override def writeRawJson(json: String): this.type = {
-      JsonStreaming.streamValue(json.toTokenIterator, this)(FieldName())
+      val tokenIterator = json.toTokenIterator.fold(throw _, identity)
+      JsonStreaming.streamValue(tokenIterator, this)(FieldName())
       this
     }
   }
