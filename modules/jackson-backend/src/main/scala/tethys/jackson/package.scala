@@ -3,6 +3,7 @@ package tethys
 import java.io.{Reader, Writer}
 
 import com.fasterxml.jackson.core.JsonFactory
+import tethys.readers.{FieldName, ReaderError}
 import tethys.readers.tokens.{TokenIterator, TokenIteratorProducer}
 import tethys.writers.tokens.{TokenWriter, TokenWriterProducer}
 
@@ -21,8 +22,8 @@ package object jackson {
   }
 
   implicit def jacksonTokenIteratorProducer(implicit jsonFactory: JsonFactory = defaultJsonFactory): TokenIteratorProducer = new TokenIteratorProducer {
-    override def fromReader(reader: Reader): TokenIterator = {
-      JacksonTokenIterator.fromFreshParser(jsonFactory.createParser(reader))
+    override def fromReader(reader: Reader): Either[ReaderError, TokenIterator] = {
+      ReaderError.catchNonFatal(JacksonTokenIterator.fromFreshParser(jsonFactory.createParser(reader)))(FieldName())
     }
   }
 }

@@ -102,9 +102,9 @@ object TokenNode {
   implicit class TokenNodesOps(val json: String) extends AnyVal {
     def jsonAsTokensList(implicit producer: TokenIteratorProducer): List[TokenNode] = {
       import tethys._
-      val iterator = json.toTokenIterator
+      val iterator = json.toTokenIterator.fold(throw _, identity)
       val builder = List.newBuilder[TokenNode]
-      while(!iterator.currentToken().isEmpty) {
+      while (!iterator.currentToken().isEmpty) {
         val token = iterator.currentToken()
         val node = {
           if (token.isArrayStart) ArrayStartNode
