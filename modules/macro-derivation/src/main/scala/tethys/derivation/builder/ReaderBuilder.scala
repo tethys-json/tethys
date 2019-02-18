@@ -7,6 +7,8 @@ import scala.annotation.compileTimeOnly
 sealed trait ReaderBuilder[A] {
   def extract[B](field: (A) => B): DependentFieldAs[A, B]
   def extractReader[B](field: (A) => B): DependentField0[A, JsonReader[_ <: B]]
+
+  def fieldStyle(style: FieldStyle): ReaderBuilder[A]
 }
 
 object ReaderBuilder {

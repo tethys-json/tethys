@@ -6,6 +6,7 @@ import tethys.readers.tokens.TokenIterator.CopySupport
 
 import scala.annotation.tailrec
 import scala.collection.mutable
+import scala.collection.immutable
 
 trait BaseTokenIterator extends TokenIterator {
   override def next(): this.type = {
@@ -21,8 +22,8 @@ trait BaseTokenIterator extends TokenIterator {
 
   override def collectExpression(): TokenIterator with CopySupport = {
     val queue = createTokenNode() match {
-      case (node, 0) => mutable.Queue[TokenNode](node)
-      case (node, _) => collectTokens(1, mutable.Queue.newBuilder[TokenNode] += node)
+      case (node, 0) => immutable.Queue[TokenNode](node)
+      case (node, _) => collectTokens(1, immutable.Queue.newBuilder[TokenNode] += node)
     }
 
     nextToken()//set pointer after this expression end
@@ -42,7 +43,7 @@ trait BaseTokenIterator extends TokenIterator {
   }
 
   @tailrec
-  private def collectTokens(started: Int, builder: mutable.Builder[TokenNode, mutable.Queue[TokenNode]]): mutable.Queue[TokenNode] = {
+  private def collectTokens(started: Int, builder: mutable.Builder[TokenNode, immutable.Queue[TokenNode]]): immutable.Queue[TokenNode] = {
     if(started == 0) builder.result()
     else {
       nextToken()

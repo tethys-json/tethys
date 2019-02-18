@@ -5,7 +5,9 @@ import tethys.commons.Token
 import tethys.commons.Token._
 import tethys.readers.tokens.{BaseTokenIterator, TokenIterator}
 
-class JacksonTokenIterator(jsonParser: JsonParser) extends BaseTokenIterator {
+import scala.annotation.switch
+
+final class JacksonTokenIterator(jsonParser: JsonParser) extends BaseTokenIterator {
   private[this] var token: Token = fromId(jsonParser.currentTokenId())
   override def currentToken(): Token = token
 
@@ -36,7 +38,7 @@ class JacksonTokenIterator(jsonParser: JsonParser) extends BaseTokenIterator {
 
   override def boolean(): Boolean = jsonParser.getBooleanValue
 
-  private def fromId(tokenId: Int): Token = tokenId match {
+  private def fromId(tokenId: Int): Token = (tokenId: @switch) match {
     case JsonTokenId.ID_START_OBJECT => ObjectStartToken
     case JsonTokenId.ID_END_OBJECT => ObjectEndToken
     case JsonTokenId.ID_START_ARRAY => ArrayStartToken

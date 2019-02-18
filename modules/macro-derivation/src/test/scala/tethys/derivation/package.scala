@@ -22,4 +22,6 @@ package object derivation {
   case class SeqMaster2(a: Seq[SeqMaster3])
   case class SeqMaster3(a: Seq[SeqMaster4])
   case class SeqMaster4(a: Seq[Int])
+
+  case class CamelCaseNames(someParam: Int, IDParam: Int, simple: Int)
 }

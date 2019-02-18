@@ -7,16 +7,17 @@ import tethys.readers.tokens.TokenIterator.CopySupport
 
 import scala.annotation.tailrec
 import scala.collection.mutable
+import scala.collection.immutable
 import scala.reflect.ClassTag
 
-class QueueIterator(nodes: mutable.Queue[TokenNode]) extends BaseTokenIterator with CopySupport {
+class QueueIterator(private var nodes: immutable.Queue[TokenNode]) extends BaseTokenIterator with CopySupport {
 
   override def copy(): QueueIterator = QueueIterator(nodes)
 
-  override def currentToken(): Token = if(nodes.isEmpty) Token.Empty else nodes.front.token
+  override def currentToken(): Token = if(nodes.isEmpty) Token.Empty else nodes.head.token
 
   override def nextToken(): Token = if(nodes.isEmpty) Token.Empty else {
-    nodes.dequeue()
+    nodes = nodes.tail
     currentToken()
   }
 
@@ -98,15 +99,15 @@ class QueueIterator(nodes: mutable.Queue[TokenNode]) extends BaseTokenIterator w
   override def collectExpression(): TokenIterator with CopySupport = {
     val node = currentNode()
     val queue = getTokenShift(node) match {
-      case 0 => mutable.Queue[TokenNode](node)
-      case _ => collectTokens(1, mutable.Queue.newBuilder[TokenNode] += node)
+      case 0 => immutable.Queue[TokenNode](node)
+      case _ => collectTokens(1, immutable.Queue.newBuilder[TokenNode] += node)
     }
 
     new QueueIterator(queue)
   }
 
   @tailrec
-  private def collectTokens(started: Int, builder: mutable.Builder[TokenNode, mutable.Queue[TokenNode]]): mutable.Queue[TokenNode] = {
+  private def collectTokens(started: Int, builder: mutable.Builder[TokenNode, immutable.Queue[TokenNode]]): immutable.Queue[TokenNode] = {
     if(started == 0) builder.result()
     else {
       val node = currentNode()
@@ -116,7 +117,11 @@ class QueueIterator(nodes: mutable.Queue[TokenNode]) extends BaseTokenIterator w
 
   private def currentNode(): TokenNode = {
     if(nodes.isEmpty) throw new NoSuchElementException("Can not finish expression")
-    else nodes.dequeue()
+    else {
+      val (head, tail) = nodes.dequeue
+      nodes = tail
+      head
+    }
   }
 
   private def getTokenShift(node: TokenNode): Int = node match {
@@ -131,7 +136,7 @@ class QueueIterator(nodes: mutable.Queue[TokenNode]) extends BaseTokenIterator w
 }
 
 object QueueIterator{
-  def apply(nodes: Seq[TokenNode]): QueueIterator = new QueueIterator(mutable.Queue[TokenNode](nodes: _*))
+  def apply(nodes: Seq[TokenNode]): QueueIterator = new QueueIterator(immutable.Queue[TokenNode](nodes: _*))
 
   final class WrongTokenError(message: String) extends Exception(message, null)
 }
