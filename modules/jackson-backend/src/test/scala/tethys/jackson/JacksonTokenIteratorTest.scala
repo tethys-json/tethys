@@ -113,7 +113,7 @@ class JacksonTokenIteratorTest extends FlatSpec with Matchers {
   it should "generate proper tokens seq" in {
     val json = """{"a":1,"b":["s",true,{"a":null},1.0,false]}"""
 
-    json.jsonAsTokensList shouldBe Right(obj(
+    json.jsonAsTokensList shouldBe obj(
       "a" -> 1,
       "b" -> arr(
         "s",
@@ -124,6 +124,6 @@ class JacksonTokenIteratorTest extends FlatSpec with Matchers {
         1.0,
         false
       )
-    ))
+    )
   }
 }

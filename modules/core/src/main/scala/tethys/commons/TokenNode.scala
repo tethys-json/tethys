@@ -100,37 +100,36 @@ object TokenNode {
   }
 
   implicit class TokenNodesOps(val json: String) extends AnyVal {
-    def jsonAsTokensList(implicit producer: TokenIteratorProducer): Either[ReaderError, List[TokenNode]] = {
+    def jsonAsTokensList(implicit producer: TokenIteratorProducer): List[TokenNode] = {
       import tethys._
-      json.toTokenIterator.right.map { iterator =>
-        val builder = List.newBuilder[TokenNode]
-        while(!iterator.currentToken().isEmpty) {
-          val token = iterator.currentToken()
-          val node = {
-            if (token.isArrayStart) ArrayStartNode
-            else if (token.isArrayEnd) ArrayEndNode
-            else if (token.isObjectStart) ObjectStartNode
-            else if (token.isObjectEnd) ObjectEndNode
-            else if (token.isNullValue) NullValueNode
-            else if (token.isFieldName) FieldNameNode(iterator.fieldName())
-            else if (token.isStringValue) StringValueNode(iterator.string())
-            else if (token.isNumberValue) iterator.number() match {
-              case v: java.lang.Short => ShortValueNode(v)
-              case v: java.lang.Integer => IntValueNode(v)
-              case v: java.lang.Long => LongValueNode(v)
-              case v: java.lang.Float => FloatValueNode(v)
-              case v: java.lang.Double => DoubleValueNode(v)
-              case n => NumberValueNode(n)
-            }
-            else BooleanValueNode(iterator.boolean())
+      val iterator = json.toTokenIterator.fold(throw _, identity)
+      val builder = List.newBuilder[TokenNode]
+      while (!iterator.currentToken().isEmpty) {
+        val token = iterator.currentToken()
+        val node = {
+          if (token.isArrayStart) ArrayStartNode
+          else if (token.isArrayEnd) ArrayEndNode
+          else if (token.isObjectStart) ObjectStartNode
+          else if (token.isObjectEnd) ObjectEndNode
+          else if (token.isNullValue) NullValueNode
+          else if (token.isFieldName) FieldNameNode(iterator.fieldName())
+          else if (token.isStringValue) StringValueNode(iterator.string())
+          else if (token.isNumberValue) iterator.number() match {
+            case v: java.lang.Short => ShortValueNode(v)
+            case v: java.lang.Integer => IntValueNode(v)
+            case v: java.lang.Long => LongValueNode(v)
+            case v: java.lang.Float => FloatValueNode(v)
+            case v: java.lang.Double => DoubleValueNode(v)
+            case n => NumberValueNode(n)
           }
-
-          builder += node
-          iterator.next()
+          else BooleanValueNode(iterator.boolean())
         }
 
-        builder.result()
+        builder += node
+        iterator.next()
       }
+
+      builder.result()
     }
   }
 
