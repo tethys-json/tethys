@@ -9,6 +9,7 @@ sealed trait ReaderBuilder[A] {
   def extractReader[B](field: (A) => B): DependentField0[A, JsonReader[_ <: B]]
 
   def fieldStyle(style: FieldStyle): ReaderBuilder[A]
+  def strict: ReaderBuilder[A]
 }
 
 object ReaderBuilder {

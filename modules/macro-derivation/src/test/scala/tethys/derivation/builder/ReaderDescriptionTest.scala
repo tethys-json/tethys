@@ -13,9 +13,9 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
     describe(ReaderBuilder[Foo]) shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq())
   }
 
-  it should "build description with field style" in {
-    describe(ReaderBuilder[Foo].fieldStyle(FieldStyle.uppercase)) shouldBe ReaderDescription[Foo](
-      ReaderDerivationConfig(fieldStyle = Some(FieldStyle.uppercase)),
+  it should "build description with config" in {
+    describe(ReaderBuilder[Foo].fieldStyle(FieldStyle.uppercase).strict) shouldBe ReaderDescription[Foo](
+      ReaderDerivationConfig.withFieldStyle(FieldStyle.uppercase).strict,
       Seq()
     )
   }

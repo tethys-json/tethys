@@ -1,12 +1,18 @@
 package tethys.derivation.builder
 
-case class ReaderDerivationConfig(fieldStyle: Option[FieldStyle]) {
+case class ReaderDerivationConfig(fieldStyle: Option[FieldStyle],
+                                  isStrict: Boolean) {
   def withFieldStyle(fieldStyle: FieldStyle): ReaderDerivationConfig = this.copy(fieldStyle = Some(fieldStyle))
+  def strict: ReaderDerivationConfig = this.copy(isStrict = true)
 }
 
 object ReaderDerivationConfig {
-  def empty: ReaderDerivationConfig = ReaderDerivationConfig(None)
-  def withFieldStyle(fieldStyle: FieldStyle): ReaderDerivationConfig = empty.copy(fieldStyle = Some(fieldStyle))
+  def empty: ReaderDerivationConfig = ReaderDerivationConfig(
+    fieldStyle = None,
+    isStrict = false
+  )
+  def withFieldStyle(fieldStyle: FieldStyle): ReaderDerivationConfig = empty.withFieldStyle(fieldStyle)
+  def strict: ReaderDerivationConfig = empty.strict
 }
 
 case class ReaderDescription[A](config: ReaderDerivationConfig, operations: Seq[ReaderDescription.BuilderOperation])

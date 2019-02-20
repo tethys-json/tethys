@@ -70,8 +70,9 @@ trait ReaderDerivation
   def deriveReader[A: WeakTypeTag](description: ReaderMacroDescription): Expr[JsonReader[A]] = {
     val tpe = weakTypeOf[A]
     val classDef = caseClassDefinition(tpe)
+    val config = c.eval(description.config)
 
-    val readerFields = applyReaderConfig(description.config)
+    val readerFields = applyFieldStyle(config.fieldStyle)
       .andThen(applyOperations(description.operations))
       .apply(classDef.fields.map { field =>
         SimpleField(
@@ -87,7 +88,7 @@ trait ReaderDerivation
     val (typeDefaultValues, defaultValuesTrees) = allocateDefaultValues(readerFields)
     val variablesTrees = allocateVariables(readerFields, typeDefaultValues)
     val functionsTrees = allocateFunctions(readerFields)
-    val cases = allocateCases(readerFields, typeReaders)
+    val cases = allocateCases(config.isStrict, readerFields, typeReaders)
     val rawPostProcessing = allocateRawFieldsPostProcessing(readerFields)
     val transformations = allocateTransformationsLoop(readerFields)
 
@@ -130,10 +131,9 @@ trait ReaderDerivation
     }
   }
 
-  private def applyReaderConfig(configExpr: Expr[ReaderDerivationConfig]): List[SimpleField] => List[SimpleField] = readerFields => {
-    val config = c.eval(configExpr)
-    config.fieldStyle.fold(readerFields) { fieldStyle =>
-      readerFields.map(f => f.copy(jsonName = fieldStyle.applyStyle(f.jsonName)))
+  private def applyFieldStyle(fieldStyle: Option[FieldStyle]): List[SimpleField] => List[SimpleField] = readerFields => {
+    fieldStyle.fold(readerFields) { style =>
+      readerFields.map(f => f.copy(jsonName = style.applyStyle(f.jsonName)))
     }
   }
 
@@ -320,7 +320,7 @@ trait ReaderDerivation
   }
 
 
-  private def allocateCases(readerFields: List[ReaderField], readers: List[(Type, TermName)]): List[CaseDef] = {
+  private def allocateCases(isStrict: Boolean, readerFields: List[ReaderField], readers: List[(Type, TermName)]): List[CaseDef] = {
     sealed trait FieldDef {
       def jsonName: String
     }
@@ -373,7 +373,19 @@ trait ReaderDerivation
           """
     }
 
-    (res :+ cq"_ => $tokenIteratorTerm.skipExpression()"): List[CaseDef]
+    val defaultCase = {
+      if(isStrict) {
+        val unexpectedName = TermName(c.freshName("unexpectedName"))
+        val expectedNames = gropedDefs.map(_._1).mkString("'", "', '", "'")
+        cq"""
+            $unexpectedName =>
+              ReaderError.wrongJson("unexpected field '" + $unexpectedName + "', expected one of " + $expectedNames)($fieldNameTmp)
+          """
+      }
+      else cq"_ => $tokenIteratorTerm.skipExpression()"
+    }
+
+    (res :+ defaultCase): List[CaseDef]
   }
 
   private def allocateRawFieldsPostProcessing(readerFields: List[ReaderField]): Tree = {

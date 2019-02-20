@@ -6,6 +6,7 @@ import tethys.commons.TokenNode._
 import tethys.commons.{Token, TokenNode}
 import tethys.derivation.builder.{FieldStyle, ReaderBuilder, ReaderDerivationConfig}
 import tethys.derivation.semiauto._
+import tethys.readers.ReaderError
 import tethys.readers.tokens.QueueIterator
 
 class SemiautoReaderDerivationTest extends FlatSpec with Matchers {
@@ -272,9 +273,9 @@ class SemiautoReaderDerivationTest extends FlatSpec with Matchers {
   }
 
   it should "derive reader for reader config" in {
-    implicit val reader: JsonReader[CamelCaseNames] = jsonReader[CamelCaseNames](ReaderDerivationConfig(
-      fieldStyle = Some(FieldStyle.lowerSnakecase)
-    ))
+    implicit val reader: JsonReader[CamelCaseNames] = jsonReader[CamelCaseNames](
+      ReaderDerivationConfig.withFieldStyle(FieldStyle.lowerSnakecase).strict
+    )
 
     read[CamelCaseNames](obj(
       "some_param" -> 1,
@@ -285,5 +286,39 @@ class SemiautoReaderDerivationTest extends FlatSpec with Matchers {
       IDParam = 2,
       simple = 3
     )
+
+    the [ReaderError] thrownBy {
+      read[CamelCaseNames](obj(
+        "some_param" -> 1,
+        "not_id_param" -> 2,
+        "simple" -> 3
+      ))
+    } should have message "Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'some_param', 'id_param', 'simple'"
+  }
+
+  it should "derive reader for reader config from builder" in {
+    implicit val reader: JsonReader[CamelCaseNames] = jsonReader[CamelCaseNames](
+      ReaderBuilder[CamelCaseNames]
+        .strict
+        .fieldStyle(FieldStyle.lowerSnakecase)
+    )
+
+    read[CamelCaseNames](obj(
+      "some_param" -> 1,
+      "id_param" -> 2,
+      "simple" -> 3
+    )) shouldBe CamelCaseNames(
+      someParam = 1,
+      IDParam = 2,
+      simple = 3
+    )
+
+    the [ReaderError] thrownBy {
+      read[CamelCaseNames](obj(
+        "some_param" -> 1,
+        "not_id_param" -> 2,
+        "simple" -> 3
+      ))
+    } should have message "Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'some_param', 'id_param', 'simple'"
   }
 }

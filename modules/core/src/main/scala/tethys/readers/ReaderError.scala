@@ -8,7 +8,7 @@ object ReaderError {
   def wrongJson(reason: String, cause: Throwable = null)(implicit fieldName: FieldName): Nothing = {
     val field = fieldName.value()
     throw new ReaderError(
-      message = s"Json is not properly formatted '$field': $reason",
+      message = s"Illegal json at '$field': $reason",
       cause = null,
       field = field
     )

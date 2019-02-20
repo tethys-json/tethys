@@ -7,7 +7,7 @@ import tethys.readers.{FieldName, ReaderError}
 
 import scala.annotation.tailrec
 
-private[readers] class SimpleJsonReader[A](fields: Array[FieldDefinition[_]], mapper: Array[Any] => A) extends JsonReader[A] {
+private[readers] class SimpleJsonReader[A](fields: Array[FieldDefinition[_]], mapper: Array[Any] => A, strict: Boolean) extends JsonReader[A] {
 
   private val defaults: Array[Any] = fields.map(_.defaultValue)
 
@@ -58,8 +58,12 @@ private[readers] class SimpleJsonReader[A](fields: Array[FieldDefinition[_]], ma
                           (implicit
                            fieldName: FieldName): Array[Any] = {
     if(i >= extracted.length) {
-      it.skipExpression()
-      extracted
+      if(strict) {
+        ReaderError.wrongJson(s"unexpected field '$name', expected one of ${fields.map(_.name).mkString("'", "', '", "'")}")
+      } else {
+        it.skipExpression()
+        extracted
+      }
     } else {
       val field = fields(i)
       if(field.name == name) {

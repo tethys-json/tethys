@@ -70,6 +70,13 @@ trait ReaderDescriptionCommons extends ReaderBuilderUtils {
         q"${description.config.tree}.withFieldStyle($style)"
       ))
 
+    // ===== isStrict =====
+    case q"${rest: Tree}.strict" =>
+      val description = extractDescription(rest)
+      description.copy(config = c.Expr[ReaderDerivationConfig](
+        q"${description.config.tree}.strict"
+      ))
+
     // ===== NOPE =====
     case _ =>
       abort(s"Unknown builder tree: $tree")
