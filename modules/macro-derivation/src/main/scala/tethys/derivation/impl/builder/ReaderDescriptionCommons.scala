@@ -19,7 +19,7 @@ trait ReaderDescriptionCommons extends ReaderBuilderUtils {
   }
 
   protected lazy val emptyReaderConfig: Expr[ReaderDerivationConfig] = c.Expr[ReaderDerivationConfig](c.untypecheck(
-    q"tethys.derivation.builder.ReaderDerivationConfig.apply()"
+    q"tethys.derivation.builder.ReaderDerivationConfig.empty"
   ))
 
   private def extractDescription(tree: Tree): ReaderMacroDescription = tree match {
@@ -67,7 +67,7 @@ trait ReaderDescriptionCommons extends ReaderBuilderUtils {
     case q"${rest: Tree}.fieldStyle(${style: Tree})" =>
       val description = extractDescription(rest)
       description.copy(config = c.Expr[ReaderDerivationConfig](
-        q"${description.config.tree}.copy(fieldStyle = _root_.scala.Some($style))"
+        q"${description.config.tree}.withFieldStyle($style)"
       ))
 
     // ===== NOPE =====

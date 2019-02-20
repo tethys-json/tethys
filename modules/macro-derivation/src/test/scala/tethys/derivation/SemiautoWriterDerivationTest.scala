@@ -3,7 +3,7 @@ package tethys.derivation
 import org.scalatest.{FlatSpec, Matchers}
 import tethys.commons.TokenNode
 import tethys.{JsonObjectWriter, JsonWriter}
-import tethys.derivation.builder.WriterBuilder
+import tethys.derivation.builder.{FieldStyle, WriterBuilder, WriterDerivationConfig}
 import tethys.writers.tokens.SimpleTokenWriter._
 import tethys.commons.TokenNode._
 import tethys.derivation.ADTWithType.{ADTWithTypeA, ADTWithTypeB}
@@ -18,7 +18,7 @@ class SemiautoWriterDerivationTest extends FlatSpec with Matchers {
   behavior of "semiauto derivation"
   it should "generate proper writer from WriterDescription" in {
     def freeVariable: String = "e"
-    implicit val dWriter: JsonWriter[D] = jsonWriter[D]
+    implicit val dWriter: JsonWriter[D] = jsonWriter[D](WriterDerivationConfig.withFieldStyle(FieldStyle.uppercase))
 
     implicit val testWriter: JsonWriter[JsonTreeTestData] = jsonWriter {
       WriterBuilder[JsonTreeTestData]
@@ -31,7 +31,7 @@ class SemiautoWriterDerivationTest extends FlatSpec with Matchers {
     JsonTreeTestData(5, b = false, C(D(1))).asTokenList shouldBe obj(
       "a" -> 6.0,
       "c" -> obj(
-        "a" -> 1
+        "A" -> 1
       ),
       "d" -> 10,
       "e" -> false

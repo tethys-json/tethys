@@ -1,7 +1,8 @@
 package tethys.derivation.impl.derivation
 
 import tethys.JsonObjectWriter
-import tethys.derivation.impl.builder.WriteBuilderUtils
+import tethys.derivation.builder.FieldStyle
+import tethys.derivation.impl.builder.{WriteBuilderUtils, WriterBuilderCommons}
 import tethys.derivation.impl.{BaseMacroDefinitions, CaseClassUtils}
 import tethys.writers.tokens.TokenWriter
 
@@ -9,7 +10,7 @@ import scala.annotation.tailrec
 import scala.reflect.macros.blackbox
 
 trait WriterDerivation
-  extends WriteBuilderUtils
+  extends WriterBuilderCommons
     with CaseClassUtils
     with BaseMacroDefinitions
     with DerivationUtils {
@@ -26,6 +27,7 @@ trait WriterDerivation
   def deriveWriter[A: WeakTypeTag]: Expr[JsonObjectWriter[A]] = {
     val description = MacroWriteDescription(
       tpe = weakTypeOf[A],
+      config = emptyWriterConfig,
       operations = Seq()
     )
     deriveWriter[A](description)
@@ -72,7 +74,11 @@ trait WriterDerivation
 
   def deriveWriter[A: WeakTypeTag](description: MacroWriteDescription): Expr[JsonObjectWriter[A]] = {
     val tpe = description.tpe
-    val writerFields = applyDescription(makeFields[A], description)
+    val config = c.eval(description.config)
+    val writerFields = applyFieldStyle(config.fieldStyle)
+        .andThen(applyDescriptionOperations(description.operations))
+        .apply(makeFields[A])
+
     val (typeWriters, writerTrees) = allocateWriters(writerFields)
     val functions = allocateFunctions(writerFields)
 
@@ -146,7 +152,16 @@ trait WriterDerivation
     }
   }
 
-  private def applyDescription(writerFields: List[WriterField], description: MacroWriteDescription): List[WriterField] = {
+  private def applyFieldStyle(fieldStyle: Option[FieldStyle]): List[WriterField] => List[WriterField] = writerFields => {
+    fieldStyle.fold(writerFields) { style =>
+      writerFields.map {
+        case field: SimpleWriterField => field.copy(jsonName = c.Expr[String](q"${style.applyStyle(field.name)}"))
+        case field => field
+      }
+    }
+  }
+
+  private def applyDescriptionOperations(operations: Seq[BuilderMacroOperation]): List[WriterField] => List[WriterField] = writerFields => {
     def mapField(fields: List[WriterField], name: String)(f: SimpleWriterField => WriterField): List[WriterField] = {
       fields.map {
         case field: SimpleWriterField if field.name == name => f(field)
@@ -154,16 +169,16 @@ trait WriterDerivation
       }
     }
 
-    description.operations.foldLeft(writerFields) {
+    operations.foldLeft(writerFields) {
       case (fields, operation) =>
         operation match {
           case BuilderMacroOperation.Remove(_, field) =>
             fields.filterNot(_.name == field)
 
           case BuilderMacroOperation.Update(_, field, name, fun, from, to) =>
-            mapField(fields, field)(_ => SimpleWriterField(
+            mapField(fields, field)(f => SimpleWriterField(
               name = field,
-              jsonName = name,
+              jsonName = name.getOrElse(f.jsonName),
               tpe = to,
               extractor = FunctionExtractor(
                 name = TermName(c.freshName()),
@@ -175,9 +190,9 @@ trait WriterDerivation
             ))
 
           case BuilderMacroOperation.UpdateFromRoot(tpe, field, name, fun, to) =>
-            mapField(fields, field)(_ => SimpleWriterField(
+            mapField(fields, field)(f => SimpleWriterField(
               name = field,
-              jsonName = name,
+              jsonName = name.getOrElse(f.jsonName),
               tpe = to,
               extractor = FunctionExtractor(
                 name = TermName(c.freshName()),
@@ -189,9 +204,9 @@ trait WriterDerivation
             ))
 
           case BuilderMacroOperation.UpdatePartial(_, field, name, fun, from) =>
-            mapField(fields, field)(_ => PartialExtractedField(
+            mapField(fields, field)(f => PartialExtractedField(
               name = field,
-              jsonName = name,
+              jsonName = name.getOrElse(f.jsonName),
               argExtractor = InlineExtract(q"$valueTerm.${TermName(field)}"),
               cases = fun match {
                 case q"{ case ..$cases }" => cases.asInstanceOf[Seq[CaseDef]].toList
@@ -199,9 +214,9 @@ trait WriterDerivation
             ))
 
           case BuilderMacroOperation.UpdatePartialFromRoot(_, field, name, fun) =>
-            mapField(fields, field)(_ => PartialExtractedField(
+            mapField(fields, field)(f => PartialExtractedField(
               name = field,
-              jsonName = name,
+              jsonName = name.getOrElse(f.jsonName),
               argExtractor = InlineExtract(q"$valueTerm"),
               cases = fun match {
                 case q"{ case ..$cases }" => cases.asInstanceOf[Seq[CaseDef]].toList

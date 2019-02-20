@@ -1,6 +1,13 @@
 package tethys.derivation.builder
 
-case class ReaderDerivationConfig(fieldStyle: Option[FieldStyle] = None)
+case class ReaderDerivationConfig(fieldStyle: Option[FieldStyle]) {
+  def withFieldStyle(fieldStyle: FieldStyle): ReaderDerivationConfig = this.copy(fieldStyle = Some(fieldStyle))
+}
+
+object ReaderDerivationConfig {
+  def empty: ReaderDerivationConfig = ReaderDerivationConfig(None)
+  def withFieldStyle(fieldStyle: FieldStyle): ReaderDerivationConfig = empty.copy(fieldStyle = Some(fieldStyle))
+}
 
 case class ReaderDescription[A](config: ReaderDerivationConfig, operations: Seq[ReaderDescription.BuilderOperation])
 

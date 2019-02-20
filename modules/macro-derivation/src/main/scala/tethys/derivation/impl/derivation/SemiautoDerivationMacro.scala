@@ -1,7 +1,7 @@
 package tethys.derivation.impl.derivation
 
 import tethys.derivation.builder._
-import tethys.derivation.impl.builder.{ReaderDescriptionCommons, WriterBuilderCommons}
+import tethys.derivation.impl.builder.WriterBuilderCommons
 import tethys.{JsonObjectWriter, JsonReader}
 
 import scala.reflect.macros.blackbox
@@ -28,6 +28,15 @@ class SemiautoDerivationMacro(val c: blackbox.Context)
   def jsonWriterWithBuilder[A: WeakTypeTag](builder: Expr[WriterBuilder[A]]): Expr[JsonObjectWriter[A]] = {
     val description = convertWriterBuilder[A](builder)
     describedJsonWriter[A](c.Expr[WriterDescription[A]](c.typecheck(description.tree)))
+  }
+
+  def jsonWriterWithConfig[A: WeakTypeTag](config: Expr[WriterDerivationConfig]): Expr[JsonObjectWriter[A]] = {
+    val description = MacroWriteDescription(
+      tpe = weakTypeOf[A],
+      config = c.Expr[WriterDerivationConfig](c.untypecheck(config.tree)),
+      operations = Seq.empty
+    )
+    deriveWriter[A](description)
   }
 
   def describedJsonWriter[A: WeakTypeTag](description: Expr[WriterDescription[A]]): Expr[JsonObjectWriter[A]] = {

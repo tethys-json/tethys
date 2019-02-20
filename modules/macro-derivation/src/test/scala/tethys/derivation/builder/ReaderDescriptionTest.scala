@@ -10,7 +10,7 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
   behavior of "describe"
 
   it should "build empty description from empty builder" in {
-    describe(ReaderBuilder[Foo]) shouldBe ReaderDescription[Foo](ReaderDerivationConfig(), Seq())
+    describe(ReaderBuilder[Foo]) shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq())
   }
 
   it should "build description with field style" in {
@@ -28,7 +28,7 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
         .extract(_.a).as[Option[Int]](fun)
     }
 
-    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig(), Seq(
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
       ReaderDescription.BuilderOperation.ExtractFieldAs("a", fun)
     ))
   }
@@ -41,7 +41,7 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
         .extract(_.a).from(_.b, _.c)(fun)
     }
 
-    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig(), Seq(
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
       ReaderDescription.BuilderOperation.ExtractFieldValue(
         field = "a",
         from = Seq(
@@ -61,7 +61,7 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
         .extract(_.a).from('b.as[String], "c".as[Any])(fun)
     }
 
-    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig(), Seq(
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
       ReaderDescription.BuilderOperation.ExtractFieldValue(
         field = "a",
         from = Seq(
@@ -81,7 +81,7 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
         .extract(_.a).from(_.b).and(_.c)(fun)
     }
 
-    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig(), Seq(
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
       ReaderDescription.BuilderOperation.ExtractFieldValue(
         field = "a",
         from = Seq(
@@ -101,7 +101,7 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
         .extract(_.a).from(_.b).and('c.as[Any])(fun)
     }
 
-    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig(), Seq(
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
       ReaderDescription.BuilderOperation.ExtractFieldValue(
         field = "a",
         from = Seq(
@@ -121,7 +121,7 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
         .extract(_.a).from('b.as[String]).and(_.c)(fun)
     }
 
-    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig(), Seq(
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
       ReaderDescription.BuilderOperation.ExtractFieldValue(
         field = "a",
         from = Seq(
@@ -141,7 +141,7 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
         .extract(_.a).from('b.as[String]).and('c.as[Any])(fun)
     }
 
-    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig(), Seq(
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
       ReaderDescription.BuilderOperation.ExtractFieldValue(
         field = "a",
         from = Seq(
@@ -161,7 +161,7 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
         .extractReader(_.a).from(_.b, _.c)(fun)
     }
 
-    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig(), Seq(
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
       ReaderDescription.BuilderOperation.ExtractFieldReader(
         field = "a",
         from = Seq(
@@ -181,7 +181,7 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
         .extractReader(_.a).from('b.as[String], "c".as[Any])(fun)
     }
 
-    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig(), Seq(
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
       ReaderDescription.BuilderOperation.ExtractFieldReader(
         field = "a",
         from = Seq(
@@ -201,7 +201,7 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
         .extractReader(_.a).from(_.b).and(_.c)(fun)
     }
 
-    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig(), Seq(
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
       ReaderDescription.BuilderOperation.ExtractFieldReader(
         field = "a",
         from = Seq(
@@ -221,7 +221,7 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
         .extractReader(_.a).from(_.b).and('c.as[Any])(fun)
     }
 
-    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig(), Seq(
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
       ReaderDescription.BuilderOperation.ExtractFieldReader(
         field = "a",
         from = Seq(
@@ -241,7 +241,7 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
         .extractReader(_.a).from('b.as[String]).and(_.c)(fun)
     }
 
-    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig(), Seq(
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
       ReaderDescription.BuilderOperation.ExtractFieldReader(
         field = "a",
         from = Seq(
@@ -261,7 +261,7 @@ class ReaderDescriptionTest extends FlatSpec with Matchers {
         .extractReader(_.a).from('b.as[String]).and('c.as[Any])(fun)
     }
 
-    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig(), Seq(
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
       ReaderDescription.BuilderOperation.ExtractFieldReader(
         field = "a",
         from = Seq(

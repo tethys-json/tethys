@@ -12,6 +12,7 @@ trait SemiautoDerivation {
   def jsonWriter[A]: JsonObjectWriter[A] = macro SemiautoDerivationMacro.simpleJsonWriter[A]
   def jsonWriter[A](description: WriterDescription[A]): JsonObjectWriter[A] = macro SemiautoDerivationMacro.describedJsonWriter[A]
   def jsonWriter[A](builder: WriterBuilder[A]): JsonObjectWriter[A] = macro SemiautoDerivationMacro.jsonWriterWithBuilder[A]
+  def jsonWriter[A](config: WriterDerivationConfig): JsonObjectWriter[A] = macro SemiautoDerivationMacro.jsonWriterWithConfig[A]
 
   def describe[A](builder: WriterBuilder[A]): WriterDescription[A] = macro WriterDescriptorMacro.simpleDescription[A]
 

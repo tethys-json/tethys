@@ -19,6 +19,8 @@ sealed trait WriterBuilder[A] {
   def updatePartial[B](field: A => B): PartialFunApply[A, B] with WithRename[PartialFunApply[A, B]]
 
   def add(name: String): FunApply[A, A]
+
+  def fieldStyle(fieldStyle: FieldStyle): WriterBuilder[A]
 }
 
 object WriterBuilder {

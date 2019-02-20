@@ -46,4 +46,9 @@ trait MacroUtils extends BaseMacroDefinitions
       case _ => Some(arg)
     }
   }
+
+  implicit lazy val optionTreeUnliftable: Unliftable[Option[Tree]] = Unliftable[Option[Tree]] {
+    case q"$col.Some.apply[$_](${res: Tree})" => Some(res)
+    case q"$col.None" => None
+  }
 }
