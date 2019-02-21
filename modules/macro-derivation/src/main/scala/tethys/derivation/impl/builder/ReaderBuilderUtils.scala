@@ -1,5 +1,6 @@
 package tethys.derivation.impl.builder
 
+import tethys.derivation.builder.ReaderDerivationConfig
 import tethys.derivation.impl.MacroUtils
 
 import scala.reflect.macros.blackbox
@@ -8,9 +9,16 @@ trait ReaderBuilderUtils extends MacroUtils {
   val c: blackbox.Context
   import c.universe._
 
-  case class ReaderMacroDescription(operations: Seq[ReaderMacroOperation])
+  case class ReaderMacroDescription(config: c.Expr[ReaderDerivationConfig], operations: Seq[ReaderMacroOperation])
 
-  final case class Field(name: String, tpe: Type)
+  sealed trait Field {
+    def name: String
+    def tpe: Type
+  }
+  object Field {
+    final case class ClassField(name: String, tpe: Type) extends Field
+    final case class RawField(name: String, tpe: Type) extends Field
+  }
 
   sealed trait ReaderMacroOperation {
     def field: String
@@ -22,32 +30,38 @@ trait ReaderBuilderUtils extends MacroUtils {
   }
 
   implicit lazy val readerMacroDescriptionLiftable: Liftable[ReaderMacroDescription] = Liftable[ReaderMacroDescription] {
-    case ReaderMacroDescription(operations) =>
-      q"$buildersPack.ReaderDescription(_root_.scala.Seq(..$operations))"
+    case ReaderMacroDescription(config, operations) =>
+      q"$buildersPack.ReaderDescription(${config.tree} ,_root_.scala.Seq(..$operations))"
   }
 
   implicit lazy val readerMacroDescriptionUnliftable: Unliftable[ReaderMacroDescription] = Unliftable[ReaderMacroDescription] {
-    case q"$_.ReaderDescription.apply[$_]($_.Seq.apply[$_](..${operations: Seq[ReaderMacroOperation]}))" =>
-      ReaderMacroDescription(operations)
+    case q"$_.ReaderDescription.apply[$_](${config: Tree} ,$_.Seq.apply[$_](..${operations: Seq[ReaderMacroOperation]}))" =>
+      ReaderMacroDescription(c.Expr[ReaderDerivationConfig](c.untypecheck(config)), operations)
   }
 
   implicit lazy val fieldLiftable: Liftable[Field] = Liftable[Field] {
-    case Field(name, tpe) =>
-      q"$buildersPack.ReaderDescription.Field[$tpe]($name)"
+    case Field.ClassField(name, tpe) =>
+      q"$buildersPack.ReaderDescription.Field.ClassField[$tpe]($name)"
+
+    case Field.RawField(name, tpe) =>
+      q"$buildersPack.ReaderDescription.Field.RawField[$tpe]($name)"
   }
 
   implicit lazy val fieldUnliftable: Unliftable[Field] = Unliftable[Field] {
-    case q"$_.ReaderDescription.Field.apply[${tpe: Tree}](${name: String})" =>
-      Field(name, tpe.tpe)
+    case q"$_.ReaderDescription.Field.ClassField.apply[${tpe: Tree}](${name: String})" =>
+      Field.ClassField(name, tpe.tpe)
+
+    case q"$_.ReaderDescription.Field.RawField.apply[${tpe: Tree}](${name: String})" =>
+      Field.RawField(name, tpe.tpe)
 
     case q"${f: BuilderField}" =>
-      Field(f.name, f.tpe)
+      Field.ClassField(f.name, f.tpe)
 
     case q"$_.ReaderFieldStringOps(${name: String}).as[${tpe: Tree}]" =>
-      Field(name, tpe.tpe)
+      Field.RawField(name, tpe.tpe)
 
     case q"$_.ReaderFieldSymbolOps(scala.Symbol.apply(${name: String})).as[${tpe: Tree}]" =>
-      Field(name, tpe.tpe)
+      Field.RawField(name, tpe.tpe)
   }
 
   implicit lazy val readerMacroOperationLiftable: Liftable[ReaderMacroOperation] = Liftable[ReaderMacroOperation] {

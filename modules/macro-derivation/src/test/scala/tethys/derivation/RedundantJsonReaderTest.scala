@@ -37,18 +37,4 @@ class RedundantJsonReaderTest extends FlatSpec with Matchers {
     )) shouldBe BaseClass(RedundantClass(1))
   }
 
-  it should "take defaultValue from reader if it's present even if it's redundant" in {
-    implicit val redundantClassReader: JsonReader[RedundantClass] = jsonReader[RedundantClass].withDefaultValue(Some(RedundantClass(2)))
-
-    implicit val reader: JsonReader[BaseClass] = jsonReader[BaseClass] {
-      describe {
-        ReaderBuilder[BaseClass]
-          .extract(_.r).from("intField".as[Int])(RedundantClass.apply)
-      }
-    }
-
-    read[BaseClass](obj()) shouldBe BaseClass(RedundantClass(2))
-  }
-
-
 }

@@ -1,83 +1,97 @@
 package tethys.derivation.impl.derivation
 
-import tethys.derivation.builder.{ReaderDescription, WriterDescription}
+import tethys.derivation.builder._
+import tethys.derivation.impl.builder.WriterBuilderCommons
 import tethys.{JsonObjectWriter, JsonReader}
 
 import scala.reflect.macros.blackbox
 
-object SemiautoDerivationMacro {
+class SemiautoDerivationMacro(val c: blackbox.Context)
+  extends WriterDerivation
+  with ReaderDerivation
+  with WriterBuilderCommons {
 
-  def simpleJsonWriter[A: c.WeakTypeTag](c: blackbox.Context): c.Expr[JsonObjectWriter[A]] = {
-    new SemiautoDerivationMacroImpl[c.type](c).simpleJsonWriter[A]
+  import c.universe._
+
+  def simpleJsonWriter[A: WeakTypeTag]: Expr[JsonObjectWriter[A]] = {
+    val tpe = weakTypeOf[A]
+    val clazz = classSym(tpe)
+    if (isCaseClass(tpe)) {
+      deriveWriter[A]
+    } else if (clazz.isSealed) {
+      deriveWriterForSealedClass[A]
+    } else {
+      abort(s"Can't auto derive JsonWriter[$tpe]")
+    }
   }
 
-  def describedJsonWriter[A: c.WeakTypeTag](c: blackbox.Context)(description: c.Expr[WriterDescription[A]]): c.Expr[JsonObjectWriter[A]] = {
-    new SemiautoDerivationMacroImpl[c.type](c).describedJsonWriter[A](description)
+  def jsonWriterWithBuilder[A: WeakTypeTag](builder: Expr[WriterBuilder[A]]): Expr[JsonObjectWriter[A]] = {
+    val description = convertWriterBuilder[A](builder)
+    describedJsonWriter[A](c.Expr[WriterDescription[A]](c.typecheck(description.tree)))
   }
 
-  def simpleJsonReader[A: c.WeakTypeTag](c: blackbox.Context): c.Expr[JsonReader[A]] = {
-    new SemiautoDerivationMacroImpl[c.type](c).simpleJsonReader[A]
+  def jsonWriterWithConfig[A: WeakTypeTag](config: Expr[WriterDerivationConfig]): Expr[JsonObjectWriter[A]] = {
+    val description = MacroWriteDescription(
+      tpe = weakTypeOf[A],
+      config = c.Expr[WriterDerivationConfig](c.untypecheck(config.tree)),
+      operations = Seq.empty
+    )
+    deriveWriter[A](description)
   }
 
-  def describedJsonReader[A: c.WeakTypeTag](c: blackbox.Context)(description: c.Expr[ReaderDescription[A]]): c.Expr[JsonReader[A]] = {
-    new SemiautoDerivationMacroImpl[c.type](c).describedJsonReader[A](description)
+  def describedJsonWriter[A: WeakTypeTag](description: Expr[WriterDescription[A]]): Expr[JsonObjectWriter[A]] = {
+    val tpe = weakTypeOf[A]
+    if (!isCaseClass(tpe)) {
+      abort(s"Can't auto derive JsonWriter[$tpe]")
+    } else {
+      deriveWriter[A](unliftWriterMacroDescription(description))
+    }
   }
 
-  private class SemiautoDerivationMacroImpl[C <: blackbox.Context](val c: C)
-    extends WriterDerivation
-      with ReaderDerivation {
-
-    import c.universe._
-
-    def simpleJsonWriter[A: WeakTypeTag]: Expr[JsonObjectWriter[A]] = {
-      val tpe = weakTypeOf[A]
-      val clazz = classSym(tpe)
-      if (isCaseClass(tpe)) {
-        deriveWriter[A]
-      } else if(clazz.isSealed) {
-        deriveWriterForSealedClass[A]
-      } else {
-        abort(s"Can't auto derive JsonWriter[$tpe]")
-      }
+  def simpleJsonReader[A: WeakTypeTag]: Expr[JsonReader[A]] = {
+    val tpe = weakTypeOf[A]
+    if (isCaseClass(tpe)) {
+      deriveReader[A]
+    } else {
+      fail(s"Can't auto derive JsonWriter[$tpe]")
     }
+  }
 
-    def describedJsonWriter[A: WeakTypeTag](description: Expr[WriterDescription[A]]): Expr[JsonObjectWriter[A]] = {
-      val tpe = weakTypeOf[A]
-      if (!isCaseClass(tpe)) {
-        abort(s"Can't auto derive JsonWriter[$tpe]")
-      } else {
-        deriveWriter[A](unliftWriterMacroDescription(description))
-      }
+  def jsonReaderWithBuilder[A: WeakTypeTag](builder: Expr[ReaderBuilder[A]]): Expr[JsonReader[A]] = {
+    val description = convertReaderBuilder[A](builder)
+    describedJsonReader[A](c.Expr[ReaderDescription[A]](c.typecheck(description.tree)))
+  }
+
+  def describedJsonReader[A: WeakTypeTag](description: Expr[ReaderDescription[A]]): Expr[JsonReader[A]] = {
+    val tpe = weakTypeOf[A]
+    if (isCaseClass(tpe)) {
+      deriveReader[A](unliftReaderMacroDescription(description))
+    } else {
+      fail(s"Can't auto derive JsonWriter[$tpe]")
     }
+  }
 
-    def simpleJsonReader[A: WeakTypeTag]: Expr[JsonReader[A]] = {
-      val tpe = weakTypeOf[A]
-      if(isCaseClass(tpe)) {
-        deriveReader[A]
-      } else {
-        fail(s"Can't auto derive JsonWriter[$tpe]")
-      }
+  def jsonReaderWithConfig[A: WeakTypeTag](config: Expr[ReaderDerivationConfig]): Expr[JsonReader[A]] = {
+    val tpe = weakTypeOf[A]
+    if (isCaseClass(tpe)) {
+      deriveReader[A](ReaderMacroDescription(
+        config = c.Expr[ReaderDerivationConfig](c.untypecheck(config.tree)),
+        operations = Seq()
+      ))
+    } else {
+      fail(s"Can't auto derive JsonWriter[$tpe]")
     }
+  }
 
-    def describedJsonReader[A: WeakTypeTag](description: Expr[ReaderDescription[A]]): Expr[JsonReader[A]] = {
-      val tpe = weakTypeOf[A]
-      if(isCaseClass(tpe)) {
-        deriveReader[A](unliftReaderMacroDescription(description))
-      } else {
-        fail(s"Can't auto derive JsonWriter[$tpe]")
-      }
+  private def unliftWriterMacroDescription[A: WeakTypeTag](description: Expr[WriterDescription[A]]): MacroWriteDescription = {
+    description.tree match {
+      case Untyped(q"${description: MacroWriteDescription}") => description
     }
+  }
 
-    private def unliftWriterMacroDescription[A: WeakTypeTag](description: Expr[WriterDescription[A]]): MacroWriteDescription = {
-      description.tree match {
-        case Untyped(q"${description: MacroWriteDescription}") => description
-      }
-    }
-
-    private def unliftReaderMacroDescription[A: WeakTypeTag](description: Expr[ReaderDescription[A]]): ReaderMacroDescription = {
-      description.tree match {
-        case Untyped(q"${description: ReaderMacroDescription}") => description
-      }
+  private def unliftReaderMacroDescription[A: WeakTypeTag](description: Expr[ReaderDescription[A]]): ReaderMacroDescription = {
+    description.tree match {
+      case Untyped(q"${description: ReaderMacroDescription}") => description
     }
   }
 }

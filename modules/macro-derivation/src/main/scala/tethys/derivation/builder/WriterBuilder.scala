@@ -19,11 +19,13 @@ sealed trait WriterBuilder[A] {
   def updatePartial[B](field: A => B): PartialFunApply[A, B] with WithRename[PartialFunApply[A, B]]
 
   def add(name: String): FunApply[A, A]
+
+  def fieldStyle(fieldStyle: FieldStyle): WriterBuilder[A]
 }
 
 object WriterBuilder {
   
-  @compileTimeOnly("ReaderBuilder should be defined in describe block")
+  @compileTimeOnly("ReaderBuilder should be defined in describe, jsonWriter of jsonReader macro")
   def apply[A <: Product]: WriterBuilder[A] = throw new NotDescribedException
 
   sealed trait WithRename[Res] {

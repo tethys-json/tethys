@@ -8,12 +8,22 @@ import tethys.derivation.semiauto._
 class WriterDescriptionTest extends FlatSpec with Matchers {
 
   behavior of "Json.describe"
+  it should "extract derivation config" in {
+    describe {
+      WriterBuilder[BuilderTestData]
+        .fieldStyle(FieldStyle.lowerSnakecase)
+    } shouldBe WriterDescription(
+      WriterDerivationConfig.withFieldStyle(FieldStyle.lowerSnakecase),
+      Seq()
+    )
+  }
+
   it should "extract remove operations" in {
     describe {
       WriterBuilder[BuilderTestData]
         .remove(_.a)
         .remove(_.inner)
-    } shouldBe WriterDescription(Seq(
+    } shouldBe WriterDescription(WriterDerivationConfig.empty, Seq(
       BuilderOperation.Remove[BuilderTestData]("a"),
       BuilderOperation.Remove[BuilderTestData]("inner")
     ))
@@ -95,7 +105,7 @@ class WriterDescriptionTest extends FlatSpec with Matchers {
 
     val testData = BuilderTestData(1, "a", c = true, 4L, InnerCls(2))
 
-    val WriterDescription(operations) = describe {
+    val WriterDescription(_, operations) = describe {
       WriterBuilder[BuilderTestData]
         .remove(_.a)
         .update(_.c)(c => !c)
@@ -119,12 +129,12 @@ class WriterDescriptionTest extends FlatSpec with Matchers {
   }
 
   it should "extract rename" in {
-    val WriterDescription(Seq(op: BuilderOperation.Update[BuilderTestData, Int, Int])) = describe {
+    val WriterDescription(_, Seq(op: BuilderOperation.Update[BuilderTestData, Int, Int])) = describe {
       WriterBuilder[BuilderTestData].rename(_.a)("aa")
     }
 
     op.field shouldBe "a"
-    op.name shouldBe "aa"
+    op.name shouldBe Some("aa")
     op.fun(1) shouldBe 1
   }
 
@@ -134,7 +144,7 @@ class WriterDescriptionTest extends FlatSpec with Matchers {
     describe {
       WriterBuilder[BuilderTestData].update(_.a).withRename("aa")(fun)
     }.operations shouldBe Seq(
-      BuilderOperation.Update("a", "aa", fun)
+      BuilderOperation.Update("a", Some("aa"), fun)
     )
   }
 
@@ -146,7 +156,7 @@ class WriterDescriptionTest extends FlatSpec with Matchers {
     describe {
       WriterBuilder[BuilderTestData].update(_.a).withRename("aa").fromRoot(fun)
     }.operations shouldBe Seq(
-      BuilderOperation.UpdateFromRoot("a", "aa", fun)
+      BuilderOperation.UpdateFromRoot("a", Some("aa"), fun)
     )
   }
 }

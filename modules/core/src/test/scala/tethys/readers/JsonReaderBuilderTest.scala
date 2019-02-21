@@ -12,9 +12,9 @@ class JsonReaderBuilderTest extends FlatSpec with Matchers {
 
   def read[A: JsonReader](nodes: List[TokenNode]): A = {
     val it = QueueIterator(nodes)
-    val res = it.readJson[A]
+    val res = it.readJson[A].fold(throw _, identity)
     it.currentToken() shouldBe Token.Empty
-    res.right.get
+    res
   }
 
   it should "build reader from fields" in {
@@ -79,6 +79,18 @@ class JsonReaderBuilderTest extends FlatSpec with Matchers {
       e = 4.0D,
       opt = None
     )
+  }
+
+
+
+  it should "build strict reader from fields" in {
+    implicit val reader: JsonReader[B] = {
+      JsonReader.builder
+        .addField[Option[Int]]("i")
+        .buildReader(strict = true)(i => B(i.getOrElse(0)))
+    }
+
+    the [ReaderError] thrownBy read[B](obj("j" -> 1)) should have message "Illegal json at '[ROOT]': unexpected field 'j', expected one of 'i'"
   }
 
   it should "allow to build reader with more than 22 fields" in {
