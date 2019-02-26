@@ -1,7 +1,7 @@
 lazy val scalaTestVersion = "3.0.5"
 
 lazy val commonSettings = Seq(
-  version := "0.8.0.1",
+  version := "0.9.0",
   organization := "com.tethys-json",
   scalaVersion := "2.11.12",
   crossScalaVersions := Seq("2.11.12", "2.12.8", "2.13.0-M2"),

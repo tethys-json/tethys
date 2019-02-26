@@ -87,7 +87,7 @@ class JsonReaderBuilderTest extends FlatSpec with Matchers {
     implicit val reader: JsonReader[B] = {
       JsonReader.builder
         .addField[Option[Int]]("i")
-        .buildReader(strict = true)(i => B(i.getOrElse(0)))
+        .buildStrictReader(i => B(i.getOrElse(0)))
     }
 
     the [ReaderError] thrownBy read[B](obj("j" -> 1)) should have message "Illegal json at '[ROOT]': unexpected field 'j', expected one of 'i'"
