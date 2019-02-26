@@ -379,7 +379,7 @@ trait ReaderDerivation
         val expectedNames = gropedDefs.map(_._1).mkString("'", "', '", "'")
         cq"""
             $unexpectedName =>
-              ReaderError.wrongJson("unexpected field '" + $unexpectedName + "', expected one of " + $expectedNames)($fieldNameTmp)
+              $readerErrorCompanion.wrongJson("unexpected field '" + $unexpectedName + "', expected one of " + $expectedNames)($fieldNameTmp)
           """
       }
       else cq"_ => $tokenIteratorTerm.skipExpression()"

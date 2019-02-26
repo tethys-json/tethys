@@ -1,10 +1,10 @@
 lazy val scalaTestVersion = "3.0.5"
 
 lazy val commonSettings = Seq(
-  version := "0.8.0",
+  version := "0.8.0.1",
   organization := "com.tethys-json",
   scalaVersion := "2.11.12",
-  crossScalaVersions := Seq("2.11.12", "2.12.6", "2.13.0-M2"),
+  crossScalaVersions := Seq("2.11.12", "2.12.8", "2.13.0-M2"),
 
   licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0")),
   homepage := Some(url("https://github.com/tethys-json/tethys")),
