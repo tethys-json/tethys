@@ -70,7 +70,7 @@ trait ReaderDerivation
   def deriveReader[A: WeakTypeTag](description: ReaderMacroDescription): Expr[JsonReader[A]] = {
     val tpe = weakTypeOf[A]
     val classDef = caseClassDefinition(tpe)
-    val config = c.eval(description.config)
+    val config = scala.util.Try(c.eval(description.config)).getOrElse(c.eval(description.config))
 
     val readerFields = applyFieldStyle(config.fieldStyle)
       .andThen(applyOperations(description.operations))

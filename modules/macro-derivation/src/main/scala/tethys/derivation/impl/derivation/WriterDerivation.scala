@@ -74,7 +74,7 @@ trait WriterDerivation
 
   def deriveWriter[A: WeakTypeTag](description: MacroWriteDescription): Expr[JsonObjectWriter[A]] = {
     val tpe = description.tpe
-    val config = c.eval(description.config)
+    val config = scala.util.Try(c.eval(description.config)).getOrElse(c.eval(description.config))
     val writerFields = applyFieldStyle(config.fieldStyle)
         .andThen(applyDescriptionOperations(description.operations))
         .apply(makeFields[A])
