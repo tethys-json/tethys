@@ -16,8 +16,9 @@ trait DataReader {
 object DataReader {
   val instances: Map[String, DataReader] = Map[String, DataReader](
     "tethys-jackson" -> TethysBench.TethysJacksonDataProcessor,
-    "circe-jawn" -> CirceBench.CirceDataProcessor,
     "pure-jackson" -> HandwrittenBench.HandwrittenJacksonDataProcessor,
+    "circe-jawn" -> CirceBench.CirceJawnDataReader,
+    "circe-jackson" -> CirceBench.CirceJacksonDataReader,
     "json4s-jackson" -> Json4sBench.Json4sJacksonDataProcessor,
     "json4s-native" -> Json4sBench.Json4sNativeDataProcessor,
     "play-json" -> PlayBench.PlayDataProcessor,

@@ -13,7 +13,6 @@ import org.openjdk.jmh.annotations.{State, _}
 @Fork(2)
 @State(Scope.Benchmark)
 class JmhReaderBench {
-
   @Param(Array(
     "10",
     "100",
@@ -29,17 +28,19 @@ class JmhReaderBench {
 
   @Setup(Level.Trial)
   def setup(): Unit = {
-    data = CirceBench.CirceDataProcessor.write(Data.dataSamples(arraySize, seed))
+    data = CirceBench.CirceDataWriter.write(Data.dataSamples(arraySize, seed))
   }
 
   @Param(Array(
     "tethys-jackson",
     "pure-jackson",
     "circe-jawn",
+    "circe-jackson",
     "json4s-jackson",
     "json4s-native",
     "play-json",
-    "spray-json"
+    "spray-json",
+    "pushka"
   ))
   var processorName: String = _
 

@@ -16,9 +16,10 @@ trait DataWriter {
 object DataWriter {
   val instances: Map[String, DataWriter] = Map(
     "tethys-jackson" -> TethysBench.TethysJacksonDataProcessor,
-    "circe-jawn" -> CirceBench.CirceDataProcessor,
-    "StringBuilder" -> HandwrittenBench.HandwrittenDataWriter,
     "pure-jackson" -> HandwrittenBench.HandwrittenJacksonDataProcessor,
+    "circe" -> CirceBench.CirceDataWriter,
+    "java.lang.StringBuilder" -> HandwrittenBench.HandwrittenJavaDataWriter,
+    "scala.StringBuilder" -> HandwrittenBench.HandwrittenScalaDataWriter,
     "json4s-jackson" -> Json4sBench.Json4sJacksonDataProcessor,
     "json4s-native" -> Json4sBench.Json4sNativeDataProcessor,
     "play-json" -> PlayBench.PlayDataProcessor,

@@ -13,7 +13,6 @@ import tethys.readers.tokens.TokenIterator
 import scala.collection.mutable
 
 object BenchMarkdown {
-
   val benchmarksOrdering: Ordering[String] = Ordering.by[String, Int] {
     case "Parsing" | "json.bench.JmhReaderBench.bench" => 1
     case "Writing" | "json.bench.JmhWriterBench.bench" => 2
@@ -23,14 +22,17 @@ object BenchMarkdown {
   val processorsOrdering: Ordering[String] = Ordering.by[String, Int] {
     case "tethys-jackson" => 1
     case "pure-jackson" => 2
-    case "circe-jawn" => 3
-    case "StringBuilder" => 4
-    case "json4s-jackson" => 5
-    case "json4s-native" => 6
-    case "play-json" => 7
-    case "spray-json" => 8
-    case "pushka" => 9
-    case _ => 10
+    case "circe" => 3
+    case "circe-jawn" => 4
+    case "circe-jackson" => 5
+    case "java.lang.StringBuilder" => 6
+    case "scala.StringBuilder" => 7
+    case "json4s-jackson" => 8
+    case "json4s-native" => 9
+    case "play-json" => 10
+    case "spray-json" => 11
+    case "pushka" => 12
+    case _ => 13
   }
 
   val namesMapping = Map(

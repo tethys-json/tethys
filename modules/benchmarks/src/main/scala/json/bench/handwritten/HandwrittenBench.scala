@@ -9,8 +9,7 @@ import _root_.json.bench.model.Data
 import _root_.json.bench.{DataReader, DataWriter}
 
 object HandwrittenBench {
-
-  object HandwrittenDataWriter extends DataWriter {
+  object HandwrittenScalaDataWriter extends DataWriter {
     override def write(seq: Seq[Data]): String = {
       val builder = new StringBuilder("[")
 
@@ -28,6 +27,55 @@ object HandwrittenBench {
     }
 
     private def writeData(data: Data, builder: StringBuilder): Unit = {
+      builder.append("{\"string\":\"").append(data.string).append("\"")
+        .append(",\"int\":")  .append(data.int)
+        .append(",\"boolean\":")  .append(data.boolean)
+        .append(",\"bigDecimal\":")  .append(data.bigDecimal)
+        .append(",\"seqInt\":[")
+
+      val intIter = data.seqInt.iterator
+      if(intIter.hasNext) {
+        builder.append(intIter.next())
+      }
+      while(intIter.hasNext) {
+        builder.append(",").append(intIter.next())
+      }
+
+      builder.append("]\"mapStringInt\":{")
+
+      val mapStringIntIter = data.mapStringInt.iterator
+      if(mapStringIntIter.hasNext) {
+        val (key, value) = mapStringIntIter.next()
+        builder.append('"').append(key).append("\":").append(value)
+      }
+      while(mapStringIntIter.hasNext) {
+        val (key, value) = mapStringIntIter.next()
+        builder.append(",\"").append(key).append("\":").append(value)
+      }
+
+      builder.append('}')
+
+    }
+  }
+
+  object HandwrittenJavaDataWriter extends DataWriter {
+    override def write(seq: Seq[Data]): String = {
+      val builder = new java.lang.StringBuilder("[")
+
+      val dataIterator = seq.iterator
+      if(dataIterator.hasNext) {
+        writeData(dataIterator.next(), builder)
+      }
+      while(dataIterator.hasNext) {
+        writeData(dataIterator.next(), builder.append(","))
+      }
+
+      builder
+        .append("]")
+        .toString()
+    }
+
+    private def writeData(data: Data, builder: java.lang.StringBuilder): Unit = {
       builder.append("{\"string\":\"").append(data.string).append("\"")
         .append(",\"int\":")  .append(data.int)
         .append(",\"boolean\":")  .append(data.boolean)

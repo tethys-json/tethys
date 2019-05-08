@@ -89,22 +89,22 @@ lazy val json4s = project.in(file("./modules/json4s"))
 lazy val benchmarks = project.in(file("./modules/benchmarks"))
   .settings(commonSettings)
   .settings(
-    scalaVersion := "2.11.11",
-    crossScalaVersions := Seq("2.11.11"),
+    scalaVersion := "2.12.8",
     publishTo := None,
     libraryDependencies ++= Seq(
       "io.spray" %% "spray-json" % "1.3.3",
-      "org.json4s" %% "json4s-native" % "3.5.1",
-      "org.json4s" %% "json4s-jackson" % "3.5.1",
-      "com.typesafe.play" %% "play-json" % "2.4.11",
+      "org.json4s" %% "json4s-native" % "3.6.5",
+      "org.json4s" %% "json4s-jackson" % "3.6.5",
+      "com.typesafe.play" %% "play-json" % "2.7.3",
       "com.github.fomkin" %% "pushka-json" % "0.8.0",
-      "io.circe" %% "circe-core" % "0.9.0-M1",
-      "io.circe" %% "circe-generic" % "0.9.0-M1",
-      "io.circe" %% "circe-parser" % "0.9.0-M1",
+      "io.circe" %% "circe-core" % "0.12.0-M1",
+      "io.circe" %% "circe-generic" % "0.12.0-M1",
+      "io.circe" %% "circe-jawn" % "0.12.0-M1",
+      "io.circe" %% "circe-jackson29" % "0.12.0-M1",
 
-      "org.knowm.xchart" % "xchart" % "3.5.0" exclude("de.erichseifert.vectorgraphics2d", "VectorGraphics2D") withSources()
+      "org.knowm.xchart" % "xchart" % "3.5.4" exclude("de.erichseifert.vectorgraphics2d", "VectorGraphics2D") withSources()
     ),
-    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
   )
   .dependsOn(tethys)
   .enablePlugins(JmhPlugin)
