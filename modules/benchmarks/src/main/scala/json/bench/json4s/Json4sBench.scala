@@ -4,9 +4,7 @@ import json.bench.model.Data
 import json.bench.{DataReader, DataWriter}
 import org.json4s._
 
-
 object Json4sBench {
-
   implicit val format = DefaultFormats
 
   object Json4sNativeDataProcessor extends DataWriter with DataReader {
@@ -20,5 +18,4 @@ object Json4sBench {
 
     override def read(json: String): Seq[Data] = org.json4s.jackson.parseJson(json).extract[Seq[Data]]
   }
-
 }
