@@ -26,7 +26,7 @@ libraryDependecies ++= Seq(
 )
 ```
 
-Also tethys has following integrations:
+Also, tethys has the following integrations:
 #### Json4s
 [see project page](https://github.com/json4s/json4s)
 ```scala
@@ -55,7 +55,7 @@ val tokenWriter = YourWriter
 tokenWriter.writeJson(List(1, 2, 3, 4))
 ```
 
-New writers could be created with object builder or with combination of few writers
+New writers can be created with an object builder or with a combination of a few writers
 
 ```scala
 import tethys._
@@ -75,7 +75,7 @@ implicit val fooWriter: JsonObjectWriter[Foo] = {
 Foo(1).asJson
 ```
 
-or just using other JsonWriter
+or just using another JsonWriter
 
 ```scala
 import tethys._
@@ -87,7 +87,7 @@ JsonWriter.stringWriter.contramap[Foo](_.bar.toString)
 
 ## JsonReader
 
-JsonReader converts json token from `TokenIterator` to it value
+JsonReader converts a json token from `TokenIterator` to its value
 ```scala
 import tethys._
 import tethys.jackson._
@@ -95,7 +95,7 @@ import tethys.jackson._
 "[1, 2, 3, 4]".jsonAs[List[Int]]
 ```
 
-New readers could be created with builder
+New readers can be created with a builder
 
 ```scala
 import tethys._
@@ -110,7 +110,7 @@ implicit val fooReader: JsonReader[Foo] = JsonReader.builder
 """{"bar":1}""".jsonAs[Foo]
 ```
 
-Also you can select existing reader that depends on other json fields
+Also you can select an existing reader that depends on other json fields
 
 ```scala
 import tethys._
@@ -143,7 +143,7 @@ Please check out `tethys` package object for all available syntax Ops classes
 # derivation
 
 `tethys-derivation` provides semiauto and auto macro derivation JsonReader and JsonWriter instances.  
-In common case you should prefer semiauto derivation because it's more precise, faster in compile and flexible.
+In most cases you should prefer semiauto derivation because it's more precise, faster in compilation and flexible.
 
 ```scala
 import tethys._
@@ -160,7 +160,7 @@ implicit val barReader: JsonReader[Bar] = jsonReader[Bar]
 """{"bar":{"seq":[1,2,3]}}""".jsonAs[Foo] //Foo reader auto derived
 ``` 
 
-In complex cases you could provide some additional information to `jsonWriter` and `jsonReader` functions
+In complex cases you can provide some additional information to `jsonWriter` and `jsonReader` functions
 
 ```scala
 import tethys._
@@ -171,13 +171,13 @@ case class Foo(a: Int, b: String, c: Any, d: Boolean, e: Double)
 
 implicit val fooWriter = jsonWriter[Foo] {
   describe {
-    //Any functions are allowed in lambdas 
+    //Any functions are allowed in lambdas
     WriterBuilder[Foo]
       .remove(_.b)
       .add("d")(_.b.trim)
       .update(_.a)(_ + 1)
       // the only way to semiauto derive Any
-      // this partial function will be replaced with match in final writer
+      // this partial function will be replaced with match in the final writer
       .updatePartial(_.c) {  
         case s: String => s
         case i: Int if i % 2 == 0 => i / 2
@@ -195,15 +195,15 @@ implicit val fooWriter = jsonWriter[Foo] {
 
 implicit val fooReader = jsonReader[Foo] {
   describe {
-    //Any functions are allowed in lambdas 
+    //Any functions are allowed in lambdas
     ReaderBuilder[Foo]
       .extractReader(_.c).from(_.a)('otherField.as[String]) { // provide reader for Any field
         case (1, "str") => JsonReader[String]
         case (_, "int") => JsonReader[Int]
         case _ => JsonReader[Option[Boolean]]
       }
-      .extract(_.a).from(_.b).and("otherField2".as[Int])((b, other) => d.toInt + other) // calculate field that depends on other fields
-      .extract(_.e).as[Option[Double]](_.getOrElse(1.0)) // extract field from value of specific type
+      .extract(_.a).from(_.b).and("otherField2".as[Int])((b, other) => d.toInt + other) // calculate a field that depends on other fields
+      .extract(_.e).as[Option[Double]](_.getOrElse(1.0)) // extract a field from a value of a specific type
   }
 }
 ```
