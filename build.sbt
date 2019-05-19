@@ -52,7 +52,7 @@ lazy val commonSettings = Seq(
 lazy val tethys = project.in(file("."))
   .settings(commonSettings)
   .dependsOn(core, `macro-derivation`, `jackson-backend`)
-  .aggregate(core, `macro-derivation`, `jackson-backend`, json4s, enumeratum)
+  .aggregate(core, `macro-derivation`, `jackson-backend`, json4s, circe, enumeratum)
 
 lazy val core = project.in(file("./modules/core"))
   .settings(commonSettings)
@@ -94,13 +94,13 @@ lazy val `jackson-backend` = project.in(file("./modules/jackson-backend"))
     )
   ).dependsOn(core)
 
-lazy val enumeratum = project.in(file("./modules/enumeratum"))
+lazy val circe = project.in(file("./modules/circe"))
   .settings(commonSettings)
   .settings(
-    name := "tethys-enumeratum",
+    name := "tethys-circe",
     libraryDependencies ++= Seq(
-      "com.beachape" %% "enumeratum" % "1.5.13",
-      
+      "io.circe" %% "circe-core" % "0.11.1",
+
       "org.scalatest" %% "scalatest" % scalaTestVersion % Test
     )
   ).dependsOn(core)
@@ -111,6 +111,17 @@ lazy val json4s = project.in(file("./modules/json4s"))
     name := "tethys-json4s",
     libraryDependencies ++= Seq(
       "org.json4s" %% "json4s-core" % "3.6.7",
+
+      "org.scalatest" %% "scalatest" % scalaTestVersion % Test
+    )
+  ).dependsOn(core)
+
+lazy val enumeratum = project.in(file("./modules/enumeratum"))
+  .settings(commonSettings)
+  .settings(
+    name := "tethys-enumeratum",
+    libraryDependencies ++= Seq(
+      "com.beachape" %% "enumeratum" % "1.5.13",
 
       "org.scalatest" %% "scalatest" % scalaTestVersion % Test
     )
