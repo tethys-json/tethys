@@ -42,7 +42,7 @@ lazy val commonSettings = Seq(
 lazy val tethys = project.in(file("."))
   .settings(commonSettings)
   .dependsOn(core, `macro-derivation`, `jackson-backend`)
-  .aggregate(core, `macro-derivation`, `jackson-backend`, json4s)
+  .aggregate(core, `macro-derivation`, `jackson-backend`, json4s, enumeratum)
 
 lazy val core = project.in(file("./modules/core"))
   .settings(commonSettings)
@@ -71,6 +71,17 @@ lazy val `jackson-backend` = project.in(file("./modules/jackson-backend"))
     libraryDependencies ++= Seq(
       "com.fasterxml.jackson.core" % "jackson-core" % "2.9.1",
 
+      "org.scalatest" %% "scalatest" % scalaTestVersion % Test
+    )
+  ).dependsOn(core)
+
+lazy val enumeratum = project.in(file("./modules/enumeratum"))
+  .settings(commonSettings)
+  .settings(
+    name := "tethys-enumeratum",
+    libraryDependencies ++= Seq(
+      "com.beachape" %% "enumeratum" % "1.5.13",
+      
       "org.scalatest" %% "scalatest" % scalaTestVersion % Test
     )
   ).dependsOn(core)
