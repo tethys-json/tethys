@@ -31,15 +31,3 @@ trait ShortTethysEnum[E <: ShortEnumEntry] extends TethysValueEnum[Short, E] { _
   implicit val tethysReader: JsonReader[E] = Enumeratum.valueReader(this)
   implicit val tethysWriter: JsonWriter[E] = Enumeratum.valueWriter(this)
 }
-
-// FIXME Add decoders
-/*
-trait CharTethysEnum[E <: CharEnumEntry] extends TethysValueEnum[Char, E] { _: ValueEnum[Char, E] =>
-  implicit val tethysReader: JsonReader[E] = Enumeratum.valueReader(this)
-  implicit val tethysWriter: JsonWriter[E] = Enumeratum.valueWriter(this)
-}
-
-trait ByteTethysEnum[E <: ByteEnumEntry] extends TethysValueEnum[Byte, E] { _: ValueEnum[Byte, E] =>
-  implicit val tethysReader: JsonReader[E] = Enumeratum.valueReader(this)
-  implicit val tethysWriter: JsonWriter[E] = Enumeratum.valueWriter(this)
-}*/
