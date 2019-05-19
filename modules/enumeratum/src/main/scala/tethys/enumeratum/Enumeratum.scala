@@ -8,15 +8,17 @@ import tethys.writers.KeyWriter
 import tethys.{JsonReader, JsonWriter}
 
 private[enumeratum] object Enumeratum {
+  private val RootFieldName = FieldName()
+
   def reader[A <: EnumEntry](enum: Enum[A]): JsonReader[A] = new JsonReader[A] {
     def read(it: TokenIterator)(implicit fieldName: FieldName): A =
-      decode(enum)(_.withNameOption(JsonReader.stringReader.read(it)), fieldName, it.currentToken())
+      decode(enum)(_.withNameOption, JsonReader.stringReader.read(it))
   }
 
   def writer[A <: EnumEntry](enum: Enum[A]): JsonWriter[A] = JsonWriter.stringWriter.contramap[A](_.entryName)
 
   def keyReader[E, A](enum: E)(fn: E => String => Option[A]): KeyReader[A] = new KeyReader[A] {
-    def read(str: String): A = decode(enum)(fn(_)(str), FieldName(), str)
+    def read(str: String): A = decode(enum)(fn, str)(RootFieldName)
   }
 
   def keyWriter[A](fn: A => String): KeyWriter[A] = new KeyWriter[A] {
@@ -27,16 +29,16 @@ private[enumeratum] object Enumeratum {
       enum: ValueEnum[ValueType, EntryType]
   ): JsonReader[EntryType] = new JsonReader[EntryType] {
     def read(it: TokenIterator)(implicit fieldName: FieldName): EntryType =
-      decode(enum)(_.withValueOpt(JsonReader[ValueType].read(it)), fieldName, it.currentToken())
+      decode(enum)(_.withValueOpt, JsonReader[ValueType].read(it))
   }
 
   def valueWriter[ValueType: JsonWriter, EntryType <: ValueEnumEntry[ValueType]](
       enum: ValueEnum[ValueType, EntryType]
   ): JsonWriter[EntryType] = JsonWriter[ValueType].contramap[EntryType](_.value)
 
-  private [this] def decode[E, A, V](enum: E)(fn: E => Option[A], field: => FieldName, value: => V): A =
-    fn(enum) match {
-      case Some(res) => res
-      case _         => ReaderError.wrongJson(s"$value is not a member of enum $enum")(field)
+  private [this] def decode[E, A, V](enum: E)(fn: E => V => Option[A], value: V)(implicit fieldName: FieldName): A =
+    fn(enum)(value) match {
+      case Some(result) => result
+      case _            => ReaderError.wrongJson(s"$value is not a member of enum $enum")
     }
 }
