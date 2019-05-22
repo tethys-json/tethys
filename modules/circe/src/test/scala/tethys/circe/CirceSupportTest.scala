@@ -4,7 +4,7 @@ import io.circe.{Json, JsonObject}
 import org.scalatest.{FlatSpec, Matchers}
 import tethys.commons.TokenNode
 import tethys.commons.TokenNode.{value => token, _}
-import tethys.writers.tokens.SimpleTokenWriter._
+import tethys.circe.SimpleTokenWriterRaw._
 
 class CirceSupportTest extends FlatSpec with Matchers {
   behavior of "Circe ast JsonReader"
@@ -51,7 +51,7 @@ class CirceSupportTest extends FlatSpec with Matchers {
 
   it should "parse Array" in {
     arr(1, 2L, 3).tokensAs[Json] shouldBe
-      Json.fromValues(List(Json.fromLong(1), Json.fromLong(2), Json.fromLong(3)))
+      Json.fromValues(List(Json.fromLong(1L), Json.fromLong(2L), Json.fromLong(3L)))
   }
 
   it should "parse JsonObject" in {
@@ -81,11 +81,11 @@ class CirceSupportTest extends FlatSpec with Matchers {
   behavior of "Circe ast JsonWriter"
 
   it should "write Int" in {
-    Json.fromInt(100).asTokenList shouldBe token(100L)
+    Json.fromInt(100).asTokenList shouldBe token(100)
   }
 
   it should "write Long" in {
-    Json.fromLong(100L).asTokenList shouldBe token(100L)
+    Json.fromLong(10000000000L).asTokenList shouldBe token(10000000000L)
   }
 
   it should "write Float" in {
@@ -97,11 +97,11 @@ class CirceSupportTest extends FlatSpec with Matchers {
   }
 
   it should "write BigInt" in {
-    Json.fromBigInt(BigInt(100L)).asTokenList shouldBe token(BigDecimal(100L))
+    Json.fromBigInt(BigInt("10000000000")).asTokenList shouldBe token(1.0E10)
   }
 
   it should "write BigDecimal" in {
-    Json.fromBigDecimal(100.0D).asTokenList shouldBe token(BigDecimal(100.0D))
+    Json.fromBigDecimal(BigDecimal(100.0D)).asTokenList shouldBe token(100.0D)
   }
 
   it should "write String" in {
@@ -122,15 +122,15 @@ class CirceSupportTest extends FlatSpec with Matchers {
 
   it should "write Array" in {
     Json.fromValues(List(
-      Json.fromLong(1),
-      Json.fromLong(2),
-      Json.fromLong(3)
-    )).asTokenList shouldBe arr(1L, 2L, 3L)
+      Json.fromInt(1),
+      Json.fromInt(2),
+      Json.fromInt(3)
+    )).asTokenList shouldBe arr(1, 2, 3)
   }
 
   it should "write JsonObject" in {
     val jobj = JsonObject(
-      "a" -> Json.fromValues(List(Json.fromLong(1L), Json.fromLong(2L))),
+      "a" -> Json.fromValues(List(Json.fromInt(1), Json.fromInt(2))),
       "b" -> Json.fromJsonObject(JsonObject("c" -> Json.Null)),
       "c" -> Json.fromString("demo"),
       "d" -> Json.True,
@@ -138,7 +138,7 @@ class CirceSupportTest extends FlatSpec with Matchers {
     )
 
     jobj.asTokenList shouldBe obj(
-      "a" -> arr(1L, 2L),
+      "a" -> arr(1, 2),
       "b" -> obj("c" -> null),
       "c" -> token("demo"),
       "d" -> token(true),

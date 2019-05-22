@@ -51,7 +51,7 @@ class SimpleTokenWriter extends TokenWriter {
     this
   }
 
-  def withRawJsonSupport(implicit producer: TokenIteratorProducer): TokenWriter = new SimpleTokenWriter {
+  def withRawJsonSupport(implicit producer: TokenIteratorProducer): SimpleTokenWriter = new SimpleTokenWriter {
     import tethys._
     override def writeRawJson(json: String): this.type = {
       val tokenIterator = json.toTokenIterator.fold(throw _, identity)
