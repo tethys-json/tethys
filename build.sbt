@@ -1,5 +1,3 @@
-lazy val scalaTestVersion = "3.1.0-SNAP13"
-
 lazy val commonSettings = Seq(
   version := "0.10.0",
   organization := "com.tethys-json",
@@ -49,85 +47,94 @@ lazy val commonSettings = Seq(
   publishArtifact in Test := false
 )
 
+lazy val testSettings = Seq(
+  libraryDependencies += "org.scalatest" %% "scalatest" % "3.1.0-SNAP13" % Test
+)
+
 lazy val tethys = project.in(file("."))
   .settings(commonSettings)
   .dependsOn(core, `macro-derivation`, `jackson-backend`)
   .aggregate(core, `macro-derivation`, `jackson-backend`, json4s, circe, enumeratum)
 
-lazy val core = project.in(file("./modules/core"))
+lazy val modules = file("modules")
+
+lazy val core = project.in(modules / "core")
   .settings(commonSettings)
+  .settings(testSettings)
   .settings(
     name := "tethys-core",
-    libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % scalaTestVersion % Test
-    ),
     libraryDependencies ++= {
       CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, y)) if y >= 13 =>
           Seq(
-            "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided"
+            "org.scala-lang" % "scala-compiler" % scalaVersion.value % Provided
           )
         case _ => Nil
       }
     }
   )
 
-lazy val `macro-derivation` = project.in(file("./modules/macro-derivation"))
+lazy val `macro-derivation` = project.in(modules / "macro-derivation")
   .settings(commonSettings)
+  .settings(testSettings)
   .settings(
     name := "tethys-derivation",
     libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided",
-
-      "org.scalatest" %% "scalatest" % scalaTestVersion % Test
+      "org.scala-lang" % "scala-compiler" % scalaVersion.value % Provided
     )
-  ).dependsOn(core)
+  )
+  .dependsOn(core)
 
-lazy val `jackson-backend` = project.in(file("./modules/jackson-backend"))
+lazy val `jackson-backend` = project.in(modules / "jackson-backend")
   .settings(commonSettings)
+  .settings(testSettings)
   .settings(
     name := "tethys-jackson",
     libraryDependencies ++= Seq(
-      "com.fasterxml.jackson.core" % "jackson-core" % "2.9.9",
-
-      "org.scalatest" %% "scalatest" % scalaTestVersion % Test
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.9.9"
     )
-  ).dependsOn(core)
+  )
+  .dependsOn(core)
 
-lazy val circe = project.in(file("./modules/circe"))
+lazy val circe = project.in(modules / "circe")
   .settings(commonSettings)
+  .settings(testSettings)
   .settings(
     name := "tethys-circe",
-    libraryDependencies ++= Seq(
-      "io.circe" %% "circe-core" % "0.11.1",
+    libraryDependencies ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, 11)) =>
+          Seq("io.circe" %% "circe-core" % "0.12.0-M3")
+        case _ =>
+          Seq("io.circe" %% "circe-core" % "0.12.3")
+      }
+    }
+  )
+  .dependsOn(core, `jackson-backend` % Test)
 
-      "org.scalatest" %% "scalatest" % scalaTestVersion % Test
-    )
-  ).dependsOn(core)
-
-lazy val json4s = project.in(file("./modules/json4s"))
+lazy val json4s = project.in(modules / "json4s")
   .settings(commonSettings)
+  .settings(testSettings)
   .settings(
     name := "tethys-json4s",
     libraryDependencies ++= Seq(
       "org.json4s" %% "json4s-core" % "3.6.7",
-
-      "org.scalatest" %% "scalatest" % scalaTestVersion % Test
     )
-  ).dependsOn(core)
+  )
+  .dependsOn(core)
 
-lazy val enumeratum = project.in(file("./modules/enumeratum"))
+lazy val enumeratum = project.in(modules / "enumeratum")
   .settings(commonSettings)
+  .settings(testSettings)
   .settings(
     name := "tethys-enumeratum",
     libraryDependencies ++= Seq(
       "com.beachape" %% "enumeratum" % "1.5.13",
-
-      "org.scalatest" %% "scalatest" % scalaTestVersion % Test
     )
-  ).dependsOn(core)
+  )
+  .dependsOn(core)
 
-lazy val benchmarks = project.in(file("./modules/benchmarks"))
+lazy val benchmarks = project.in(modules / "benchmarks")
   .settings(commonSettings)
   .settings(
     publishTo := None,
