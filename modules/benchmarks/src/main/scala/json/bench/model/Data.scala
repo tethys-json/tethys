@@ -1,13 +1,7 @@
 package json.bench.model
 
-import pushka.annotation.pushka
-import _root_.pushka.{Ast, RW}
-
-import scala.math.BigDecimal.RoundingMode
 import scala.util.Random
-import Data.bigDecimalRW
 
-@pushka
 case class Data(string: String,
                 int: Int,
                 boolean: Boolean,
@@ -17,13 +11,6 @@ case class Data(string: String,
 
 object Data {
 
-  implicit val bigDecimalRW: RW[BigDecimal] = new RW[BigDecimal] {
-
-    override def write(value: BigDecimal): Ast = Ast.Num(value.toString())
-
-    override def read(value: Ast): BigDecimal = BigDecimal(value.asInstanceOf[Ast.Num].value)
-  }
-
   def samples[JAst](dataBuilder: DataBuilder[JAst], count: Int, seed: Int): JAst = {
     val asts = dataSamples(count, seed).map(dataBuilder.ast)
     dataBuilder.array(asts)
@@ -31,15 +18,35 @@ object Data {
 
   def dataSamples(count: Int, seed: Int): Seq[Data] = {
     val rnd = new Random(seed = seed)
+    def rndString(len: Int) = rnd.alphanumeric.take(len).mkString
 
-    (1 to count).map(_ => Data(
-      string = rnd.alphanumeric.take(rnd.nextInt(20)).mkString,
-      int = rnd.nextInt(1000),
-      boolean = rnd.nextBoolean(),
-      bigDecimal = BigDecimal(rnd.nextDouble() * 1000).setScale(5, RoundingMode.HALF_UP),
-      seqInt = (1 to (1 + rnd.nextInt(99))).toVector.map(_ => rnd.nextInt(1000)),
-      mapStringInt = (1 to (1 + rnd.nextInt(9))).toVector.map(_ => rnd.alphanumeric.take(rnd.nextInt(20)).mkString -> rnd.nextInt(1000)).toMap
-    )).toVector
+    def rndInt(len: Int) = {
+      val tenPow = (1 to len).foldLeft(1)((acc, _) => acc * 10)
+      tenPow + rnd.nextInt(tenPow)
+    }
+
+    (1 to count).toList.map { i =>
+      val flag = (i % 2) == 0
+      //128 bytes entity
+      Data( // 2 bytes
+        string = rndString(6 - (if (flag) 0 else 1)), // 9 + 8 (7) + 1 bytes
+        int = rndInt(3), // 6 + 3 + 1 bytes
+        boolean = rnd.nextBoolean(), // 10 + 4 (5) + 1 bytes
+        bigDecimal = BigDecimal(rndInt(3)), // 13 + 3 + 1 bytes
+        seqInt = List( // 9 + 2 + 5 + 4 + 1 bytes
+          rndInt(1),
+          rndInt(1),
+          rndInt(1),
+          rndInt(1),
+          rndInt(1)
+        ),
+        mapStringInt = Map( // 15 + (6 + 3 + 1) * 3
+          rndString(3) -> rndInt(3),
+          rndString(3) -> rndInt(3),
+          rndString(3) -> rndInt(3)
+        )
+      )
+    }
   }
 
   trait DataBuilder[JAst] {
@@ -47,4 +54,5 @@ object Data {
 
     def array(seq: Seq[JAst]): JAst
   }
+
 }
