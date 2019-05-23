@@ -1,7 +1,7 @@
 lazy val scalaTestVersion = "3.0.5"
 
 lazy val commonSettings = Seq(
-  version := "0.9.0.1",
+  version := "0.10.0-SNAPSHOT",
   organization := "com.tethys-json",
   scalaVersion := "2.11.12",
   crossScalaVersions := Seq("2.11.12", "2.12.8", "2.13.0-M2"),
@@ -20,6 +20,12 @@ lazy val commonSettings = Seq(
       name = "Aleksei Otts",
       email = "eld0727@gmail.com",
       url = url("https://github.com/eld0727")
+    ),
+    Developer(
+      id = "REDNBLACK",
+      name = "Boris Potepun",
+      email = "boris@f0w.org",
+      url = url("https://github.com/REDNBLACK")
     )
   ),
   publishMavenStyle := true,
