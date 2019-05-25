@@ -1,11 +1,21 @@
-lazy val scalaTestVersion = "3.0.5"
+lazy val scalaTestVersion = "3.0.8-RC3"
 
 lazy val commonSettings = Seq(
   version := "0.10.0-SNAPSHOT",
   organization := "com.tethys-json",
   scalaVersion := "2.11.12",
-  crossScalaVersions := Seq("2.11.12", "2.12.8", "2.13.0-M2"),
+  crossScalaVersions := Seq("2.11.12", "2.12.8", "2.13.0-RC1"),
+  Compile / unmanagedSourceDirectories ++= {
+    def extraDirs(suffix: String) = Seq(file(sourceDirectory.value.getPath + "/main/scala" + suffix))
 
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, y)) if y <= 12 =>
+        extraDirs("-2.12-")
+      case Some((2, y)) if y >= 13 =>
+        extraDirs("-2.13+")
+      case _ => Nil
+    }
+  },
   licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0")),
   homepage := Some(url("https://github.com/tethys-json/tethys")),
   scmInfo := Some(
@@ -50,7 +60,16 @@ lazy val core = project.in(file("./modules/core"))
     name := "tethys-core",
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % scalaTestVersion % Test
-    )
+    ),
+    libraryDependencies ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, y)) if y >= 13 =>
+          Seq(
+            "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided"
+          )
+        case _ => Nil
+      }
+    }
   )
 
 lazy val `macro-derivation` = project.in(file("./modules/macro-derivation"))
@@ -91,7 +110,7 @@ lazy val json4s = project.in(file("./modules/json4s"))
   .settings(
     name := "tethys-json4s",
     libraryDependencies ++= Seq(
-      "org.json4s" %% "json4s-core" % "3.5.3",
+      "org.json4s" %% "json4s-core" % "3.6.6",
 
       "org.scalatest" %% "scalatest" % scalaTestVersion % Test
     )

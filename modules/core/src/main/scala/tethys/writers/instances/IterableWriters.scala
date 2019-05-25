@@ -3,11 +3,10 @@ package tethys.writers.instances
 import tethys._
 import tethys.writers.tokens.TokenWriter
 
-import scala.collection.GenIterableLike
 import scala.language.higherKinds
 
 private[tethys] trait IterableWriters extends LowPriorityJsonWriters {
-  final implicit def iterableWriter[A, C[X] <: GenIterableLike[X, C[X]]](implicit valueWriter: JsonWriter[A]): JsonWriter[C[A]] = new IterableWriter[A, C](valueWriter) {
+  final implicit def iterableWriter[A, C[X] <: Iterable[X]](implicit valueWriter: JsonWriter[A]): JsonWriter[C[A]] = new IterableWriter[A, C](valueWriter) {
     override def iterator(c: C[A]): Iterator[A] = c.iterator
   }
 

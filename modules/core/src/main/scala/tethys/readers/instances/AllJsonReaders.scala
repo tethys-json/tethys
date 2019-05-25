@@ -109,7 +109,7 @@ trait AllJsonReaders extends OptionReaders {
     case jshort: java.lang.Short => BigDecimal(jshort.longValue())
     case jlong: java.lang.Long => BigDecimal(jlong)
     case jbi: java.math.BigInteger => BigDecimal(jbi)
-    case jfloat: java.lang.Float => BigDecimal(jfloat)
+    case jfloat: java.lang.Float => BigDecimal(jfloat.toDouble)
     case jdouble: java.lang.Double => BigDecimal(jdouble)
     case num => BigDecimal(num.doubleValue())
   }
@@ -117,7 +117,7 @@ trait AllJsonReaders extends OptionReaders {
   implicit lazy val bigIntReader: JsonReader[BigInt] = numberReader.map {
     case bi: BigInt => bi
     case jbi: java.math.BigInteger => BigInt(jbi)
-    case bd: BigDecimal => bd.toBigInt()
+    case bd: BigDecimal => bd.toBigInt
     case jbd: java.math.BigDecimal => jbd.toBigInteger
     case jint: java.lang.Integer => BigInt(jint)
     case jshort: java.lang.Short => BigInt(jshort.longValue())
