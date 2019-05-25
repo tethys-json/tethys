@@ -51,6 +51,7 @@ lazy val commonSettings = Seq(
 
 lazy val tethys = project.in(file("."))
   .settings(commonSettings)
+  .settings(crossScalaVersions := Nil)
   .dependsOn(core, `macro-derivation`, `jackson-backend`)
   .aggregate(core, `macro-derivation`, `jackson-backend`, json4s, enumeratum)
 
@@ -98,6 +99,7 @@ lazy val enumeratum = project.in(file("./modules/enumeratum"))
   .settings(commonSettings)
   .settings(
     name := "tethys-enumeratum",
+    crossScalaVersions := Seq("2.11.12", "2.12.8"),
     libraryDependencies ++= Seq(
       "com.beachape" %% "enumeratum" % "1.5.13",
       
