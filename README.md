@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/tethys-json/tethys.svg?branch=master)](https://travis-ci.org/tethys-json/tethys)
+
 # tethys
 tethys is a JSON parsing/writing library for Scala
 
