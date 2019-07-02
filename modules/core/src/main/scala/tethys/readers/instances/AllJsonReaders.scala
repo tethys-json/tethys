@@ -125,6 +125,8 @@ trait AllJsonReaders extends OptionReaders {
     case num => BigInt(num.longValue())
   }
 
+
+  implicit lazy val javaBooleanReader: JsonReader[java.lang.Boolean] = booleanReader.map(a => a)
   implicit lazy val javaShortReader: JsonReader[java.lang.Short] = shortReader.map(a => a)
   implicit lazy val javaIntReader: JsonReader[java.lang.Integer] = intReader.map(a => a)
   implicit lazy val javaLongReader: JsonReader[java.lang.Long] = longReader.map(a => a)
