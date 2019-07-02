@@ -7,7 +7,7 @@ import org.openjdk.jmh.annotations._
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
-@Warmup(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
+@Warmup(iterations = 4, time = 5, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 4, time = 5, timeUnit = TimeUnit.SECONDS)
 @Fork(value = 1, jvmArgsAppend = Array("-Xms1G", "-Xmx1G"))
 @State(Scope.Benchmark)
@@ -37,14 +37,14 @@ class JmhWriterBench {
 
   @Param(Array(
     "tethys-jackson",
-    "pure-jackson",
-    "circe",
+    /*"pure-jackson",
+    "circe",*/
     "java.lang.StringBuilder",
-    "scala.StringBuilder",
+    "scala.StringBuilder"/*,
     "json4s-jackson",
     "json4s-native",
     "play-json",
-    "spray-json"
+    "spray-json"*/
   ))
   var processorName: String = _
 

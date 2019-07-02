@@ -27,11 +27,22 @@ object HandwrittenBench {
     }
 
     private def writeData(data: Data, builder: StringBuilder): Unit = {
-      builder.append("{\"string\":\"").append(data.string).append("\"")
-        .append(",\"int\":")  .append(data.int)
-        .append(",\"boolean\":")  .append(data.boolean)
-        .append(",\"bigDecimal\":")  .append(data.bigDecimal)
-        .append(",\"seqInt\":[")
+      builder
+        .append("{")
+        .appendName("string")
+        .appendMaskedString(data.string)
+        .append(',')
+        .appendName("int")
+        .append(data.int)
+        .append(',')
+        .appendName("boolean")
+        .append(data.boolean)
+        .append(',')
+        .appendName("bigDecimal")
+        .append(data.bigDecimal)
+        .append(',')
+        .appendName("seqInt")
+        .append('[')
 
       val intIter = data.seqInt.iterator
       if(intIter.hasNext) {
@@ -41,20 +52,56 @@ object HandwrittenBench {
         builder.append(",").append(intIter.next())
       }
 
-      builder.append("]\"mapStringInt\":{")
+      builder
+        .append("],")
+        .appendName("mapStringInt")
+        .append('{')
 
       val mapStringIntIter = data.mapStringInt.iterator
       if(mapStringIntIter.hasNext) {
         val (key, value) = mapStringIntIter.next()
-        builder.append('"').append(key).append("\":").append(value)
+        builder.appendName(key).append(value)
       }
       while(mapStringIntIter.hasNext) {
         val (key, value) = mapStringIntIter.next()
-        builder.append(",\"").append(key).append("\":").append(value)
+        builder.appendName(key).append(value)
       }
 
       builder.append('}')
 
+    }
+
+    private implicit class BuilderOps(val builder: StringBuilder) extends AnyVal {
+      def appendName(name: String): StringBuilder = {
+        builder.append('"')
+        appendString(builder, name)
+        builder.append("\":")
+      }
+
+      def appendMaskedString(value: String): StringBuilder = {
+        builder.append('"')
+        appendString(builder, value)
+        builder.append('"')
+      }
+    }
+
+    private def appendString(builder: StringBuilder, s: String): Unit = {
+      var i = 0
+      while(i < s.length) {
+        appendChar(builder, s.charAt(i))
+        i = i + 1
+      }
+    }
+
+    private def appendChar(builder: StringBuilder, char: Char): Unit = char match {
+      case '\n' => builder.append("\\n")
+      case '\r' => builder.append("\\r")
+      case '\t' => builder.append("\\t")
+      case '\b' => builder.append("\\b")
+      case '\f' => builder.append("\\f")
+      case '\\' => builder.append("\\\\")
+      case '"' => builder.append("\\\"")
+      case _ => builder.append(char)
     }
   }
 
@@ -76,11 +123,22 @@ object HandwrittenBench {
     }
 
     private def writeData(data: Data, builder: java.lang.StringBuilder): Unit = {
-      builder.append("{\"string\":\"").append(data.string).append("\"")
-        .append(",\"int\":")  .append(data.int)
-        .append(",\"boolean\":")  .append(data.boolean)
-        .append(",\"bigDecimal\":")  .append(data.bigDecimal)
-        .append(",\"seqInt\":[")
+      builder
+        .append("{")
+        .appendName("string")
+        .appendMaskedString(data.string)
+        .append(',')
+        .appendName("int")
+        .append(data.int)
+        .append(',')
+        .appendName("boolean")
+        .append(data.boolean)
+        .append(',')
+        .appendName("bigDecimal")
+        .append(data.bigDecimal)
+        .append(',')
+        .appendName("seqInt")
+        .append('[')
 
       val intIter = data.seqInt.iterator
       if(intIter.hasNext) {
@@ -90,20 +148,56 @@ object HandwrittenBench {
         builder.append(",").append(intIter.next())
       }
 
-      builder.append("]\"mapStringInt\":{")
+      builder
+        .append("],")
+        .appendName("mapStringInt")
+        .append('{')
 
       val mapStringIntIter = data.mapStringInt.iterator
       if(mapStringIntIter.hasNext) {
         val (key, value) = mapStringIntIter.next()
-        builder.append('"').append(key).append("\":").append(value)
+        builder.appendName(key).append(value)
       }
       while(mapStringIntIter.hasNext) {
         val (key, value) = mapStringIntIter.next()
-        builder.append(",\"").append(key).append("\":").append(value)
+        builder.appendName(key).append(value)
       }
 
       builder.append('}')
 
+    }
+
+    private implicit class JavaBuilderOps(val builder: java.lang.StringBuilder) extends AnyVal {
+      def appendName(name: String): java.lang.StringBuilder = {
+        builder.append('"')
+        appendString(builder, name)
+        builder.append("\":")
+      }
+
+      def appendMaskedString(value: String): java.lang.StringBuilder = {
+        builder.append('"')
+        appendString(builder, value)
+        builder.append('"')
+      }
+    }
+
+    private def appendString(builder: java.lang.StringBuilder, s: String): Unit = {
+      var i = 0
+      while(i < s.length) {
+        appendChar(builder, s.charAt(i))
+        i = i + 1
+      }
+    }
+
+    private def appendChar(builder: java.lang.StringBuilder, char: Char): Unit = char match {
+      case '\n' => builder.append("\\n")
+      case '\r' => builder.append("\\r")
+      case '\t' => builder.append("\\t")
+      case '\b' => builder.append("\\b")
+      case '\f' => builder.append("\\f")
+      case '\\' => builder.append("\\\\")
+      case '"' => builder.append("\\\"")
+      case _ => builder.append(char)
     }
   }
 

@@ -13,6 +13,9 @@ import tethys.readers.tokens.TokenIterator
 import scala.collection.mutable
 
 object BenchMarkdown {
+  val nameColumn = "processorName"
+  val sizeColumn = "jsonSize"
+
   val benchmarksOrdering: Ordering[String] = Ordering.by[String, Int] {
     case "Parsing" | "json.bench.JmhReaderBench.bench" => 1
     case "Writing" | "json.bench.JmhWriterBench.bench" => 2
@@ -53,18 +56,22 @@ object BenchMarkdown {
   case class Benchmark(benchmark: String, mode: String, params: mutable.LinkedHashMap[String, String], primaryMetric: PrimaryMetrics)
   case class PrimaryMetrics(score: Either[String, Double], scoreError: Either[String, Double])
 
+  def readBenchmarks(dir: String, file: String): Seq[Benchmark] = {
+    val jhmResultsPath = Paths.get(dir, file)
+    val json = new String(Files.readAllBytes(jhmResultsPath), "UTF-8")
+    json.jsonAs[Seq[Benchmark]].fold(throw _, identity)
+  }
+
   def main(args: Array[String]): Unit = {
     val List(dir) = args.toList
-    val jhmResultsPath = Paths.get(dir, "jmh-result.json")
-    val json = new String(Files.readAllBytes(jhmResultsPath), "UTF-8")
-    val benchs = json.jsonAs[Seq[Benchmark]].fold(throw _, identity)
+    val benchs = readBenchmarks(dir, "jmh-reader.json") ++ readBenchmarks(dir, "jmh-writer.json")
     val grouped = benchs.groupBy(_.benchmark)
     val mainTables = grouped.toList.sortBy(_._1)(benchmarksOrdering).map {
       case (name, benchmarks) =>
-        val rows = benchmarks.map(_.params("processorName")).distinct.sorted(processorsOrdering)
-        val colls = benchmarks.map(_.params("arraySize")).distinct
+        val rows = benchmarks.map(_.params(nameColumn)).distinct.sorted(processorsOrdering)
+        val colls = benchmarks.map(_.params(sizeColumn)).distinct
         val data = benchmarks.map { b =>
-          (b.params("processorName"), b.params("arraySize")) -> b.primaryMetric.score.fold(identity, _.toString)
+          (b.params(nameColumn), b.params(sizeColumn)) -> b.primaryMetric.score.fold(identity, _.toString)
         }.toMap
 
         s"""
@@ -107,22 +114,24 @@ object BenchMarkdown {
       .width(940)
       .height(400)
       .title(title)
-      .yAxisTitle("ops/s")
+      .yAxisTitle("ops/s normalized")
       .xAxisTitle("size")
       .build()
 
-    val maxs = benchmarks.groupBy(_.params("arraySize").toInt).map {
+    val maxs = benchmarks.groupBy(_.params(sizeColumn)).map {
       case (size, bs) => size -> bs.map(_.primaryMetric.score.fold(_ => 0.0, identity)).max
     }
 
-    benchmarks.groupBy(_.params("processorName")).toList.sortBy(_._1)(processorsOrdering).foreach {
+    benchmarks.groupBy(_.params(nameColumn)).toList.sortBy(_._1)(processorsOrdering).foreach {
       case (name, bs) =>
+        import scala.collection.JavaConverters._
+
         val data = bs.map { b =>
-          val size = b.params("arraySize").toInt
-          size.toDouble -> (b.primaryMetric.score.fold(_ => 0.0, identity) / maxs(size))
+          val size = b.params(sizeColumn)
+          size -> (b.primaryMetric.score.fold(_ => 0.0, identity) / maxs(size))
         }.sortBy(_._1)
-        val xData = data.map(_._1).toArray
-        val yData = data.map(_._2).toArray
+        val xData = data.map(_._1).asJava
+        val yData = data.map(t => Double.box(t._2)).asJava
         chart.addSeries(name, xData, yData)
     }
 

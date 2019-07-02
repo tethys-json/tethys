@@ -1,10 +1,10 @@
-lazy val scalaTestVersion = "3.0.8-RC3"
+lazy val scalaTestVersion = "3.1.0-SNAP13"
 
 lazy val commonSettings = Seq(
   version := "0.10.0-SNAPSHOT",
   organization := "com.tethys-json",
   scalaVersion := "2.11.12",
-  crossScalaVersions := Seq("2.11.12", "2.12.8"/*, "2.13.0-RC1"*/),
+  crossScalaVersions := Seq("2.11.12", "2.12.8", "2.13.0"),
   Compile / unmanagedSourceDirectories ++= {
     def extraDirs(suffix: String) = Seq(file(sourceDirectory.value.getPath + "/main/scala" + suffix))
 
@@ -110,7 +110,7 @@ lazy val json4s = project.in(file("./modules/json4s"))
   .settings(
     name := "tethys-json4s",
     libraryDependencies ++= Seq(
-      "org.json4s" %% "json4s-core" % "3.6.6",
+      "org.json4s" %% "json4s-core" % "3.6.7",
 
       "org.scalatest" %% "scalatest" % scalaTestVersion % Test
     )
@@ -122,8 +122,8 @@ lazy val benchmarks = project.in(file("./modules/benchmarks"))
     publishTo := None,
     libraryDependencies ++= Seq(
       "io.spray" %% "spray-json" % "1.3.3",
-      "org.json4s" %% "json4s-native" % "3.6.5",
-      "org.json4s" %% "json4s-jackson" % "3.6.5",
+      "org.json4s" %% "json4s-native" % "3.6.7",
+      "org.json4s" %% "json4s-jackson" % "3.6.7",
       "com.typesafe.play" %% "play-json" % "2.7.3",
       "io.circe" %% "circe-core" % "0.12.0-M1",
       "io.circe" %% "circe-generic" % "0.12.0-M1",

@@ -8,7 +8,7 @@ import org.openjdk.jmh.annotations.{State, _}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
-@Warmup(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
+@Warmup(iterations = 4, time = 5, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 4, time = 5, timeUnit = TimeUnit.SECONDS)
 @Fork(value = 1, jvmArgsAppend = Array("-Xms1G", "-Xmx1G"))
 @State(Scope.Benchmark)
