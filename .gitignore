@@ -1,7 +1,6 @@
 # Specific file types
 *.sc
 *.class
-*.log
 
 # SBT folders
 /target

@@ -37,14 +37,14 @@ class JmhWriterBench {
 
   @Param(Array(
     "tethys-jackson",
-    /*"pure-jackson",
-    "circe",*/
+    "pure-jackson",
+    "circe",
     "java.lang.StringBuilder",
-    "scala.StringBuilder"/*,
+    "scala.StringBuilder",
     "json4s-jackson",
     "json4s-native",
     "play-json",
-    "spray-json"*/
+    "spray-json"
   ))
   var processorName: String = _
 

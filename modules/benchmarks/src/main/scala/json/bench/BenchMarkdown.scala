@@ -129,7 +129,7 @@ object BenchMarkdown {
         val data = bs.map { b =>
           val size = b.params(sizeColumn)
           size -> (b.primaryMetric.score.fold(_ => 0.0, identity) / maxs(size))
-        }.sortBy(_._1)
+        }
         val xData = data.map(_._1).asJava
         val yData = data.map(t => Double.box(t._2)).asJava
         chart.addSeries(name, xData, yData)

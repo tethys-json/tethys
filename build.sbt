@@ -1,7 +1,7 @@
 lazy val scalaTestVersion = "3.1.0-SNAP13"
 
 lazy val commonSettings = Seq(
-  version := "0.10.0-SNAPSHOT",
+  version := "0.10.0",
   organization := "com.tethys-json",
   scalaVersion := "2.11.12",
   crossScalaVersions := Seq("2.11.12", "2.12.8", "2.13.0"),
@@ -88,7 +88,7 @@ lazy val `jackson-backend` = project.in(file("./modules/jackson-backend"))
   .settings(
     name := "tethys-jackson",
     libraryDependencies ++= Seq(
-      "com.fasterxml.jackson.core" % "jackson-core" % "2.9.1",
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.9.9",
 
       "org.scalatest" %% "scalatest" % scalaTestVersion % Test
     )
@@ -121,10 +121,10 @@ lazy val benchmarks = project.in(file("./modules/benchmarks"))
   .settings(
     publishTo := None,
     libraryDependencies ++= Seq(
-      "io.spray" %% "spray-json" % "1.3.3",
+      "io.spray" %% "spray-json" % "1.3.5",
       "org.json4s" %% "json4s-native" % "3.6.7",
       "org.json4s" %% "json4s-jackson" % "3.6.7",
-      "com.typesafe.play" %% "play-json" % "2.7.3",
+      "com.typesafe.play" %% "play-json" % "2.7.4",
       "io.circe" %% "circe-core" % "0.12.0-M1",
       "io.circe" %% "circe-generic" % "0.12.0-M1",
       "io.circe" %% "circe-jawn" % "0.12.0-M1",

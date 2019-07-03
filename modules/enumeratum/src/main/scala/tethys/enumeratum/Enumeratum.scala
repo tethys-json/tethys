@@ -7,7 +7,7 @@ import tethys.readers.{FieldName, KeyReader, ReaderError}
 import tethys.writers.KeyWriter
 import tethys.{JsonReader, JsonWriter}
 
-private[enumeratum] object Enumeratum {
+object Enumeratum {
   private val RootFieldName = FieldName()
 
   def reader[A <: EnumEntry](enum: Enum[A]): JsonReader[A] = new JsonReader[A] {

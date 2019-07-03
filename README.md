@@ -12,7 +12,7 @@ tethys is a JSON parsing/writing library for Scala
 Add dependencies to your `build.sbt`  
 
 ```scala
-val tethysVersion = "0.9.0.1"
+val tethysVersion = "0.10.0"
 libraryDependecies ++= Seq(
   "com.tethys-json" %% "tethys-core" % tethysVersion,
   "com.tethys-json" %% "tethys-jackson" % tethysVersion,
@@ -24,7 +24,7 @@ or just
 
 ```scala
 libraryDependecies ++= Seq(
-  "com.tethys-json" %% "tethys" % "0.9.0.1"
+  "com.tethys-json" %% "tethys" % "0.10.0"
 )
 ```
 
@@ -33,6 +33,11 @@ Also, tethys has the following integrations:
 [see project page](https://github.com/json4s/json4s)
 ```scala
 libraryDependencies += "com.tethys-json" %% "tethys-json4s" % tethysVersion
+```
+#### Enumeratum
+[see project page](https://github.com/lloydmeta/enumeratum)
+```scala
+libraryDependencies += "com.tethys-json" %% "tethys-enumeratum" % tethysVersion
 ```
 
 # core
@@ -196,7 +201,6 @@ implicit val fooWriter = jsonWriter[Foo] {
 }
 
 implicit val fooReader = jsonReader[Foo] {
-  describe {
     //Any functions are allowed in lambdas
     ReaderBuilder[Foo]
       .extractReader(_.c).from(_.a)('otherField.as[String]) { // provide reader for Any field
@@ -206,7 +210,6 @@ implicit val fooReader = jsonReader[Foo] {
       }
       .extract(_.a).from(_.b).and("otherField2".as[Int])((b, other) => d.toInt + other) // calculate a field that depends on other fields
       .extract(_.e).as[Option[Double]](_.getOrElse(1.0)) // extract a field from a value of a specific type
-  }
 }
 ```
 
@@ -253,5 +256,29 @@ val json = """{"bar": 1, "baz": ["some", {"arbitrary": "json"}]"""
 val foo = json.jsonAs[Foo].fold(throw _, identity)
 
 foo.bar // 1
-foo.baz // JArray(List(JString("some), JObject("arbitrary" -> JString("json"))))
+foo.baz // JArray(List(JString("some"), JObject("arbitrary" -> JString("json"))))
+```
+
+# enumeratum support
+
+enumeratum module provides bunch of mixins for your Enum classes.
+```scala
+
+import enumeratum.{Enum, EnumEntry}
+import tethys.enumeratum._
+
+sealed trait Direction extends EnumEntry
+case object Direction extends Enum[Direction] 
+  with TethysEnum[Direction] // provides JsonReader and JsonWriter instances 
+  with TethysKeyEnum[Direction] { // provides KeyReader and KeyWriter instances
+  
+  
+  case object Up extends    Direction
+  case object Down extends  Direction
+  case object Left extends  Direction
+  case object Right extends Direction
+
+  val values = findValues
+}
+
 ```
