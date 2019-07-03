@@ -125,10 +125,10 @@ lazy val benchmarks = project.in(file("./modules/benchmarks"))
       "org.json4s" %% "json4s-native" % "3.6.7",
       "org.json4s" %% "json4s-jackson" % "3.6.7",
       "com.typesafe.play" %% "play-json" % "2.7.4",
-      "io.circe" %% "circe-core" % "0.12.0-M1",
-      "io.circe" %% "circe-generic" % "0.12.0-M1",
-      "io.circe" %% "circe-jawn" % "0.12.0-M1",
-      "io.circe" %% "circe-jackson29" % "0.12.0-M1",
+      "io.circe" %% "circe-core" % "0.12.0-M3",
+      "io.circe" %% "circe-generic" % "0.12.0-M3",
+      "io.circe" %% "circe-jawn" % "0.12.0-M3",
+      "io.circe" %% "circe-jackson29" % "0.12.0-M3",
 
       "org.knowm.xchart" % "xchart" % "3.5.4" exclude("de.erichseifert.vectorgraphics2d", "VectorGraphics2D") withSources()
     ),

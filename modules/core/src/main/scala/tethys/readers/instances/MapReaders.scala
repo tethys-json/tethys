@@ -114,7 +114,8 @@ private[tethys] trait LowPriorityMapReaders extends IterableReaders {
           builder.result()
         case token if token.isFieldName =>
           val name = it.fieldName()
-          appendBuilder(it.next(), builder, keyReader.read(name))(fieldName.appendFieldName(name))
+          val nextFieldName = fieldName.appendFieldName(name)
+          appendBuilder(it.next(), builder, keyReader.read(name)(nextFieldName))(nextFieldName)
           recRead(it, builder)(fieldName)
 
         case token => ReaderError.wrongJson(s"Expect end of object or field name but '$token' found")(fieldName)

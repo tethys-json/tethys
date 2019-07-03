@@ -8,7 +8,6 @@ import tethys.writers.KeyWriter
 import tethys.{JsonReader, JsonWriter}
 
 object Enumeratum {
-  private val RootFieldName = FieldName()
 
   def reader[A <: EnumEntry](enum: Enum[A]): JsonReader[A] = new JsonReader[A] {
     def read(it: TokenIterator)(implicit fieldName: FieldName): A =
@@ -18,7 +17,7 @@ object Enumeratum {
   def writer[A <: EnumEntry](enum: Enum[A]): JsonWriter[A] = JsonWriter.stringWriter.contramap[A](_.entryName)
 
   def keyReader[E, A](enum: E)(fn: E => String => Option[A]): KeyReader[A] = new KeyReader[A] {
-    def read(str: String): A = decode(enum)(fn, str)(RootFieldName)
+    def read(str: String)(implicit fieldName: FieldName): A = decode(enum)(fn, str)
   }
 
   def keyWriter[A](fn: A => String): KeyWriter[A] = new KeyWriter[A] {
@@ -36,7 +35,7 @@ object Enumeratum {
       enum: ValueEnum[ValueType, EntryType]
   ): JsonWriter[EntryType] = JsonWriter[ValueType].contramap[EntryType](_.value)
 
-  private [this] def decode[E, A, V](enum: E)(fn: E => V => Option[A], value: V)(implicit fieldName: FieldName): A =
+  def decode[E, A, V](enum: E)(fn: E => V => Option[A], value: V)(implicit fieldName: FieldName): A =
     fn(enum)(value) match {
       case Some(result) => result
       case _            => ReaderError.wrongJson(s"$value is not a member of enum $enum")
