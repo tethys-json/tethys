@@ -53,7 +53,7 @@ class SemiautoDerivationMacro(val c: blackbox.Context)
     if (isCaseClass(tpe)) {
       deriveReader[A]
     } else {
-      fail(s"Can't auto derive JsonWriter[$tpe]")
+      fail(s"Can't auto derive JsonReader[$tpe]")
     }
   }
 
@@ -67,7 +67,7 @@ class SemiautoDerivationMacro(val c: blackbox.Context)
     if (isCaseClass(tpe)) {
       deriveReader[A](unliftReaderMacroDescription(description))
     } else {
-      fail(s"Can't auto derive JsonWriter[$tpe]")
+      fail(s"Can't auto derive JsonReader[$tpe]")
     }
   }
 
@@ -79,7 +79,7 @@ class SemiautoDerivationMacro(val c: blackbox.Context)
         operations = Seq()
       ))
     } else {
-      fail(s"Can't auto derive JsonWriter[$tpe]")
+      fail(s"Can't auto derive JsonReader[$tpe]")
     }
   }
 
