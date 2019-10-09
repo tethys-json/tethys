@@ -13,7 +13,7 @@ Add dependencies to your `build.sbt`
 
 ```scala
 val tethysVersion = "0.10.0"
-libraryDependecies ++= Seq(
+libraryDependencies ++= Seq(
   "com.tethys-json" %% "tethys-core" % tethysVersion,
   "com.tethys-json" %% "tethys-jackson" % tethysVersion,
   "com.tethys-json" %% "tethys-derivation" % tethysVersion
