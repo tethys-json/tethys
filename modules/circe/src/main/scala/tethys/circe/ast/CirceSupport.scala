@@ -1,10 +1,7 @@
 package tethys.circe.ast
 
 import scala.collection.mutable.ArrayBuffer
-
-import io.circe.{Json, JsonNumber, JsonObject}
-import io.circe.syntax._
-
+import io.circe.{Json, JsonNumber, JsonNumberHack, JsonObject}
 import tethys.readers.{FieldName, ReaderError}
 import tethys.readers.tokens.TokenIterator
 import tethys.{JsonObjectWriter, JsonReader, JsonWriter}
@@ -77,10 +74,10 @@ trait CirceSupport {
     }
   }
 
-  private[this] class TethysJsonFolder(writer: TokenWriter) extends Json.Folder[Unit] {
+  private[this] class TethysJsonFolder(writer: TokenWriter) extends Json.Folder[Unit] with JsonNumberHack {
     def onNull: Unit = writer.writeNull()
     def onBoolean(value: Boolean): Unit = writer.writeBoolean(value)
-    def onNumber(value: JsonNumber): Unit = writer.writeRawJson(value.asJson.noSpaces)
+    def onNumber(value: JsonNumber): Unit = writeNumber(value, writer)
     def onString(value: String): Unit = writer.writeString(value)
     def onArray(value: Vector[Json]): Unit = {
       writer.writeArrayStart()

@@ -81,7 +81,7 @@ class CirceSupportTest extends FlatSpec with Matchers {
   behavior of "Circe ast JsonWriter"
 
   it should "write Int" in {
-    Json.fromInt(100).asTokenList shouldBe token(100)
+    Json.fromInt(100).asTokenList shouldBe token(100L)
   }
 
   it should "write Long" in {
@@ -89,7 +89,7 @@ class CirceSupportTest extends FlatSpec with Matchers {
   }
 
   it should "write Float" in {
-    Json.fromFloat(100.0f).asTokenList shouldBe token(100.0D)
+    Json.fromFloat(100.0f).asTokenList shouldBe token(100.0f)
   }
 
   it should "write Double" in {
@@ -97,11 +97,15 @@ class CirceSupportTest extends FlatSpec with Matchers {
   }
 
   it should "write BigInt" in {
-    Json.fromBigInt(BigInt("10000000000")).asTokenList shouldBe token(1.0E10)
+    Json.fromBigInt(BigInt("10000000000")).asTokenList match {
+      case DoubleValueNode(d) :: Nil => d shouldBe 1.0e10 // 2.11 only behavior
+      case LongValueNode(l) :: Nil => l shouldBe 10000000000L
+      case _ => fail()
+    }
   }
 
   it should "write BigDecimal" in {
-    Json.fromBigDecimal(BigDecimal(100.0D)).asTokenList shouldBe token(100.0D)
+    Json.fromBigDecimal(BigDecimal(100.0D)).asTokenList shouldBe token(BigDecimal(100.0D))
   }
 
   it should "write String" in {
@@ -125,7 +129,7 @@ class CirceSupportTest extends FlatSpec with Matchers {
       Json.fromInt(1),
       Json.fromInt(2),
       Json.fromInt(3)
-    )).asTokenList shouldBe arr(1, 2, 3)
+    )).asTokenList shouldBe arr(1L, 2L, 3L)
   }
 
   it should "write JsonObject" in {
@@ -138,7 +142,7 @@ class CirceSupportTest extends FlatSpec with Matchers {
     )
 
     jobj.asTokenList shouldBe obj(
-      "a" -> arr(1, 2),
+      "a" -> arr(1L, 2L),
       "b" -> obj("c" -> null),
       "c" -> token("demo"),
       "d" -> token(true),
