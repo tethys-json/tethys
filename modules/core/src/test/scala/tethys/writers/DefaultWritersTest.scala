@@ -1,7 +1,7 @@
 package tethys.writers
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers.{value => _, _}
+import org.scalatest.matchers.should.Matchers.{value => _, _}
+import org.scalatest.flatspec.AnyFlatSpec
 import tethys.JsonWriter
 import tethys.commons.TokenNode
 import tethys.commons.TokenNode._
@@ -10,7 +10,7 @@ import tethys.writers.tokens.SimpleTokenWriter._
 
 import scala.reflect.ClassTag
 
-class DefaultWritersTest extends FlatSpec {
+class DefaultWritersTest extends AnyFlatSpec {
 
   private def test[A](value: A)(implicit jsonWriter: JsonWriter[A], ct: ClassTag[A]): TestDefinition[A] = {
     TestDefinition(value, jsonWriter, ct.toString())

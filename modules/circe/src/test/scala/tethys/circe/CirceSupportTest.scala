@@ -1,12 +1,13 @@
 package tethys.circe
 
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 import io.circe.{Json, JsonObject}
-import org.scalatest.{FlatSpec, Matchers}
 import tethys.commons.TokenNode
 import tethys.commons.TokenNode.{value => token, _}
 import tethys.circe.SimpleTokenWriterRaw._
 
-class CirceSupportTest extends FlatSpec with Matchers {
+class CirceSupportTest extends AnyFlatSpec with Matchers {
   behavior of "Circe ast JsonReader"
 
   it should "parse Int" in {

@@ -2,12 +2,14 @@ package tethys.enumeratum
 
 import scala.util.Try
 
-import org.scalatest.{EitherValues, FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.EitherValues
 import tethys.commons.TokenNode.{value => token, _}
 import tethys.readers.{FieldName, ReaderError}
 import tethys.writers.tokens.SimpleTokenWriter._
 
-class EnumeratumSupportTest extends FlatSpec with Matchers with EitherValues {
+class EnumeratumSupportTest extends AnyFlatSpec with Matchers with EitherValues {
   behavior of "TethysEnum"
 
   it should "work for encode" in {

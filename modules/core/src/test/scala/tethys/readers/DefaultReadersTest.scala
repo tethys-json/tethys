@@ -1,7 +1,7 @@
 package tethys.readers
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers.{value => _, _}
+import org.scalatest.matchers.should.Matchers.{value => _, _}
+import org.scalatest.flatspec.AnyFlatSpec
 import tethys.JsonReader
 import tethys.commons.{Token, TokenNode}
 import tethys.commons.TokenNode._
@@ -10,8 +10,7 @@ import tethys.readers.tokens._
 
 import scala.reflect.ClassTag
 
-class DefaultReadersTest extends FlatSpec {
-
+class DefaultReadersTest extends AnyFlatSpec {
   private def test[A](result: A)(implicit jsonReader: JsonReader[A], ct: ClassTag[A]): TestDefinition[A] = {
     TestDefinition(result, jsonReader, ct.toString())
   }

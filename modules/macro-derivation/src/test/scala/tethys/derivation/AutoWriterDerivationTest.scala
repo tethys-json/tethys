@@ -1,6 +1,7 @@
 package tethys.derivation
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 import tethys.commons.TokenNode
 import tethys.commons.TokenNode._
 import tethys.derivation.ADTWithType._
@@ -10,7 +11,7 @@ import tethys.writers.instances.SimpleJsonObjectWriter
 import tethys.writers.tokens.SimpleTokenWriter._
 import tethys.{JsonObjectWriter, JsonWriter}
 
-class AutoWriterDerivationTest extends FlatSpec with Matchers {
+class AutoWriterDerivationTest extends AnyFlatSpec with Matchers {
 
   behavior of "auto derivation"
   it should "auto derive writer for simple classes tree" in {

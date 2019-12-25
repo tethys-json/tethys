@@ -2,11 +2,12 @@ package tethys.jackson
 
 import java.io.StringWriter
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 import tethys._
 import tethys.writers.tokens.TokenWriter
 
-class JacksonTokenWriterTest extends FlatSpec with Matchers {
+class JacksonTokenWriterTest extends AnyFlatSpec with Matchers {
 
   def iterate(fun: (TokenWriter) => Unit): String = {
     val sw = new StringWriter()

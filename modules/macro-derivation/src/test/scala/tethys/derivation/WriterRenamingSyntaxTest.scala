@@ -1,13 +1,14 @@
 package tethys.derivation
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 import tethys._
 import tethys.writers.tokens.SimpleTokenWriter._
 import tethys.commons.TokenNode._
 import tethys.derivation.builder.WriterBuilder
 import tethys.derivation.semiauto._
 
-class WriterRenamingSyntaxTest extends FlatSpec with Matchers {
+class WriterRenamingSyntaxTest extends AnyFlatSpec with Matchers {
   behavior of "renaming syntax"
   it should "rename field on 'rename'" in {
     implicit val writer: JsonWriter[D] = jsonWriter[D] {
