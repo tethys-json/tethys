@@ -1,11 +1,12 @@
 package tethys.json4s
 
 import org.json4s.JsonAST._
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 import tethys.commons.TokenNode.{value => token, _}
 import tethys.writers.tokens.SimpleTokenWriter._
 
-class Json4sSupportTest extends FlatSpec with Matchers {
+class Json4sSupportTest extends AnyFlatSpec with Matchers {
   behavior of "Json4s ast JsonReader"
 
   it should "parse JLong" in {

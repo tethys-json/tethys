@@ -1,10 +1,11 @@
 package tethys.readers
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 import tethys.commons.TokenNode._
 import tethys.readers.tokens.QueueIterator
 
-class QueueIteratorTest extends FlatSpec with Matchers {
+class QueueIteratorTest extends AnyFlatSpec with Matchers {
   behavior of "QueueIterator"
 
   it should "properly iterate over json token nodes" in {

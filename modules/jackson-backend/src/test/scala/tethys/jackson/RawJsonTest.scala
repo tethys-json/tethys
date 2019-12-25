@@ -1,11 +1,12 @@
 package tethys.jackson
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 import tethys._
 import tethys.commons.RawJson
 import tethys.writers.tokens.TokenWriter
 
-class RawJsonTest extends FlatSpec with Matchers {
+class RawJsonTest extends AnyFlatSpec with Matchers {
   behavior of "RawJson.reader"
   it should "read int values as is" in {
     "123".jsonAs[RawJson] shouldBe Right(RawJson("123"))

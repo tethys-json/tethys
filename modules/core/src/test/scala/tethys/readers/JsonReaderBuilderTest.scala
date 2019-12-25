@@ -1,13 +1,14 @@
 package tethys.readers
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 import tethys.JsonReader
 import tethys.commons.{Token, TokenNode}
 import tethys.commons.TokenNode._
 import tethys.readers.JsonReaderBuilderTest._
 import tethys.readers.tokens.QueueIterator
 
-class JsonReaderBuilderTest extends FlatSpec with Matchers {
+class JsonReaderBuilderTest extends AnyFlatSpec with Matchers {
   behavior of "JsonReaderBuilder"
 
   def read[A: JsonReader](nodes: List[TokenNode]): A = {

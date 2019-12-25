@@ -1,6 +1,7 @@
 package tethys.derivation
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 import tethys.commons.TokenNode
 import tethys.{JsonObjectWriter, JsonWriter}
 import tethys.derivation.builder.{FieldStyle, WriterBuilder, WriterDerivationConfig}
@@ -10,10 +11,7 @@ import tethys.derivation.ADTWithType.{ADTWithTypeA, ADTWithTypeB}
 import tethys.derivation.semiauto._
 import tethys.writers.instances.SimpleJsonObjectWriter
 
-/**
-  * Created by eld0727 on 23.04.17.
-  */
-class SemiautoWriterDerivationTest extends FlatSpec with Matchers {
+class SemiautoWriterDerivationTest extends AnyFlatSpec with Matchers {
 
   behavior of "semiauto derivation"
   it should "generate proper writer from WriterDescription" in {

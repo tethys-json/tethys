@@ -1,6 +1,7 @@
 package tethys.derivation
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 import tethys.JsonReader
 import tethys.commons._
 import tethys.commons.TokenNode._
@@ -15,7 +16,7 @@ object RedundantJsonReaderTest {
   case class BaseClass(r: RedundantClass)
 }
 
-class RedundantJsonReaderTest extends FlatSpec with Matchers {
+class RedundantJsonReaderTest extends AnyFlatSpec with Matchers {
   def read[A: JsonReader](nodes: List[TokenNode]): A = {
     val it = QueueIterator(nodes)
     val res = it.readJson[A].fold(throw _, identity)

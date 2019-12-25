@@ -2,9 +2,10 @@ package tethys.jackson
 
 import tethys._
 import tethys.commons.TokenNode._
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
-class JacksonTokenIteratorTest extends FlatSpec with Matchers {
+class JacksonTokenIteratorTest extends AnyFlatSpec with Matchers {
 
   behavior of "JacksonTokenIterator"
 

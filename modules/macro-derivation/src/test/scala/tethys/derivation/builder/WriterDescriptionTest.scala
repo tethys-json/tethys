@@ -1,11 +1,12 @@
 package tethys.derivation.builder
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 import tethys.derivation.builder.WriterDescriptionTest._
 import tethys.derivation.builder.WriterDescription._
 import tethys.derivation.semiauto._
 
-class WriterDescriptionTest extends FlatSpec with Matchers {
+class WriterDescriptionTest extends AnyFlatSpec with Matchers {
 
   behavior of "Json.describe"
   it should "extract derivation config" in {

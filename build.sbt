@@ -2,7 +2,7 @@ lazy val commonSettings = Seq(
   version := "0.11.0",
   organization := "com.tethys-json",
   scalaVersion := "2.11.12",
-  crossScalaVersions := Seq("2.11.12", "2.12.8", "2.13.0"),
+  crossScalaVersions := Seq("2.11.12", "2.12.10", "2.13.1"),
   Compile / unmanagedSourceDirectories ++= {
     def extraDirs(suffix: String) = Seq(file(sourceDirectory.value.getPath + "/main/scala" + suffix))
 
@@ -48,7 +48,7 @@ lazy val commonSettings = Seq(
 )
 
 lazy val testSettings = Seq(
-  libraryDependencies += "org.scalatest" %% "scalatest" % "3.1.0-SNAP13" % Test
+  libraryDependencies += "org.scalatest" %% "scalatest" % "3.1.0" % Test
 )
 
 lazy val tethys = project.in(file("."))
@@ -91,7 +91,7 @@ lazy val `jackson-backend` = project.in(modules / "jackson-backend")
   .settings(
     name := "tethys-jackson",
     libraryDependencies ++= Seq(
-      "com.fasterxml.jackson.core" % "jackson-core" % "2.9.9"
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.10.1"
     )
   )
   .dependsOn(core)
@@ -118,7 +118,7 @@ lazy val json4s = project.in(modules / "json4s")
   .settings(
     name := "tethys-json4s",
     libraryDependencies ++= Seq(
-      "org.json4s" %% "json4s-core" % "3.6.7",
+      "org.json4s" %% "json4s-core" % "3.6.7"
     )
   )
   .dependsOn(core)
@@ -129,7 +129,7 @@ lazy val enumeratum = project.in(modules / "enumeratum")
   .settings(
     name := "tethys-enumeratum",
     libraryDependencies ++= Seq(
-      "com.beachape" %% "enumeratum" % "1.5.13",
+      "com.beachape" %% "enumeratum" % "1.5.14"
     )
   )
   .dependsOn(core)
@@ -143,14 +143,37 @@ lazy val benchmarks = project.in(modules / "benchmarks")
       "org.json4s" %% "json4s-native" % "3.6.7",
       "org.json4s" %% "json4s-jackson" % "3.6.7",
       "com.typesafe.play" %% "play-json" % "2.7.4",
-      "io.circe" %% "circe-core" % "0.12.0-M3",
-      "io.circe" %% "circe-generic" % "0.12.0-M3",
-      "io.circe" %% "circe-jawn" % "0.12.0-M3",
-      "io.circe" %% "circe-jackson29" % "0.12.0-M3",
 
-      "org.knowm.xchart" % "xchart" % "3.5.4" exclude("de.erichseifert.vectorgraphics2d", "VectorGraphics2D") withSources()
+      "org.knowm.xchart" % "xchart" % "3.6.0" exclude("de.erichseifert.vectorgraphics2d", "VectorGraphics2D") withSources()
     ),
-    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
+    libraryDependencies ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, 13)) => Seq(
+          "io.circe" %% "circe-core" % "0.12.3",
+          "io.circe" %% "circe-generic" % "0.12.3",
+          "io.circe" %% "circe-jawn" % "0.12.3",
+          "io.circe" %% "circe-jackson210" % "0.12.1"
+        )
+        case _             => Seq(
+          "io.circe" %% "circe-core" % "0.12.0-M3",
+          "io.circe" %% "circe-generic" % "0.12.0-M3",
+          "io.circe" %% "circe-jawn" % "0.12.0-M3",
+          "io.circe" %% "circe-jackson210" % "0.11.2"
+        )
+      }
+    },
+    libraryDependencies ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, 13)) => Nil
+        case _             => Seq(compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full))
+      }
+    },
+    scalacOptions ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, 13)) => Seq("-Ymacro-annotations")
+        case _             => Nil
+      }
+    }
   )
   .dependsOn(core, `macro-derivation`, `jackson-backend`)
   .enablePlugins(JmhPlugin)

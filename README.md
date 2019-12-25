@@ -1,4 +1,6 @@
-[![Build Status](https://travis-ci.org/tethys-json/tethys.svg?branch=master)](https://travis-ci.org/tethys-json/tethys)
+| CI | Release | 
+| --- | --- |
+| [![Build Status](https://travis-ci.org/tethys-json/tethys.svg?branch=master)](https://travis-ci.org/manatki/derevo) | [![Maven Central](https://img.shields.io/maven-central/v/com.tethys-json/tethys-core_2.13.svg)](https://search.maven.org/search?q=com.tethys-json.tethys-json) | 
 
 # tethys
 tethys is a JSON parsing/writing library for Scala
@@ -29,6 +31,11 @@ libraryDependecies ++= Seq(
 ```
 
 Also, tethys has the following integrations:
+#### Circe
+[see project page](https://github.com/circe/circe)
+```scala
+libraryDependencies += "com.tethys-json" %% "tethys-circe" % tethysVersion
+```
 #### Json4s
 [see project page](https://github.com/json4s/json4s)
 ```scala
@@ -237,6 +244,10 @@ case class Bar(seq: Seq[Int])
 val foo = """{"bar":{"seq":[1,2,3]}}""".jsonAs[Foo].fold(throw _, identity)
 val json = foo.asJson
 ```
+
+# circe AST support
+
+// TODO
 
 # json4s AST support
 

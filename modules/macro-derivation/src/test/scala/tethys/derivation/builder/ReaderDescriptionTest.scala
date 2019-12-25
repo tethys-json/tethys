@@ -1,11 +1,12 @@
 package tethys.derivation.builder
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 import tethys.JsonReader
 import tethys.derivation.builder.ReaderDescriptionTest.Foo
 import tethys.derivation.semiauto._
 
-class ReaderDescriptionTest extends FlatSpec with Matchers {
+class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
 
   behavior of "describe"
 

@@ -1,6 +1,7 @@
 package tethys.derivation
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 import tethys.JsonReader
 import tethys.commons.{Token, TokenNode}
 import tethys.commons.TokenNode._
@@ -8,7 +9,7 @@ import tethys.derivation.auto._
 import tethys.readers.ReaderError
 import tethys.readers.tokens.QueueIterator
 
-class AutoReaderDerivationTest extends FlatSpec with Matchers {
+class AutoReaderDerivationTest extends AnyFlatSpec with Matchers {
 
   def read[A: JsonReader](nodes: List[TokenNode]): A = {
     val it = QueueIterator(nodes)
