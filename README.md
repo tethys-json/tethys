@@ -245,14 +245,30 @@ val foo = """{"bar":{"seq":[1,2,3]}}""".jsonAs[Foo].fold(throw _, identity)
 val json = foo.asJson
 ```
 
-# circe AST support
 
-// TODO
-
-# json4s AST support
-
+# AST support
 In some cases, you may need to work with raw AST,
-so tethys can offer you json4s AST support:
+so tethys can offer you circe and json4s AST support:
+
+## circe AST support
+```scala
+import tethys._
+import tethys.jackson._
+import tethys.derivation.auto._
+import tethys.circe._
+
+import io.circe.Json
+
+case class Foo(bar: Int, baz: Json)
+
+val json = """{"bar": 1, "baz": ["some", {"arbitrary": "json"}]}"""
+val foo = json.jsonAs[Foo].fold(throw _, identity)
+
+foo.bar // 1: Int
+foo.baz // [ "some", { "arbitrary" : "json" } ]: io.circe.Json
+```
+
+## json4s AST support
 ```scala
 import tethys._
 import tethys.jackson._
