@@ -2,7 +2,7 @@ lazy val commonSettings = Seq(
   version := "0.11.0",
   organization := "com.tethys-json",
   scalaVersion := "2.11.12",
-  crossScalaVersions := Seq("2.11.12", "2.12.10", "2.13.1"),
+  crossScalaVersions := Seq("2.11.12", "2.12.12", "2.13.3"),
   Compile / unmanagedSourceDirectories ++= {
     def extraDirs(suffix: String) = Seq(file(sourceDirectory.value.getPath + "/main/scala" + suffix))
 
@@ -48,7 +48,10 @@ lazy val commonSettings = Seq(
 )
 
 lazy val testSettings = Seq(
-  libraryDependencies += "org.scalatest" %% "scalatest" % "3.1.0" % Test
+  libraryDependencies ++=  Seq(
+    "org.scalatest" %% "scalatest-flatspec" % "3.2.2" % Test,
+    "org.scalatest" %% "scalatest-shouldmatchers" % "3.2.2" % Test
+  )
 )
 
 lazy val tethys = project.in(file("."))
@@ -91,7 +94,7 @@ lazy val `jackson-backend` = project.in(modules / "jackson-backend")
   .settings(
     name := "tethys-jackson",
     libraryDependencies ++= Seq(
-      "com.fasterxml.jackson.core" % "jackson-core" % "2.10.1"
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.11.2"
     )
   )
   .dependsOn(core)
@@ -106,7 +109,7 @@ lazy val circe = project.in(modules / "circe")
         case Some((2, 11)) =>
           Seq("io.circe" %% "circe-core" % "0.12.0-M3")
         case _ =>
-          Seq("io.circe" %% "circe-core" % "0.12.3")
+          Seq("io.circe" %% "circe-core" % "0.13.0")
       }
     }
   )
@@ -118,7 +121,7 @@ lazy val json4s = project.in(modules / "json4s")
   .settings(
     name := "tethys-json4s",
     libraryDependencies ++= Seq(
-      "org.json4s" %% "json4s-core" % "3.6.7"
+      "org.json4s" %% "json4s-core" % "3.6.9"
     )
   )
   .dependsOn(core)
@@ -129,7 +132,7 @@ lazy val enumeratum = project.in(modules / "enumeratum")
   .settings(
     name := "tethys-enumeratum",
     libraryDependencies ++= Seq(
-      "com.beachape" %% "enumeratum" % "1.5.14"
+      "com.beachape" %% "enumeratum" % "1.6.1"
     )
   )
   .dependsOn(core)
@@ -140,25 +143,25 @@ lazy val benchmarks = project.in(modules / "benchmarks")
     publishTo := None,
     libraryDependencies ++= Seq(
       "io.spray" %% "spray-json" % "1.3.5",
-      "org.json4s" %% "json4s-native" % "3.6.7",
-      "org.json4s" %% "json4s-jackson" % "3.6.7",
-      "com.typesafe.play" %% "play-json" % "2.7.4",
-
-      "org.knowm.xchart" % "xchart" % "3.6.0" exclude("de.erichseifert.vectorgraphics2d", "VectorGraphics2D") withSources()
+      "org.json4s" %% "json4s-native" % "3.6.9",
+      "org.json4s" %% "json4s-jackson" % "3.6.9",
+      "org.knowm.xchart" % "xchart" % "3.6.5" exclude("de.erichseifert.vectorgraphics2d", "VectorGraphics2D") withSources()
     ),
     libraryDependencies ++= {
       CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, 13)) => Seq(
-          "io.circe" %% "circe-core" % "0.12.3",
-          "io.circe" %% "circe-generic" % "0.12.3",
-          "io.circe" %% "circe-jawn" % "0.12.3",
-          "io.circe" %% "circe-jackson210" % "0.12.1"
+          "io.circe" %% "circe-core" % "0.13.0",
+          "io.circe" %% "circe-generic" % "0.13.0",
+          "io.circe" %% "circe-jawn" % "0.13.0",
+          "io.circe" %% "circe-jackson210" % "0.13.0",
+          "com.typesafe.play" %% "play-json" % "2.9.1"
         )
         case _             => Seq(
           "io.circe" %% "circe-core" % "0.12.0-M3",
           "io.circe" %% "circe-generic" % "0.12.0-M3",
           "io.circe" %% "circe-jawn" % "0.12.0-M3",
-          "io.circe" %% "circe-jackson210" % "0.11.2"
+          "io.circe" %% "circe-jackson210" % "0.11.2",
+          "com.typesafe.play" %% "play-json" % "2.7.4"
         )
       }
     },
