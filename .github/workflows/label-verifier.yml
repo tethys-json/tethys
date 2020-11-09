@@ -1,0 +1,13 @@
+name: "Verify type labels"
+
+on:
+  pull_request:
+    types: [opened, labeled, unlabeled, synchronize]
+
+jobs:
+  triage:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: zwaldowski/match-label-action@v2
+        with:
+          allowed: 'bug, enhancement, new feature, documentation'
