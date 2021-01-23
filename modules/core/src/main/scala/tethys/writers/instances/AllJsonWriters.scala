@@ -3,7 +3,7 @@ package tethys.writers.instances
 import tethys.JsonWriter
 import tethys.writers.tokens.TokenWriter
 
-trait AllJsonWriters extends OptionWriters {
+trait AllJsonWriters extends LiteralWriters with OptionWriters {
   implicit lazy val intWriter: JsonWriter[Int] = new JsonWriter[Int] {
     override def write(value: Int, tokenWriter: TokenWriter): Unit = tokenWriter.writeNumber(value)
   }

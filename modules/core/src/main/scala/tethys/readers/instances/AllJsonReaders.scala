@@ -4,7 +4,7 @@ import tethys.JsonReader
 import tethys.readers.tokens.TokenIterator
 import tethys.readers.{FieldName, ReaderError}
 
-trait AllJsonReaders extends OptionReaders {
+trait AllJsonReaders extends LiteralReaders with OptionReaders {
   implicit lazy val booleanReader: JsonReader[Boolean] = new JsonReader[Boolean] {
     override def read(it: TokenIterator)(implicit fieldName: FieldName): Boolean = {
       if(it.currentToken().isBooleanValue) {
