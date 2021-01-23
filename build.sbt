@@ -1,8 +1,8 @@
 lazy val commonSettings = Seq(
-  version := "0.11.0",
+  version := "0.20.0",
   organization := "com.tethys-json",
-  scalaVersion := "2.11.12",
-  crossScalaVersions := Seq("2.11.12", "2.12.12", "2.13.3"),
+  scalaVersion := "2.12.13",
+  crossScalaVersions := Seq("2.12.13", "2.13.4"),
   Compile / unmanagedSourceDirectories ++= {
     def extraDirs(suffix: String) = Seq(file(sourceDirectory.value.getPath + "/main/scala" + suffix))
 
@@ -32,25 +32,24 @@ lazy val commonSettings = Seq(
     Developer(
       id = "REDNBLACK",
       name = "Boris Potepun",
-      email = "boris@f0w.org",
+      email = "boris.p@protonmail.com",
       url = url("https://github.com/REDNBLACK")
     )
   ),
   publishMavenStyle := true,
   publishTo := {
-    val nexus = "https://oss.sonatype.org/"
     if (isSnapshot.value)
-      Some("snapshots" at nexus + "content/repositories/snapshots")
+      Some(Opts.resolver.sonatypeSnapshots)
     else
-      Some("releases" at nexus + "service/local/staging/deploy/maven2")
+      sonatypePublishToBundle.value
   },
   publishArtifact in Test := false
 )
 
 lazy val testSettings = Seq(
   libraryDependencies ++=  Seq(
-    "org.scalatest" %% "scalatest-flatspec" % "3.2.2" % Test,
-    "org.scalatest" %% "scalatest-shouldmatchers" % "3.2.2" % Test
+    "org.scalatest" %% "scalatest-flatspec"       % "3.2.3" % Test,
+    "org.scalatest" %% "scalatest-shouldmatchers" % "3.2.3" % Test
   )
 )
 
@@ -94,7 +93,7 @@ lazy val `jackson-backend` = project.in(modules / "jackson-backend")
   .settings(
     name := "tethys-jackson",
     libraryDependencies ++= Seq(
-      "com.fasterxml.jackson.core" % "jackson-core" % "2.11.2"
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.12.1"
     )
   )
   .dependsOn(core)
@@ -104,14 +103,9 @@ lazy val circe = project.in(modules / "circe")
   .settings(testSettings)
   .settings(
     name := "tethys-circe",
-    libraryDependencies ++= {
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, 11)) =>
-          Seq("io.circe" %% "circe-core" % "0.12.0-M3")
-        case _ =>
-          Seq("io.circe" %% "circe-core" % "0.13.0")
-      }
-    }
+    libraryDependencies ++= Seq(
+      "io.circe" %% "circe-core" % "0.13.0"
+    )
   )
   .dependsOn(core, `jackson-backend` % Test)
 
@@ -121,7 +115,7 @@ lazy val json4s = project.in(modules / "json4s")
   .settings(
     name := "tethys-json4s",
     libraryDependencies ++= Seq(
-      "org.json4s" %% "json4s-core" % "3.6.9"
+      "org.json4s" %% "json4s-core" % "3.6.10"
     )
   )
   .dependsOn(core)
@@ -142,29 +136,16 @@ lazy val benchmarks = project.in(modules / "benchmarks")
   .settings(
     publishTo := None,
     libraryDependencies ++= Seq(
-      "io.spray" %% "spray-json" % "1.3.5",
-      "org.json4s" %% "json4s-native" % "3.6.9",
-      "org.json4s" %% "json4s-jackson" % "3.6.9",
-      "org.knowm.xchart" % "xchart" % "3.6.5" exclude("de.erichseifert.vectorgraphics2d", "VectorGraphics2D") withSources()
+      "io.spray"          %% "spray-json"       % "1.3.6",
+      "org.json4s"        %% "json4s-native"    % "3.6.10",
+      "org.json4s"        %% "json4s-jackson"   % "3.6.10",
+      "io.circe"          %% "circe-core"       % "0.13.0",
+      "io.circe"          %% "circe-generic"    % "0.13.0",
+      "io.circe"          %% "circe-jawn"       % "0.13.0",
+      "io.circe"          %% "circe-jackson210" % "0.13.0",
+      "com.typesafe.play" %% "play-json"        % "2.9.2",
+      "org.knowm.xchart"  %  "xchart"           % "3.8.0" exclude("de.erichseifert.vectorgraphics2d", "VectorGraphics2D") withSources()
     ),
-    libraryDependencies ++= {
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, 13)) => Seq(
-          "io.circe" %% "circe-core" % "0.13.0",
-          "io.circe" %% "circe-generic" % "0.13.0",
-          "io.circe" %% "circe-jawn" % "0.13.0",
-          "io.circe" %% "circe-jackson210" % "0.13.0",
-          "com.typesafe.play" %% "play-json" % "2.9.1"
-        )
-        case _             => Seq(
-          "io.circe" %% "circe-core" % "0.12.0-M3",
-          "io.circe" %% "circe-generic" % "0.12.0-M3",
-          "io.circe" %% "circe-jawn" % "0.12.0-M3",
-          "io.circe" %% "circe-jackson210" % "0.11.2",
-          "com.typesafe.play" %% "play-json" % "2.7.4"
-        )
-      }
-    },
     libraryDependencies ++= {
       CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, 13)) => Nil
