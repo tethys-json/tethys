@@ -36,6 +36,8 @@ class DefaultWritersTest extends AnyFlatSpec {
     test(Map("a" -> 1, "b" -> 2)) -> obj("a" -> 1, "b" -> 2),
     test(Option(1), "Option.nonEmpty") -> value(1),
     test(Option.empty[Int], "Option.empty") -> List(NullValueNode),
+    test(Right(1): Either[String, Int], "Either.right") -> value(1),
+    test(Left("Not an Int"): Either[String, Int], "Either.left") -> value("Not an Int"),
     test(1: java.lang.Integer) -> value(1),
     test(java.lang.Short.valueOf(1: Short)) -> value(1: Short),
     test(1L: java.lang.Long) -> value(1L),
