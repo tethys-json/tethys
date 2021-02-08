@@ -1,5 +1,13 @@
+import scala.util.matching.Regex.Groups
+
 lazy val commonSettings = Seq(
-  version := "0.21.0",
+  version := {
+    for {
+      tag <- git.gitDescribedVersion.value
+      Groups(x, y, z, sha) <- """(\d+?)\.(\d+?)\.(\d+?)(.+)?""".r findFirstMatchIn tag
+      ver = Option(sha).fold(s"$x.$y.$z")(_ => s"$x.$y.$z$sha-SNAPSHOT")
+    } yield ver
+  }.getOrElse(throw new MessageOnlyException("Failed to get project version from Git")),
   organization := "com.tethys-json",
   scalaVersion := "2.12.13",
   crossScalaVersions := Seq("2.12.13", "2.13.4"),

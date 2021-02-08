@@ -12,6 +12,9 @@ categories:
   - title: 'Bug Fixes'
     labels:
       - 'bug'
+  - title: 'Dependencies'
+    labels:
+      - 'dependencies'
 exclude-labels:
   - 'skip-changelog'
 change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
