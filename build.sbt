@@ -56,7 +56,7 @@ lazy val testSettings = Seq(
 lazy val tethys = project.in(file("."))
   .settings(commonSettings)
   .dependsOn(core, `macro-derivation`, `jackson-backend`)
-  .aggregate(core, `macro-derivation`, `jackson-backend`, json4s, circe, enumeratum)
+  .aggregate(core, `macro-derivation`, `jackson-backend`, json4s, circe, enumeratum, refined)
 
 lazy val modules = file("modules")
 
@@ -127,6 +127,17 @@ lazy val enumeratum = project.in(modules / "enumeratum")
     name := "tethys-enumeratum",
     libraryDependencies ++= Seq(
       "com.beachape" %% "enumeratum" % "1.6.1"
+    )
+  )
+  .dependsOn(core)
+
+lazy val refined = project.in(modules / "refined")
+  .settings(commonSettings)
+  .settings(testSettings)
+  .settings(
+    name := "tethys-refined",
+    libraryDependencies ++= Seq(
+      "eu.timepit" %% "refined" % "0.9.20"
     )
   )
   .dependsOn(core)

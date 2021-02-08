@@ -10,6 +10,7 @@
 .cache
 .history
 .lib
+.bsp
 
 # Intellij Idea
 *.iml
