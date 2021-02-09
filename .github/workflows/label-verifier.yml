@@ -10,4 +10,4 @@ jobs:
     steps:
       - uses: zwaldowski/match-label-action@v2
         with:
-          allowed: 'bug, enhancement, new feature, documentation'
+          allowed: 'bug, enhancement, new feature, documentation, dependencies'

@@ -5,6 +5,9 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  release:
+    types:
+      - published
 
 jobs:
   test:
@@ -12,11 +15,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        scala: [2.12.13, 2.13.4]
+        os: [ ubuntu-latest ]
+        scala: [ 2.12.13, 2.13.4 ]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.4
 
       - name: Cache jabba
         uses: actions/cache@v2.1.4
@@ -42,3 +45,42 @@ jobs:
 
       - name: Test
         run: sbt ++${{matrix.scala}} test
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: [ test ]
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v2.3.4
+        with:
+          fetch-depth: 0
+
+      - name: Cache jabba
+        uses: actions/cache@v1
+        with:
+          path: ~/.jabba
+          key: ${{ runner.os }}-jabba-cache-${{ hashFiles('**/workflows/scala.yml') }}
+
+      - name: Cache SBT ivy cache
+        uses: actions/cache@v1
+        with:
+          path: ~/.ivy2/cache
+          key: ${{ runner.os }}-sbt-ivy-cache-${{ hashFiles('**/build.sbt') }}
+
+      - name: Cache SBT
+        uses: actions/cache@v1
+        with:
+          path: ~/.sbt
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
+
+      - uses: olafurpg/setup-scala@v10
+        with:
+          java-version: graalvm@21.0.0=tgz+https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-21.0.0/graalvm-ce-java11-linux-amd64-21.0.0.tar.gz
+
+        run: sbt ci-release
+        env:
+          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+          PGP_SECRET: ${{ secrets.PGP_SECRET }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
