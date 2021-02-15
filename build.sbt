@@ -1,5 +1,5 @@
 lazy val commonSettings = Seq(
-  version := "0.21.0",
+  version := "0.22.0",
   organization := "com.tethys-json",
   scalaVersion := "2.12.13",
   crossScalaVersions := Seq("2.12.13", "2.13.4"),
@@ -54,9 +54,11 @@ lazy val testSettings = Seq(
 )
 
 lazy val tethys = project.in(file("."))
-  .settings(commonSettings)
-  .dependsOn(core, `macro-derivation`, `jackson-backend`)
-  .aggregate(core, `macro-derivation`, `jackson-backend`, json4s, circe, enumeratum, refined)
+  .settings(
+    publishTo := None,
+    commonSettings
+  )
+  .aggregate(core, `macro-derivation`, `jackson-211`, `jackson-212`, json4s, circe, enumeratum, refined)
 
 lazy val modules = file("modules")
 
@@ -87,11 +89,30 @@ lazy val `macro-derivation` = project.in(modules / "macro-derivation")
   )
   .dependsOn(core)
 
-lazy val `jackson-backend` = project.in(modules / "jackson-backend")
+lazy val jacksonSettings = Seq(
+  unmanagedSourceDirectories   in Compile += modules / "jackson-backend" / "src" / "main",
+  unmanagedSourceDirectories   in Test    += modules / "jackson-backend" / "src" / "test",
+  unmanagedResourceDirectories in Test    += modules / "jackson-backend" / "src" / "test" / "resources"
+)
+
+lazy val `jackson-211` = project.in(modules / "jackson-211")
   .settings(commonSettings)
+  .settings(jacksonSettings)
   .settings(testSettings)
   .settings(
     name := "tethys-jackson",
+    libraryDependencies ++= Seq(
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.11.4"
+    )
+  )
+  .dependsOn(core)
+
+lazy val `jackson-212` = project.in(modules / "jackson-212")
+  .settings(commonSettings)
+  .settings(jacksonSettings)
+  .settings(testSettings)
+  .settings(
+    name := "tethys-jackson212",
     libraryDependencies ++= Seq(
       "com.fasterxml.jackson.core" % "jackson-core" % "2.12.1"
     )
@@ -107,7 +128,7 @@ lazy val circe = project.in(modules / "circe")
       "io.circe" %% "circe-core" % "0.13.0"
     )
   )
-  .dependsOn(core, `jackson-backend` % Test)
+  .dependsOn(core, `jackson-212` % Test)
 
 lazy val json4s = project.in(modules / "json4s")
   .settings(commonSettings)
@@ -170,5 +191,5 @@ lazy val benchmarks = project.in(modules / "benchmarks")
       }
     }
   )
-  .dependsOn(core, `macro-derivation`, `jackson-backend`)
+  .dependsOn(core, `macro-derivation`, `jackson-211`)
   .enablePlugins(JmhPlugin)
