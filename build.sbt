@@ -2,7 +2,7 @@ lazy val commonSettings = Seq(
   version := "0.22.0",
   organization := "com.tethys-json",
   scalaVersion := "2.12.13",
-  crossScalaVersions := Seq("2.12.13", "2.13.4"),
+  crossScalaVersions := Seq("2.12.13", "2.13.5"),
   Compile / unmanagedSourceDirectories ++= {
     def extraDirs(suffix: String) = Seq(file(sourceDirectory.value.getPath + "/main/scala" + suffix))
 
