@@ -48,7 +48,7 @@ lazy val commonSettings = Seq(
 
 lazy val testSettings = Seq(
   libraryDependencies ++=  Seq(
-    "org.scalatest" %% "scalatest-flatspec"       % "3.2.3" % Test,
+    "org.scalatest" %% "scalatest-flatspec"       % "3.2.5" % Test,
     "org.scalatest" %% "scalatest-shouldmatchers" % "3.2.5" % Test
   )
 )
@@ -158,7 +158,7 @@ lazy val refined = project.in(modules / "refined")
   .settings(
     name := "tethys-refined",
     libraryDependencies ++= Seq(
-      "eu.timepit" %% "refined" % "0.9.20"
+      "eu.timepit" %% "refined" % "0.9.21"
     )
   )
   .dependsOn(core)
