@@ -114,7 +114,7 @@ lazy val `jackson-212` = project.in(modules / "jackson-212")
   .settings(
     name := "tethys-jackson212",
     libraryDependencies ++= Seq(
-      "com.fasterxml.jackson.core" % "jackson-core" % "2.12.1"
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.12.2"
     )
   )
   .dependsOn(core)
