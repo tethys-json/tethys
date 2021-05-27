@@ -125,7 +125,7 @@ lazy val circe = project.in(modules / "circe")
   .settings(
     name := "tethys-circe",
     libraryDependencies ++= Seq(
-      "io.circe" %% "circe-core" % "0.13.0"
+      "io.circe" %% "circe-core" % "0.14.1"
     )
   )
   .dependsOn(core, `jackson-212` % Test)
@@ -171,7 +171,7 @@ lazy val benchmarks = project.in(modules / "benchmarks")
       "io.spray"          %% "spray-json"       % "1.3.6",
       "org.json4s"        %% "json4s-native"    % "3.6.10",
       "org.json4s"        %% "json4s-jackson"   % "3.6.10",
-      "io.circe"          %% "circe-core"       % "0.13.0",
+      "io.circe"          %% "circe-core"       % "0.14.1",
       "io.circe"          %% "circe-generic"    % "0.13.0",
       "io.circe"          %% "circe-jawn"       % "0.13.0",
       "io.circe"          %% "circe-jackson210" % "0.13.0",
