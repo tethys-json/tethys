@@ -136,7 +136,7 @@ lazy val json4s = project.in(modules / "json4s")
   .settings(
     name := "tethys-json4s",
     libraryDependencies ++= Seq(
-      "org.json4s" %% "json4s-core" % "3.6.11"
+      "org.json4s" %% "json4s-core" % "4.0.0"
     )
   )
   .dependsOn(core)
