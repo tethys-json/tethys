@@ -147,7 +147,7 @@ lazy val enumeratum = project.in(modules / "enumeratum")
   .settings(
     name := "tethys-enumeratum",
     libraryDependencies ++= Seq(
-      "com.beachape" %% "enumeratum" % "1.6.1"
+      "com.beachape" %% "enumeratum" % "1.7.0"
     )
   )
   .dependsOn(core)
