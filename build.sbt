@@ -2,7 +2,7 @@ lazy val commonSettings = Seq(
   version := "0.25.0",
   organization := "com.tethys-json",
   scalaVersion := "2.12.15",
-  crossScalaVersions := Seq("2.12.15", "2.13.6"),
+  crossScalaVersions := Seq("2.12.15", "2.13.7"),
   Compile / unmanagedSourceDirectories ++= {
     def extraDirs(suffix: String) = Seq(file(sourceDirectory.value.getPath + "/main/scala" + suffix))
 
@@ -43,7 +43,7 @@ lazy val commonSettings = Seq(
     else
       sonatypePublishToBundle.value
   },
-  publishArtifact in Test := false
+  Test / publishArtifact := false
 )
 
 lazy val testSettings = Seq(
@@ -90,9 +90,9 @@ lazy val `macro-derivation` = project.in(modules / "macro-derivation")
   .dependsOn(core)
 
 lazy val jacksonSettings = Seq(
-  unmanagedSourceDirectories   in Compile += modules / "jackson-backend" / "src" / "main",
-  unmanagedSourceDirectories   in Test    += modules / "jackson-backend" / "src" / "test",
-  unmanagedResourceDirectories in Test    += modules / "jackson-backend" / "src" / "test" / "resources"
+  Compile / unmanagedSourceDirectories += modules / "jackson-backend" / "src" / "main",
+  Test / unmanagedSourceDirectories    += modules / "jackson-backend" / "src" / "test",
+  Test / unmanagedResourceDirectories  += modules / "jackson-backend" / "src" / "test" / "resources"
 )
 
 lazy val `jackson-211` = project.in(modules / "jackson-211")
@@ -114,7 +114,7 @@ lazy val `jackson-212` = project.in(modules / "jackson-212")
   .settings(
     name := "tethys-jackson212",
     libraryDependencies ++= Seq(
-      "com.fasterxml.jackson.core" % "jackson-core" % "2.12.5"
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.12.6"
     )
   )
   .dependsOn(core)
@@ -158,7 +158,7 @@ lazy val refined = project.in(modules / "refined")
   .settings(
     name := "tethys-refined",
     libraryDependencies ++= Seq(
-      "eu.timepit" %% "refined" % "0.9.27"
+      "eu.timepit" %% "refined" % "0.9.28"
     )
   )
   .dependsOn(core)
