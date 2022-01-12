@@ -31,12 +31,22 @@ class SemiautoDerivationMacro(val c: blackbox.Context)
   }
 
   def jsonWriterWithConfig[A: WeakTypeTag](config: Expr[WriterDerivationConfig]): Expr[JsonObjectWriter[A]] = {
-    val description = MacroWriteDescription(
-      tpe = weakTypeOf[A],
-      config = c.Expr[WriterDerivationConfig](c.untypecheck(config.tree)),
-      operations = Seq.empty
-    )
-    deriveWriter[A](description)
+    val tpe = weakTypeOf[A]
+    val clazz = classSym(tpe)
+
+    if (isCaseClass(tpe)) {
+      deriveWriter[A](
+        MacroWriteDescription(
+          tpe = tpe,
+          config = c.Expr[WriterDerivationConfig](c.untypecheck(config.tree)),
+          operations = Seq.empty
+        )
+      )
+    } else if (clazz.isSealed) {
+      deriveWriterForSealedClass[A](c.Expr[WriterDerivationConfig](c.untypecheck(config.tree)))
+    } else {
+      abort(s"Can't auto derive JsonWriter[$tpe]")
+    }
   }
 
   def describedJsonWriter[A: WeakTypeTag](description: Expr[WriterDescription[A]]): Expr[JsonObjectWriter[A]] = {

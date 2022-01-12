@@ -1,7 +1,7 @@
 package tethys.derivation.impl.derivation
 
 import tethys.JsonObjectWriter
-import tethys.derivation.builder.FieldStyle
+import tethys.derivation.builder.{FieldStyle, WriterDerivationConfig}
 import tethys.derivation.impl.builder.{WriteBuilderUtils, WriterBuilderCommons}
 import tethys.derivation.impl.{BaseMacroDefinitions, CaseClassUtils}
 import tethys.writers.tokens.TokenWriter
@@ -34,6 +34,10 @@ trait WriterDerivation
   }
 
   def deriveWriterForSealedClass[A: WeakTypeTag]: Expr[JsonObjectWriter[A]] = {
+    deriveWriterForSealedClass[A](emptyWriterConfig)
+  }
+
+  def deriveWriterForSealedClass[A: WeakTypeTag](config: c.Expr[WriterDerivationConfig]): Expr[JsonObjectWriter[A]] = {
     val tpe = weakTypeOf[A]
 
     val types = collectDistinctSubtypes(tpe).sortBy(_.typeSymbol.fullName)
@@ -51,7 +55,14 @@ trait WriterDerivation
       val subClassesCases = types.zip(terms).map {
         case (subtype, writer) =>
           val term = TermName(c.freshName("sub"))
-          cq"$term: $subtype => $writer.writeValues($term, $tokenWriterTerm)"
+          val discriminatorTerm = TermName(c.freshName("discriminator"))
+          val typeName = subtype.typeSymbol.asClass.name.decodedName.toString.trim
+          cq"""$term: $subtype => {
+               $writer.writeValues($term, $tokenWriterTerm)
+               ${config.tree}.discriminator.foreach { $discriminatorTerm: String =>
+                 implicitly[$jsonWriterType[String]].write($discriminatorTerm, $typeName, $tokenWriterTerm)
+               }
+          }"""
       }
 
       c.Expr[JsonObjectWriter[A]] {

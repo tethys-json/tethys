@@ -2,8 +2,9 @@ package tethys.derivation.builder
 
 import tethys.derivation.builder.WriterDescription.BuilderOperation
 
-case class WriterDerivationConfig(fieldStyle: Option[FieldStyle]) {
+case class WriterDerivationConfig(fieldStyle: Option[FieldStyle], discriminator: Option[String] = None) {
   def withFieldStyle(fieldStyle: FieldStyle): WriterDerivationConfig = this.copy(fieldStyle = Some(fieldStyle))
+  def withDiscriminator(discriminator: String): WriterDerivationConfig = this.copy(discriminator = Some(discriminator))
 }
 
 object WriterDerivationConfig {
