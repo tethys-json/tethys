@@ -1,5 +1,5 @@
 lazy val commonSettings = Seq(
-  version := "0.25.0",
+  version := "0.26.0",
   organization := "com.tethys-json",
   scalaVersion := "2.12.15",
   crossScalaVersions := Seq("2.12.15", "2.13.8"),
@@ -36,6 +36,9 @@ lazy val commonSettings = Seq(
       url = url("https://github.com/REDNBLACK")
     )
   ),
+  credentials ++= Option(Path.userHome / ".config" / "sbt" / ".tethys-credentials")
+    .filter(_.exists())
+    .map(Credentials(_)),
   publishMavenStyle := true,
   publishTo := {
     if (isSnapshot.value)
