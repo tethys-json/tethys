@@ -15,8 +15,8 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
   }
 
   it should "build description with config" in {
-    describe(ReaderBuilder[Foo].fieldStyle(FieldStyle.uppercase).strict) shouldBe ReaderDescription[Foo](
-      ReaderDerivationConfig.withFieldStyle(FieldStyle.uppercase).strict,
+    describe(ReaderBuilder[Foo].fieldStyle(FieldStyle.Uppercase).strict) shouldBe ReaderDescription[Foo](
+      ReaderDerivationConfig.withFieldStyle(FieldStyle.Uppercase).strict,
       Seq()
     )
   }
@@ -59,7 +59,7 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
 
     val description = describe {
       ReaderBuilder[Foo]
-        .extract(_.a).from('b.as[String], "c".as[Any])(fun)
+        .extract(_.a).from(Symbol("b").as[String], "c".as[Any])(fun)
     }
 
     description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
@@ -99,7 +99,7 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
 
     val description = describe {
       ReaderBuilder[Foo]
-        .extract(_.a).from(_.b).and('c.as[Any])(fun)
+        .extract(_.a).from(_.b).and(Symbol("c").as[Any])(fun)
     }
 
     description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
@@ -119,7 +119,7 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
 
     val description = describe {
       ReaderBuilder[Foo]
-        .extract(_.a).from('b.as[String]).and(_.c)(fun)
+        .extract(_.a).from(Symbol("b").as[String]).and(_.c)(fun)
     }
 
     description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
@@ -139,7 +139,7 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
 
     val description = describe {
       ReaderBuilder[Foo]
-        .extract(_.a).from('b.as[String]).and('c.as[Any])(fun)
+        .extract(_.a).from(Symbol("b").as[String]).and(Symbol("c").as[Any])(fun)
     }
 
     description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
@@ -179,7 +179,7 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
 
     val description = describe {
       ReaderBuilder[Foo]
-        .extractReader(_.a).from('b.as[String], "c".as[Any])(fun)
+        .extractReader(_.a).from(Symbol("b").as[String], "c".as[Any])(fun)
     }
 
     description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
@@ -219,7 +219,7 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
 
     val description = describe {
       ReaderBuilder[Foo]
-        .extractReader(_.a).from(_.b).and('c.as[Any])(fun)
+        .extractReader(_.a).from(_.b).and(Symbol("c").as[Any])(fun)
     }
 
     description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
@@ -239,7 +239,7 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
 
     val description = describe {
       ReaderBuilder[Foo]
-        .extractReader(_.a).from('b.as[String]).and(_.c)(fun)
+        .extractReader(_.a).from(Symbol("b").as[String]).and(_.c)(fun)
     }
 
     description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
@@ -259,7 +259,7 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
 
     val description = describe {
       ReaderBuilder[Foo]
-        .extractReader(_.a).from('b.as[String]).and('c.as[Any])(fun)
+        .extractReader(_.a).from(Symbol("b").as[String]).and(Symbol("c").as[Any])(fun)
     }
 
     description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(

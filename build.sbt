@@ -1,16 +1,16 @@
 lazy val commonSettings = Seq(
-  version := "0.27.0",
+  version := "0.28.0",
   organization := "com.tethys-json",
-  scalaVersion := "2.12.17",
-  crossScalaVersions := Seq("2.12.17", "2.13.10"),
+  scalaVersion := "3.1.3",
+  crossScalaVersions := Seq("2.13.10", "3.1.3"),
   Compile / unmanagedSourceDirectories ++= {
     def extraDirs(suffix: String) = Seq(file(sourceDirectory.value.getPath + "/main/scala" + suffix))
 
     CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, y)) if y <= 12 =>
-        extraDirs("-2.12-")
       case Some((2, y)) if y >= 13 =>
         extraDirs("-2.13+")
+      case Some((3, _)) =>
+        extraDirs("-3")
       case _ => Nil
     }
   },
@@ -34,6 +34,12 @@ lazy val commonSettings = Seq(
       name = "Boris Potepun",
       email = "boris.p@protonmail.com",
       url = url("https://github.com/REDNBLACK")
+    ),
+    Developer(
+      id = "MrIrre",
+      name = "Erlan Zhaygutov",
+      email = "zhaigutov.erlan@gmail.com",
+      url = url("https://github.com/MrIrre")
     )
   ),
   credentials ++= Option(Path.userHome / ".config" / "sbt" / ".tethys-credentials")
@@ -61,7 +67,7 @@ lazy val tethys = project.in(file("."))
     publishTo := None,
     commonSettings
   )
-  .aggregate(core, `macro-derivation`, `jackson-211`, `jackson-212`, json4s, circe, enumeratum, refined)
+  .aggregate(core, `macro-derivation`, `jackson-211`, `jackson-212`, `jackson-213`, json4s, circe, refined)
 
 lazy val modules = file("modules")
 
@@ -76,7 +82,7 @@ lazy val core = project.in(modules / "core")
           Seq(
             "org.scala-lang" % "scala-compiler" % scalaVersion.value % Provided
           )
-        case _ => Nil
+        case _ => Seq.empty
       }
     }
   )
@@ -86,9 +92,15 @@ lazy val `macro-derivation` = project.in(modules / "macro-derivation")
   .settings(testSettings)
   .settings(
     name := "tethys-derivation",
-    libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value % Provided
-    )
+    libraryDependencies ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, y)) if y >= 13 =>
+          Seq(
+            "org.scala-lang" % "scala-compiler" % scalaVersion.value % Provided
+          )
+        case _ => Seq.empty
+      }
+    }
   )
   .dependsOn(core)
 
@@ -103,7 +115,7 @@ lazy val `jackson-211` = project.in(modules / "jackson-211")
   .settings(jacksonSettings)
   .settings(testSettings)
   .settings(
-    name := "tethys-jackson",
+    name := "tethys-jackson211",
     libraryDependencies ++= Seq(
       "com.fasterxml.jackson.core" % "jackson-core" % "2.11.4"
     )
@@ -117,7 +129,19 @@ lazy val `jackson-212` = project.in(modules / "jackson-212")
   .settings(
     name := "tethys-jackson212",
     libraryDependencies ++= Seq(
-      "com.fasterxml.jackson.core" % "jackson-core" % "2.12.7"
+        "com.fasterxml.jackson.core" % "jackson-core" % "2.12.7"
+      )
+  )
+  .dependsOn(core)
+
+lazy val `jackson-213` = project.in(modules / "jackson-213")
+  .settings(commonSettings)
+  .settings(jacksonSettings)
+  .settings(testSettings)
+  .settings(
+    name := "tethys-jackson213",
+    libraryDependencies ++= Seq(
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.13.2"
     )
   )
   .dependsOn(core)
@@ -147,6 +171,8 @@ lazy val json4s = project.in(modules / "json4s")
 lazy val enumeratum = project.in(modules / "enumeratum")
   .settings(commonSettings)
   .settings(testSettings)
+  .settings(scalaVersion := "2.13.8")
+  .settings(crossScalaVersions := Seq("2.13.8"))
   .settings(
     name := "tethys-enumeratum",
     libraryDependencies ++= Seq(
@@ -171,22 +197,16 @@ lazy val benchmarks = project.in(modules / "benchmarks")
   .settings(
     publishTo := None,
     libraryDependencies ++= Seq(
-      "io.spray"          %% "spray-json"       % "1.3.6",
-      "org.json4s"        %% "json4s-native"    % "3.6.10",
-      "org.json4s"        %% "json4s-jackson"   % "3.6.10",
-      "io.circe"          %% "circe-core"       % "0.14.4",
-      "io.circe"          %% "circe-generic"    % "0.13.0",
-      "io.circe"          %% "circe-jawn"       % "0.13.0",
-      "io.circe"          %% "circe-jackson210" % "0.13.0",
-      "com.typesafe.play" %% "play-json"        % "2.9.2",
-      "org.knowm.xchart"  %  "xchart"           % "3.8.0" exclude("de.erichseifert.vectorgraphics2d", "VectorGraphics2D") withSources()
+      "io.spray" %% "spray-json" % "1.3.6",
+      "org.json4s" %% "json4s-native" % "4.0.5",
+      "org.json4s" %% "json4s-jackson" % "4.0.5",
+      "io.circe" %% "circe-core" % "0.14.2",
+      "io.circe" %% "circe-generic" % "0.14.2",
+      "io.circe" %% "circe-jawn" % "0.14.2",
+      "io.circe" %% "circe-jackson210" % "0.14.0",
+      "com.typesafe.play" %% "play-json" % "2.10.0-RC6",
+      "org.knowm.xchart" % "xchart" % "3.8.1" exclude("de.erichseifert.vectorgraphics2d", "VectorGraphics2D") withSources()
     ),
-    libraryDependencies ++= {
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, 13)) => Nil
-        case _             => Seq(compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full))
-      }
-    },
     scalacOptions ++= {
       CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, 13)) => Seq("-Ymacro-annotations")

@@ -9,18 +9,16 @@ trait CaseClassUtils extends LoggingUtils {
   val c: blackbox.Context
   import c.universe._
 
-  case class CaseClassDefinition(tpe: Type, fields: List[CaseClassField], typeParamsToRealTypes: Map[String, Type])
+  case class CaseClassDefinition(tpe: Type, fields: List[CaseClassField])
   case class CaseClassField(name: String, tpe: Type)
 
   def caseClassDefinition[A: WeakTypeTag]: CaseClassDefinition = caseClassDefinition(weakTypeOf[A])
 
   def caseClassDefinition(tpe: Type): CaseClassDefinition = {
     val ctor = getConstructor(tpe)
-    val typeParamsToRealTypes = extractTypeParamsToRealTypes(tpe)
     CaseClassDefinition(
       tpe = tpe,
-      fields = ctor.paramLists.head.map(constructorParameterToCaseClassField(tpe)),
-      typeParamsToRealTypes = typeParamsToRealTypes
+      fields = ctor.paramLists.head.map(constructorParameterToCaseClassField(tpe))
     )
   }
 
@@ -49,12 +47,5 @@ trait CaseClassUtils extends LoggingUtils {
       name = param.name.decodedName.toString,
       tpe = possibleRealType.getOrElse(param.typeSignatureIn(tpe))
     )
-  }
-
-  private def extractTypeParamsToRealTypes(tpe: Type): Map[String, Type] = {
-    val ctorTypeArgs = getConstructor(tpe).typeSignature.finalResultType.typeArgs
-    ctorTypeArgs.zip(tpe.typeArgs).map {
-      case (gen, real) => gen.typeSymbol.name.decodedName.toString -> real
-    }.toMap
   }
 }

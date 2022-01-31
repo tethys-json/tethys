@@ -12,9 +12,9 @@ class WriterDescriptionTest extends AnyFlatSpec with Matchers {
   it should "extract derivation config" in {
     describe {
       WriterBuilder[BuilderTestData]
-        .fieldStyle(FieldStyle.lowerSnakecase)
+        .fieldStyle(FieldStyle.LowerSnakeCase)
     } shouldBe WriterDescription(
-      WriterDerivationConfig.withFieldStyle(FieldStyle.lowerSnakecase),
+      WriterDerivationConfig.withFieldStyle(FieldStyle.LowerSnakeCase),
       Seq()
     )
   }
@@ -24,10 +24,13 @@ class WriterDescriptionTest extends AnyFlatSpec with Matchers {
       WriterBuilder[BuilderTestData]
         .remove(_.a)
         .remove(_.inner)
-    } shouldBe WriterDescription(WriterDerivationConfig.empty, Seq(
-      BuilderOperation.Remove[BuilderTestData]("a"),
-      BuilderOperation.Remove[BuilderTestData]("inner")
-    ))
+    } shouldBe WriterDescription(
+      WriterDerivationConfig.empty,
+      Seq(
+        BuilderOperation.Remove[BuilderTestData]("a"),
+        BuilderOperation.Remove[BuilderTestData]("inner")
+      )
+    )
   }
 
   it should "not compile if we try to remove field from inner class" in {
@@ -55,7 +58,8 @@ class WriterDescriptionTest extends AnyFlatSpec with Matchers {
   it should "extract update from root operations" in {
     val description = describe {
       WriterBuilder[BuilderTestData]
-        .update(_.a).fromRoot(_.a.toString)
+        .update(_.a)
+        .fromRoot(_.a.toString)
     }
 
     val Seq(u: BuilderOperation.UpdateFromRoot[BuilderTestData, String]) = description.operations
@@ -85,10 +89,11 @@ class WriterDescriptionTest extends AnyFlatSpec with Matchers {
   it should "extract update partial from root operations" in {
     val description = describe {
       WriterBuilder[BuilderTestData]
-        .updatePartial(_.a).fromRoot {
+        .updatePartial(_.a)
+        .fromRoot {
           case d if d.a == 1 => "uno!"
           case d if d.a == 2 => 4
-          case d => d.a * 3
+          case d             => d.a * 3
         }
     }
 
@@ -150,8 +155,8 @@ class WriterDescriptionTest extends AnyFlatSpec with Matchers {
   }
 
   it should "extract update from root with rename" in {
-    val fun: PartialFunction[BuilderTestData, Int] = {
-      case d => d.a
+    val fun: PartialFunction[BuilderTestData, Int] = { case d =>
+      d.a
     }
 
     describe {
@@ -163,11 +168,7 @@ class WriterDescriptionTest extends AnyFlatSpec with Matchers {
 }
 
 object WriterDescriptionTest {
-
   case class BuilderTestData(a: Int, b: String, c: Boolean, d: Long, inner: InnerCls)
 
   case class InnerCls(a: Int)
-
 }
-
-

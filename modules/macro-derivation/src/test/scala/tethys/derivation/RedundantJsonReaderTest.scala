@@ -10,6 +10,8 @@ import tethys.derivation.builder.ReaderBuilder
 import tethys.derivation.semiauto._
 import tethys.readers.tokens.QueueIterator
 
+import tethys.TokenIteratorOps
+
 object RedundantJsonReaderTest {
   case class RedundantClass(i: Int)
 
