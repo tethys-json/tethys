@@ -53,6 +53,12 @@ object FieldStyle {
     override def applyStyle(field: String): String = field.toUpperCase()
   }
 
+  val kebabcase: FieldStyle = new FieldStyle {
+    override def applyStyle(field: String): String = splitName(field).mkString("-")
+  }
+
   val lowerSnakecase: FieldStyle = snakecase >> lowercase
   val upperSnakecase: FieldStyle = snakecase >> uppercase
+  val lowerKebabcase: FieldStyle = kebabcase >> lowercase
+  val upperKebabcase: FieldStyle = kebabcase >> uppercase
 }
