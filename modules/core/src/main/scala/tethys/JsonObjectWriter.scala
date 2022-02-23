@@ -22,6 +22,11 @@ trait JsonObjectWriter[A] extends JsonWriter[A] {
       that.writeValues(value, tokenWriter)
     }
   }
+
+  override def contramap[B](fun: B => A): JsonObjectWriter[B] = new JsonObjectWriter[B] {
+    override def writeValues(value: B, tokenWriter: TokenWriter): Unit =
+      self.writeValues(fun(value), tokenWriter)
+  }
 }
 
 object JsonObjectWriter extends LowPriorityJsonObjectWriters {
