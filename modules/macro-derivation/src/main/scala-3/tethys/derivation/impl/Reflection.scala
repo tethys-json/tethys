@@ -37,6 +37,8 @@ trait Reflection {
         case _                    => Nil
       }
 
+    def getDealiasFullName: String = underlying.dealias.typeSymbol.fullName
+
     private def search[F[_]: Type]: Term = underlying.asType match {
       case '[t] => '{ summonInline[F[t]] }.asTerm
     }

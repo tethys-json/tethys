@@ -262,20 +262,20 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
     )) shouldBe SimpleType(1, "str", 1.0)
   }
 
-//  it should "derive reader for extract field even it described few times" in {
-//    implicit val reader: JsonReader[SimpleType] = jsonReader[SimpleType] {
-//      describe {
-//        ReaderBuilder[SimpleType]
-//          .extract(_.i).from("i".as[Int])(identity)
-//          .extract(_.s).from("i".as[Long])(_.toString)
-//          .extract(_.d).from(_.i)(_.toDouble)
-//      }
-//    }
-//
-//    read[SimpleType](obj(
-//      "i" -> 1
-//    )) shouldBe SimpleType(1, "1", 1.0)
-//  }
+  it should "derive reader for extract field even it described few times" in {
+    implicit val reader: JsonReader[SimpleType] = jsonReader[SimpleType] {
+      describe {
+        ReaderBuilder[SimpleType]
+          .extract(_.i).from("i".as[Int])(identity)
+          .extract(_.s).from("i".as[Long])(_.toString)
+          .extract(_.d).from(_.i)(_.toDouble)
+      }
+    }
+
+    read[SimpleType](obj(
+      "i" -> 1
+    )) shouldBe SimpleType(1, "1", 1.0)
+  }
 
   it should "derive reader for reader config" in {
     implicit val reader: JsonReader[CamelCaseNames] = jsonReader[CamelCaseNames](
