@@ -292,13 +292,13 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
       simple = 3
     )
 
-//    the [ReaderError] thrownBy {
-//      read[CamelCaseNames](obj(
-//        "some_param" -> 1,
-//        "not_id_param" -> 2,
-//        "simple" -> 3
-//      ))
-//    } should include ("Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'some_param', 'id_param', 'simple'")
+    (the [ReaderError] thrownBy {
+      read[CamelCaseNames](obj(
+        "some_param" -> 1,
+        "not_id_param" -> 2,
+        "simple" -> 3
+      ))
+    }).getMessage shouldBe "Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'simple', 'id_param', 'some_param'"
   }
 
   it should "derive reader for reader config from builder" in {
@@ -318,12 +318,12 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
       simple = 3
     )
 
-//    the [ReaderError] thrownBy {
-//      read[CamelCaseNames](obj(
-//        "some_param" -> 1,
-//        "not_id_param" -> 2,
-//        "simple" -> 3
-//      ))
-//    } should include ("Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'some_param', 'id_param', 'simple'")
+    (the [ReaderError] thrownBy {
+      read[CamelCaseNames](obj(
+        "some_param" -> 1,
+        "not_id_param" -> 2,
+        "simple" -> 3
+      ))
+    }).getMessage shouldBe "Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'simple', 'id_param', 'some_param'"
   }
 }

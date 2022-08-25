@@ -76,6 +76,11 @@ trait ReaderDerivation extends ReaderBuilderCommons {
                 .fold(
                   if (fieldsWithoutReaders.contains(jsonName))
                     notComputedFields.update(jsonName, currentIt)
+                  else if (${Expr(isStrict)}) {
+                    val unexpectedName = jsonName
+                    val expectedNames = readers.keySet.union(fieldsWithoutReaders).mkString("'", "', '", "'")
+                    ReaderError.wrongJson(s"unexpected field '$unexpectedName', expected one of $expectedNames")
+                  }
                 )(_.foreach { case (name, tpeName, reader) =>
                   val value: Any = reader.read(currentIt.copy())(fieldName.appendFieldName(jsonName))
                   readFields.updateWith(name) {
