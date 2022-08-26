@@ -15,8 +15,8 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
   }
 
   it should "build description with config" in {
-    describe(ReaderBuilder[Foo].fieldStyle(FieldStyle.Uppercase).strict) shouldBe ReaderDescription[Foo](
-      ReaderDerivationConfig.withFieldStyle(FieldStyle.Uppercase).strict,
+    describe(ReaderBuilder[Foo].fieldStyle(FieldStyle.UpperCase).strict) shouldBe ReaderDescription[Foo](
+      ReaderDerivationConfig.withFieldStyle(FieldStyle.UpperCase).strict,
       Seq()
     )
   }

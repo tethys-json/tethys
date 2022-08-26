@@ -172,8 +172,8 @@ trait WriterBuilderUtils extends Reflection {
 
     val fieldStyle: Option[FieldStyle] = fieldStyleExpr.map { fs =>
       fs.asTerm.underlying.asExprOf[ConfigFieldStyle] match {
-        case '{ ConfigFieldStyle.Lowercase } => FieldStyle.lowercase
-        case '{ ConfigFieldStyle.Uppercase } => FieldStyle.uppercase
+        case '{ ConfigFieldStyle.LowerCase } => FieldStyle.lowercase
+        case '{ ConfigFieldStyle.UpperCase } => FieldStyle.uppercase
 
         case '{ ConfigFieldStyle.Capitalize }   => FieldStyle.capitalize
         case '{ ConfigFieldStyle.Uncapitalize } => FieldStyle.uncapitalize

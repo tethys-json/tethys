@@ -16,7 +16,7 @@ class SemiautoWriterDerivationTest extends AnyFlatSpec with Matchers {
   behavior of "semiauto derivation"
   it should "generate proper writer from WriterDescription" in {
     def freeVariable: String = "e"
-    implicit val dWriter: JsonWriter[D] = jsonWriter[D](WriterDerivationConfig.withFieldStyle(FieldStyle.Uppercase))
+    implicit val dWriter: JsonWriter[D] = jsonWriter[D](WriterDerivationConfig.withFieldStyle(FieldStyle.UpperCase))
 
     implicit val testWriter: JsonWriter[JsonTreeTestData] = jsonWriter {
       WriterBuilder[JsonTreeTestData]

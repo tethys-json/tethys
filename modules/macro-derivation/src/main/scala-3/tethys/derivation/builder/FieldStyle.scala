@@ -1,11 +1,11 @@
 package tethys.derivation.builder
 
 enum FieldStyle {
-  case Lowercase
-  case Uppercase
-
   case Capitalize
   case Uncapitalize
+
+  case LowerCase
+  case UpperCase
 
   case KebabCase
   case LowerKebabCase
@@ -18,4 +18,21 @@ enum FieldStyle {
   case UpperSnakeCase
   case CapitalizedSnakeCase
   case UncapitalizedSnakeCase
+
+  @deprecated("use FieldStyle.SnakeCase")
+  case snakecase
+  @deprecated("use FieldStyle.KebabCase")
+  case kebabcase
+  @deprecated("use FieldStyle.LowerCase")
+  case lowercase
+  @deprecated("use FieldStyle.UpperCase")
+  case uppercase
+  @deprecated("use FieldStyle.LowerSnakeCase")
+  case lowerSnakecase
+  @deprecated("use FieldStyle.UpperSnakeCase")
+  case upperSnakecase
+  @deprecated("use FieldStyle.LowerKebabCase")
+  case lowerKebabcase
+  @deprecated("use FieldStyle.UpperKebabCase")
+  case upperKebabcase
 }
