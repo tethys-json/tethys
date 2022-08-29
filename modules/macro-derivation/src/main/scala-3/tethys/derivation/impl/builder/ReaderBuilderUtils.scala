@@ -152,6 +152,15 @@ trait ReaderBuilderUtils extends Reflection {
         case '{ ConfigFieldStyle.CapitalizedSnakeCase }   => FieldStyle.capitalizedSnakecase
         case '{ ConfigFieldStyle.UncapitalizedSnakeCase } => FieldStyle.uncapitalizedSnakecase
 
+        case '{ ConfigFieldStyle.lowercase }      => FieldStyle.lowercase
+        case '{ ConfigFieldStyle.uppercase }      => FieldStyle.uppercase
+        case '{ ConfigFieldStyle.kebabcase }      => FieldStyle.kebabcase
+        case '{ ConfigFieldStyle.lowerKebabcase } => FieldStyle.lowerKebabcase
+        case '{ ConfigFieldStyle.upperKebabcase } => FieldStyle.upperKebabcase
+        case '{ ConfigFieldStyle.snakecase }      => FieldStyle.snakecase
+        case '{ ConfigFieldStyle.lowerSnakecase } => FieldStyle.lowerSnakecase
+        case '{ ConfigFieldStyle.upperSnakecase } => FieldStyle.upperSnakecase
+
         case _ => report.errorAndAbort("fieldStyle in reader config can not be computed in compile-time")
       }
     }
