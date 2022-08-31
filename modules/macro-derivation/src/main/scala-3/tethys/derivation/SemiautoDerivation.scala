@@ -1,6 +1,6 @@
 package tethys.derivation
 
-import tethys.{JsonObjectWriter, JsonReader}
+import tethys.{JsonObjectWriter, JsonReader, JsonWriter}
 import tethys.derivation.builder.{
   NotDescribedException,
   ReaderBuilder,

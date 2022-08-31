@@ -100,7 +100,7 @@ class AutoWriterDerivationTest extends AnyFlatSpec with Matchers {
     implicit val simpleClassWriter: JsonObjectWriter[SimpleClass] = JsonWriter.obj[SimpleClass].addField("b")(_.b)
     implicit val justObjectWriter: JsonObjectWriter[JustObject.type] = JsonWriter.obj.addField("type")(_ => "JustObject")
 
-    implicit val sealedWriter: JsonWriter[SimpleSealedType] = jsonWriter[SimpleSealedType]
+    implicit lazy val sealedWriter: JsonWriter[SimpleSealedType] = jsonWriter[SimpleSealedType]
 
     def write(simpleSealedType: SimpleSealedType): List[TokenNode] = simpleSealedType.asTokenList
 

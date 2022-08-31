@@ -1,6 +1,5 @@
 package tethys.derivation.impl
 
-import scala.compiletime.summonInline
 import scala.quoted.*
 
 import tethys.readers.JsonReaderDefaultValue
@@ -12,35 +11,36 @@ trait Reflection {
   import context.reflect.*
 
   extension (underlying: TypeRepr) {
-    def searchJsonReader: Term = search[JsonReader]
+    def searchInlineJsonReader: Term = searchInline[JsonReader]
 
-    def searchJsonWriter: Term = search[JsonWriter]
+    def searchInlineJsonWriter: Term = searchInline[JsonWriter]
 
-    def getWriteMethod: Term = underlying.searchJsonWriter.selectWriteMethod
+    def getWrite2Method: Term = underlying.searchInlineJsonWriter.selectWrite2Method
 
-    def searchJsonObjectWriter: Term = search[JsonObjectWriter]
+    def getWrite3Method: Term = underlying.searchInlineJsonWriter.selectWrite3Method
 
-    def getWriteValuesMethod: Term = underlying.searchJsonObjectWriter.selectFirstMethod("writeValues")
+    def searchInlineJsonObjectWriter: Term = searchInline[JsonObjectWriter]
 
-    def searchJsonReaderDefaultValue: Term =
-      underlying.asType match {
-        case '[t] =>
-          Expr.summon[JsonReaderDefaultValue[t]] match {
-            case Some(instance) => instance.asTerm
-            case None => report.errorAndAbort(s"Can't find implicit for ${Type.show[JsonReaderDefaultValue[t]]}")
-          }
-      }
+    def searchJsonObjectWriter: Term = searchUnsafe[JsonObjectWriter]
 
-    def getTypeArgs: List[TypeRepr] =
-      underlying.widenTermRefByName.dealias match {
-        case AppliedType(_, args) => args
-        case _                    => Nil
-      }
+    def safeSearchJsonObjectWriter: Option[Term] = searchSafe[JsonObjectWriter]
+
+    def searchJsonReaderDefaultValue: Term = searchUnsafe[JsonReaderDefaultValue]
 
     def getDealiasFullName: String = underlying.dealias.typeSymbol.fullName
 
-    private def search[F[_]: Type]: Term = underlying.asType match {
-      case '[t] => '{ summonInline[F[t]] }.asTerm
+    private def searchInline[F[_]: Type]: Term = underlying.asType match {
+      case '[t] => '{ scala.compiletime.summonInline[F[t]] }.asTerm
+    }
+
+    private def searchSafe[F[_]: Type]: Option[Term] = underlying.asType match {
+      case '[t] => Expr.summon[F[t]].map(_.asTerm)
+    }
+
+    private def searchUnsafe[F[_]: Type]: Term = underlying.asType match {
+      case '[t] => Expr.summon[F[t]]
+        .getOrElse(report.errorAndAbort(s"Can't find implicit for ${Type.show[F[t]]}"))
+        .asTerm
     }
   }
 
@@ -50,12 +50,6 @@ trait Reflection {
 
     def selectField(fieldName: String): Term =
       underlying.select(underlying.tpe.typeSymbol.fieldMember(fieldName))
-
-    def selectWriteMethod: Term =
-      underlying.tpe.typeSymbol
-        .findMethod("write")(_.signature.paramSigs.length == 3)
-        .map(underlying.select)
-        .get
 
     def foldOption(ifEmpty: Term)(f: Term => Term): Term = {
       underlying.tpe.asType match {
@@ -72,6 +66,20 @@ trait Reflection {
         case _ => report.errorAndAbort(s"Field ${underlying.show} is not Option[_]")
       }
     }
+    def selectWriteValuesMethod: Term =
+      underlying.selectFirstMethod("writeValues")
+
+    def selectWrite2Method: Term =
+      selectWriteMethod(2)
+
+    def selectWrite3Method: Term =
+      selectWriteMethod(3)
+
+    private def selectWriteMethod(argsCount: Int) =
+      underlying.tpe.typeSymbol
+        .findMethod("write")(_.signature.paramSigs.length == argsCount)
+        .map(underlying.select)
+        .get
   }
 
   extension [T: Type](underlying: Expr[Option[T]]) {
@@ -119,5 +127,46 @@ trait Reflection {
           Some(SelectChain(selectAllNames(select)))
         case _ => None
       }
+  }
+
+  def collectDistinctSubtypes(baseTpe: TypeRepr): List[TypeRepr] = {
+    def collectSubclasses(parent: Symbol): List[Symbol] = {
+      parent.children.flatMap { child =>
+        if (child.flags.is(Flags.Sealed) && (child.flags.is(Flags.Trait) || child.flags.is(Flags.Abstract)))
+          collectSubclasses(child)
+        else
+          List(child)
+      }
+    }
+
+    val baseSym = baseTpe.typeSymbol
+    val baseArgs = baseTpe.typeArgs
+    val children = collectSubclasses(baseSym)
+
+    def substituteArgs(childTpe: TypeRepr, childSym: Symbol): TypeRepr = {
+      val subst = childTpe.baseType(baseSym).typeArgs
+
+      val args = childSym.typeMembers.map { param =>
+        val paramTpe = TypeIdent(param).tpe
+        val index = subst.indexWhere(_ =:= paramTpe)
+        if (index != -1) baseArgs(index)
+        else
+          report.errorAndAbort(s"$childSym contains additional type parameter that can't be derived in compile time")
+      }
+
+      childTpe.appliedTo(args)
+    }
+
+    val tpes = children.map { childSym =>
+      if (childSym.isType)
+        substituteArgs(TypeIdent(childSym).tpe, childSym)
+      else
+        Ref(childSym).tpe
+    }
+
+    tpes.foldLeft(List.empty[TypeRepr]) { case (acc, t) =>
+      if (!acc.exists(_ =:= t)) t :: acc
+      else acc
+    }
   }
 }

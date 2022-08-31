@@ -1,6 +1,6 @@
 package tethys.compat
 
-import scala.collection.{AbstractMap, Factory, IterableFactory, Map, MapFactory, mutable}
+import scala.collection.{IterableFactory, MapFactory, mutable}
 import scala.quoted.*
 
 trait CollectionBuilder[A, C] {
@@ -19,21 +19,21 @@ object CollectionBuilder {
   inline given iterableFactoryCollectionBuilder[A, C[X] <: Iterable[X]]: CollectionBuilder[A, C[A]] =
     ${CollectionBuilderMacroImpl.fromIterableFactory[A, C]}
 
-  inline given mapFactoryCollectionBuilder[K, V, M[_, _] <: Map[_, _]]: MapFactoryCollectionBuilder[K, V, M] =
+  inline given mapFactoryCollectionBuilder[K, V, M[X, Y] <: Map[X, Y]]: MapFactoryCollectionBuilder[K, V, M] =
     ${CollectionBuilderMacroImpl.fromMapFactory[K, V, M]}
 
   object CollectionBuilderMacroImpl {
     def fromIterableFactory[A: Type, C[X] <: Iterable[X]: Type](using Quotes): Expr[IterableFactoryCollectionBuilder[A, C]] = {
       import quotes.reflect.*
 
-      val factory = Ref(TypeRepr.of[C[A]].typeSymbol.companionModule).asExprOf[IterableFactory[C]]
+      val factory = Ref(TypeRepr.of[C].typeSymbol.companionModule).asExprOf[IterableFactory[C]]
       '{new tethys.compat.CollectionBuilder.IterableFactoryCollectionBuilder[A, C]($factory)}
     }
 
-    def fromMapFactory[K: Type, V: Type, M[_, _] <: Map[_, _]: Type](using Quotes): Expr[MapFactoryCollectionBuilder[K, V, M]] = {
+    def fromMapFactory[K: Type, V: Type, M[X, Y] <: Map[X, Y]: Type](using Quotes): Expr[MapFactoryCollectionBuilder[K, V, M]] = {
       import quotes.reflect.*
 
-      val factory = Ref(TypeRepr.of[M[K, V]].typeSymbol.companionModule).asExprOf[MapFactory[M]]
+      val factory = Ref(TypeRepr.of[M].typeSymbol.companionModule).asExprOf[MapFactory[M]]
       '{new tethys.compat.CollectionBuilder.MapFactoryCollectionBuilder[K, V, M]($factory)}
     }
   }

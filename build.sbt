@@ -1,8 +1,8 @@
 lazy val commonSettings = Seq(
   version := "0.28.0",
   organization := "com.tethys-json",
-  scalaVersion := "3.1.3",
-  crossScalaVersions := Seq("2.13.10", "3.1.3"),
+  scalaVersion := "3.2.0",
+  crossScalaVersions := Seq("2.13.10", "3.2.0"),
   Compile / unmanagedSourceDirectories ++= {
     def extraDirs(suffix: String) = Seq(file(sourceDirectory.value.getPath + "/main/scala" + suffix))
 
@@ -101,6 +101,10 @@ lazy val `macro-derivation` = project.in(modules / "macro-derivation")
         case _ => Seq.empty
       }
     }
+//    ,
+//    ThisBuild / scalacOptions += "-explain"
+//    ,
+//    ThisBuild / scalacOptions += "-Xprint:inline"
   )
   .dependsOn(core)
 

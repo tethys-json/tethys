@@ -11,46 +11,52 @@ class AutoDerivationMacro(val quotes: Quotes) extends WriterDerivation with Read
   import context.reflect.*
 
   def simpleJsonWriter[T: Type]: Expr[LowPriorityInstance[JsonObjectWriter[T]]] = {
-    // TODO: recursive derivation check
+    // TODO: recursive A => B => A derivation check
 
     val tpe = TypeRepr.of[T]
+    val tpeSym = tpe.typeSymbol
     val description = MacroWriteDescription(
       tpe = tpe,
       config = emptyWriterConfig,
       operations = Seq()
     )
-    val tpeSym = tpe.typeSymbol
 
-    '{
-      LowPriorityInstance[JsonObjectWriter[T]](
-        new JsonObjectWriter[T] {
-          private[this] implicit def thisWriter: JsonWriter[T] = this
+    val jsonObjectWriter =
+      if (tpe.termSymbol.isNoSymbol) {
+        if (tpeSym.isClassDef && tpeSym.flags.is(Flags.Case))
+          deriveCaseClassWriter[T](description)
+        else if (
+          tpeSym.flags.is(Flags.Enum) || (tpeSym.flags
+            .is(Flags.Sealed) && (tpeSym.flags.is(Flags.Trait) || tpeSym.flags.is(Flags.Abstract)))
+        )
+          deriveSealedClassWriter[T](description.config)
+        else
+          report.errorAndAbort(
+            s"Can't auto derive json writer! '${tpe.show}' isn't a Case Class, Sealed Trait, Sealed Abstract Class or Enum."
+          )
+      } else deriveTermWriter[T]
 
-          def writeValues(value: T, tokenWriter: TokenWriter): Unit = ${
-            if (tpeSym.isClassDef && tpeSym.flags.is(Flags.Case))
-              deriveCaseClassWriteValuesWithDescription[T]('value, 'tokenWriter)(description)
-            else if (
-              tpeSym.flags.is(Flags.Enum) || (tpeSym.flags
-                .is(Flags.Sealed) && (tpeSym.flags.is(Flags.Trait) || tpeSym.flags.is(Flags.Abstract)))
-            )
-              deriveSealedClassWriteValues[T]('value, 'tokenWriter)(description.config)
-            else
-              report.errorAndAbort(s"Can't auto derive json writer! '${tpeSym.fullName}' isn't a Case Class, Sealed Trait, Sealed Abstract Class or Enum.")
-          }
-        }
-      )
-    }
+    '{ LowPriorityInstance[JsonObjectWriter[T]]($jsonObjectWriter) }
   }
 
   def simpleJsonReader[T: Type]: Expr[LowPriorityInstance[JsonReader[T]]] = {
+    val tpe = TypeRepr.of[T]
+    val tpeSym = tpe.typeSymbol
+
     val description = MacroReaderDescription(
       config = emptyReaderConfig,
       operations = Seq()
     )
-    val tpeSym = TypeRepr.of[T].typeSymbol
-    if (tpeSym.isClassDef && tpeSym.flags.is(Flags.Case))
-      '{ LowPriorityInstance[JsonReader[T]](${deriveCaseClassReadWithDescription[T](description)}) }
-    else
-      report.errorAndAbort(s"Can't auto derive json reader! '${tpeSym.fullName}' isn't a Case Class")
+    val jsonReader =
+      if (tpe.termSymbol.isNoSymbol) {
+        if (tpeSym.isClassDef && tpeSym.flags.is(Flags.Case))
+          deriveCaseClassReader[T](description)
+        else if (tpeSym.flags.is(Flags.Enum))
+          deriveEnumReader[T]
+        else
+          report.errorAndAbort(s"Can't auto derive json reader! '${tpe.show}' isn't a Case Class or Enum")
+      } else deriveTermReader[T]
+
+    '{ LowPriorityInstance[JsonReader[T]]($jsonReader) }
   }
 }
