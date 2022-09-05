@@ -1,25 +1,5 @@
 package tethys.derivation.builder
 
-//sealed trait DependentFieldAs[A, B] extends DependentField0[A, B] {
-//  def as[C]: ReaderBuilder.AsSyntax[A, C, B]
-//}
-//
-//
-//sealed trait DependentField0[A, B] {
-//  def apply(fun: () => B): ReaderBuilder[A]
-//
-//  def from[TS <: Tuple: Tuple.IsMappedBy[[C] =>> A => C]](fs: TS): DependentFieldN[A, B, Tuple.InverseMap[TS, [C] =>> A => C]]
-////  def from[T](fs: => ReaderField[T]*): DependentFieldN[A, B, TS] // Laziness is a trick!!!
-//}
-//
-//sealed trait DependentFieldNF[A, B, TS <: Tuple] {
-//  def apply(f: TS => B): ReaderBuilder[A]
-//}
-//
-//sealed trait DependentFieldN[A, B, TS1 <: Tuple] extends DependentFieldNF[A, B, TS1] {
-//  def and[TS2 <: Tuple: Tuple.IsMappedBy[[C] =>> A => C]](fs: Tuple.Map[TS2, [C] =>> A => C]): DependentFieldNF[A, B, Tuple.Concat[TS1, TS2]]
-//}
-
 sealed trait DependentFieldAs[A, B] extends DependentField0[A, B] {
   def as[C]: ReaderBuilder.AsSyntax[A, C, B]
 }

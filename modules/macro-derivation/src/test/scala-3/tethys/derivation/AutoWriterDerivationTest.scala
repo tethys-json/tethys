@@ -3,12 +3,12 @@ package tethys.derivation
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 import tethys.commons.TokenNode
-import tethys.commons.TokenNode._
-import tethys.derivation.ADTWithType._
-import tethys.derivation.auto._
-import tethys.derivation.semiauto._
+import tethys.commons.TokenNode.*
+import tethys.derivation.ADTWithType.*
+import tethys.derivation.auto.*
+import tethys.derivation.semiauto.*
 import tethys.writers.instances.SimpleJsonObjectWriter
-import tethys.writers.tokens.SimpleTokenWriter._
+import tethys.writers.tokens.SimpleTokenWriter.*
 import tethys.{JsonObjectWriter, JsonWriter}
 
 class AutoWriterDerivationTest extends AnyFlatSpec with Matchers {

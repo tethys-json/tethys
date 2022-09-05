@@ -5,10 +5,10 @@ import org.scalatest.flatspec.AnyFlatSpec
 import tethys.commons.TokenNode
 import tethys.{JsonObjectWriter, JsonWriter}
 import tethys.derivation.builder.{FieldStyle, WriterBuilder, WriterDerivationConfig}
-import tethys.writers.tokens.SimpleTokenWriter._
-import tethys.commons.TokenNode._
+import tethys.writers.tokens.SimpleTokenWriter.*
+import tethys.commons.TokenNode.*
 import tethys.derivation.ADTWithType.{ADTWithTypeA, ADTWithTypeB}
-import tethys.derivation.semiauto._
+import tethys.derivation.semiauto.*
 import tethys.writers.instances.SimpleJsonObjectWriter
 
 class SemiautoWriterDerivationTest extends AnyFlatSpec with Matchers {

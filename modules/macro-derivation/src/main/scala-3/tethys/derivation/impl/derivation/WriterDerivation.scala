@@ -248,7 +248,6 @@ trait WriterDerivation extends WriterBuilderCommons {
                   .appliedTo(Expr(discriminator).asTerm, Expr(typeChildTpr.typeSymbol.name).asTerm, tokenWriterTerm)
               }
               val rhs = Block(List(writeValuesTerm), discriminatorTerm)
-
               CaseDef(Bind(typeChildBind, Typed(Ref(typeChildBind), typeChildTpt)), None, rhs)
             case termChildTpr =>
               val termChildSym = termChildTpr.termSymbol
@@ -273,7 +272,6 @@ trait WriterDerivation extends WriterBuilderCommons {
                   val writeObjectEndTerm = tokenWriterTerm.selectFirstMethod("writeObjectEnd").appliedToNone
                   List(writeObjectStartTerm, writeValuesTerm, discriminatorTerm, writeObjectEndTerm)
                 }
-
               val rhs = Block(terms, '{ () }.asTerm)
               CaseDef(termChildRef, None, rhs)
           }

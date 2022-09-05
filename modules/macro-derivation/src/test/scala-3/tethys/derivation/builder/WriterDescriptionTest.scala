@@ -2,9 +2,10 @@ package tethys.derivation.builder
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
-import tethys.derivation.builder.WriterDescriptionTest._
-import tethys.derivation.builder.WriterDescription._
-import tethys.derivation.semiauto._
+import tethys.derivation.builder.{FieldStyle, WriterDerivationConfig}
+import tethys.derivation.builder.WriterDescriptionTest.*
+import tethys.derivation.builder.WriterDescription.*
+import tethys.derivation.semiauto.*
 
 class WriterDescriptionTest extends AnyFlatSpec with Matchers {
 

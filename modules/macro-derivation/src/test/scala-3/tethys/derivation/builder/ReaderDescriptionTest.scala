@@ -3,8 +3,10 @@ package tethys.derivation.builder
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 import tethys.JsonReader
+import tethys.derivation.builder.ReaderDescription.BuilderOperation
+import tethys.derivation.builder.{FieldStyle, ReaderDerivationConfig, ReaderDescription}
 import tethys.derivation.builder.ReaderDescriptionTest.Foo
-import tethys.derivation.semiauto._
+import tethys.derivation.semiauto.*
 
 class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
 
@@ -30,7 +32,7 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
     }
 
     description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
-      ReaderDescription.BuilderOperation.ExtractFieldAs("a", fun)
+      BuilderOperation.ExtractFieldAs("a", fun)
     ))
   }
 
