@@ -134,5 +134,6 @@ trait AllJsonReaders extends OptionReaders {
   implicit lazy val javaDoubleReader: JsonReader[java.lang.Double] = doubleReader.map(a => a)
   implicit lazy val javaBigDecimalReader: JsonReader[java.math.BigDecimal] = bigDecimalReader.map(_.bigDecimal)
   implicit lazy val javaBigIntegerReader: JsonReader[java.math.BigInteger] = bigIntReader.map(_.bigInteger)
+  implicit lazy val javaUUIDReader: JsonReader[java.util.UUID] = stringReader.map(java.util.UUID.fromString(_))
 
 }
