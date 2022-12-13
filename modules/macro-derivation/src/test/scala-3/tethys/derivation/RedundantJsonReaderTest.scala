@@ -3,11 +3,11 @@ package tethys.derivation
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 import tethys.JsonReader
-import tethys.commons._
-import tethys.commons.TokenNode._
-import tethys.derivation.RedundantJsonReaderTest._
+import tethys.commons.*
+import tethys.commons.TokenNode.*
+import tethys.derivation.RedundantJsonReaderTest.*
 import tethys.derivation.builder.ReaderBuilder
-import tethys.derivation.semiauto._
+import tethys.derivation.semiauto.*
 import tethys.readers.tokens.QueueIterator
 
 import tethys.TokenIteratorOps

@@ -3,10 +3,10 @@ package tethys.derivation
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 import tethys.JsonReader
-import tethys.commons.TokenNode._
+import tethys.commons.TokenNode.*
 import tethys.commons.{Token, TokenNode}
 import tethys.derivation.builder.{FieldStyle, ReaderBuilder, ReaderDerivationConfig}
-import tethys.derivation.semiauto._
+import tethys.derivation.semiauto.*
 import tethys.readers.ReaderError
 import tethys.readers.tokens.QueueIterator
 
@@ -63,20 +63,20 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
   }
 
   // TODO: fix
-//  it should "derive reader for A => B => A cycle" in {
-//    implicit lazy val testReader1: JsonReader[ComplexRecursionA] = jsonReader[ComplexRecursionA]
-//    implicit lazy val testReader2: JsonReader[ComplexRecursionB] = jsonReader[ComplexRecursionB]
-//
-//    read[ComplexRecursionA](obj(
-//      "a" -> 1,
-//      "b" -> obj(
-//        "b" -> 2,
-//        "a" -> obj(
-//          "a" -> 3
-//        )
-//      )
-//    )) shouldBe ComplexRecursionA(1, Some(ComplexRecursionB(2, ComplexRecursionA(3, None))))
-//  }
+  it should "derive reader for A => B => A cycle" in {
+    implicit lazy val testReader1: JsonReader[ComplexRecursionA] = jsonReader[ComplexRecursionA]
+    implicit lazy val testReader2: JsonReader[ComplexRecursionB] = jsonReader[ComplexRecursionB]
+
+    read[ComplexRecursionA](obj(
+      "a" -> 1,
+      "b" -> obj(
+        "b" -> 2,
+        "a" -> obj(
+          "a" -> 3
+        )
+      )
+    )) shouldBe ComplexRecursionA(1, Some(ComplexRecursionB(2, ComplexRecursionA(3, None))))
+  }
 
   it should "derive reader for extract as description" in {
     implicit val reader: JsonReader[SimpleType] = jsonReader[SimpleType] {
@@ -102,7 +102,7 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
     implicit val reader: JsonReader[SimpleType] = jsonReader[SimpleType] {
       describe {
         ReaderBuilder[SimpleType]
-          .extract(_.i).from(_.s, _.d)((s, d) => 2)
+          .extract(_.i).from(_.s, _.d)((_, _) => 2)
       }
     }
 
@@ -170,10 +170,10 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
     implicit val reader: JsonReader[SimpleTypeWithAny] = jsonReader[SimpleTypeWithAny] {
       ReaderBuilder[SimpleTypeWithAny]
         .extractReader(_.any).from(_.i) {
-          case 1 => JsonReader[String]
-          case 2 => JsonReader[Int]
-          case _ => JsonReader[Option[Boolean]]
-        }
+        case 1 => JsonReader[String]
+        case 2 => JsonReader[Int]
+        case _ => JsonReader[Option[Boolean]]
+      }
         .extract(_.i).from(_.d).and(Symbol("e").as[Int])((d, e) => d.toInt + e)
         .extract(_.d).as[Option[Double]](_.getOrElse(1.0))
     }
@@ -230,22 +230,21 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
     )
   }
 
-//  it should "derive reader for fieldStyle from function in description" in {
-//    implicit val reader: JsonReader[CamelCaseNames] = jsonReader[CamelCaseNames] {
-//      ReaderBuilder[CamelCaseNames]
-//        .fieldStyle(FieldStyle(_.capitalize))
-//    }
-//
-//    read[CamelCaseNames](obj(
-//      "SomeParam" -> 1,
-//      "IDParam" -> 2,
-//      "Simple" -> 3
-//    )) shouldBe CamelCaseNames(
-//      someParam = 1,
-//      IDParam = 2,
-//      simple = 3
-//    )
-//  }
+  //  it should "derive reader for fieldStyle from function in description" in {
+  implicit val reader: JsonReader[CamelCaseNames] = jsonReader[CamelCaseNames] {
+    ReaderBuilder[CamelCaseNames].fieldStyle(FieldStyle.Capitalize)
+  }
+
+  read[CamelCaseNames](obj(
+    "SomeParam" -> 1,
+    "IDParam" -> 2,
+    "Simple" -> 3
+  )) shouldBe CamelCaseNames(
+    someParam = 1,
+    IDParam = 2,
+    simple = 3
+  )
+
 
   it should "derive reader for extract field with same string param" in {
     implicit val reader: JsonReader[SimpleType] = jsonReader[SimpleType] {
@@ -292,7 +291,7 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
       simple = 3
     )
 
-    (the [ReaderError] thrownBy {
+    (the[ReaderError] thrownBy {
       read[CamelCaseNames](obj(
         "some_param" -> 1,
         "not_id_param" -> 2,
@@ -318,7 +317,7 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
       simple = 3
     )
 
-    (the [ReaderError] thrownBy {
+    (the[ReaderError] thrownBy {
       read[CamelCaseNames](obj(
         "some_param" -> 1,
         "not_id_param" -> 2,

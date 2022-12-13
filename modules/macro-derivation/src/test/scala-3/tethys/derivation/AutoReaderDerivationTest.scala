@@ -4,8 +4,8 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 import tethys.JsonReader
 import tethys.commons.{Token, TokenNode}
-import tethys.commons.TokenNode._
-import tethys.derivation.auto._
+import tethys.commons.TokenNode.*
+import tethys.derivation.auto.*
 import tethys.readers.ReaderError
 import tethys.readers.tokens.QueueIterator
 
@@ -56,15 +56,15 @@ class AutoReaderDerivationTest extends AnyFlatSpec with Matchers {
   }
 
   // TODO: Fix
-//  it should "derive writer for A => B => A cycle" in {
-//    read[ComplexRecursionA](obj(
-//      "a" -> 1,
-//      "b" -> obj(
-//        "b" -> 2,
-//        "a" -> obj(
-//          "a" -> 3
-//        )
-//      )
-//    )) shouldBe ComplexRecursionA(1, Some(ComplexRecursionB(2, ComplexRecursionA(3, None))))
-//  }
+  it should "derive writer for A => B => A cycle" in {
+    read[ComplexRecursionA](obj(
+      "a" -> 1,
+      "b" -> obj(
+        "b" -> 2,
+        "a" -> obj(
+          "a" -> 3
+        )
+      )
+    )) shouldBe ComplexRecursionA(1, Some(ComplexRecursionB(2, ComplexRecursionA(3, None))))
+  }
 }

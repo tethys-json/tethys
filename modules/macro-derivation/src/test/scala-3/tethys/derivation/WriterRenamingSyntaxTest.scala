@@ -2,11 +2,11 @@ package tethys.derivation
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
-import tethys._
-import tethys.writers.tokens.SimpleTokenWriter._
-import tethys.commons.TokenNode._
+import tethys.*
+import tethys.writers.tokens.SimpleTokenWriter.*
+import tethys.commons.TokenNode.*
 import tethys.derivation.builder.WriterBuilder
-import tethys.derivation.semiauto._
+import tethys.derivation.semiauto.*
 
 class WriterRenamingSyntaxTest extends AnyFlatSpec with Matchers {
   behavior of "renaming syntax"

@@ -1,6 +1,6 @@
 package tethys.derivation.builder
 
-import tethys.derivation.builder.WriterBuilder._
+import tethys.derivation.builder.WriterBuilder.*
 
 import scala.annotation.compileTimeOnly
 

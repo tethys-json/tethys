@@ -7,13 +7,9 @@ import scala.annotation.StaticAnnotation
 trait FieldStyle  { self =>
   def applyStyle(field: String): String
 
-  def andThen(that: FieldStyle): FieldStyle = new FieldStyle {
-    override def applyStyle(field: String): String = that.applyStyle(self.applyStyle(field))
-  }
+  def andThen(that: FieldStyle): FieldStyle = field => that.applyStyle(self.applyStyle(field))
 
-  def andThen(that: String => String): FieldStyle = new FieldStyle {
-    override def applyStyle(field: String): String = that.apply(self.applyStyle(field))
-  }
+  def andThen(that: String => String): FieldStyle = field => that.apply(self.applyStyle(field))
 
   def >>(that: FieldStyle): FieldStyle = andThen(that)
   def >>(that: String => String): FieldStyle = andThen(that)
@@ -22,9 +18,7 @@ trait FieldStyle  { self =>
 
 object FieldStyle {
 
-  def apply(fun: String => String): FieldStyle = new FieldStyle {
-    override def applyStyle(field: String): String = fun(field)
-  }
+  def apply(fun: String => String): FieldStyle = fun(_)
 
   class Ref(fieldStyle: FieldStyle) extends StaticAnnotation
   trait StyleReference extends FieldStyle {
@@ -41,21 +35,10 @@ object FieldStyle {
     regexp2.matcher(first).replaceAll(replacement).split("_").toList
   }
 
-  val snakecase: FieldStyle = new FieldStyle {
-    override def applyStyle(field: String): String = splitName(field).mkString("_")
-  }
-
-  val lowercase: FieldStyle = new FieldStyle {
-    override def applyStyle(field: String): String = field.toLowerCase()
-  }
-
-  val uppercase: FieldStyle = new FieldStyle {
-    override def applyStyle(field: String): String = field.toUpperCase()
-  }
-
-  val kebabcase: FieldStyle = new FieldStyle {
-    override def applyStyle(field: String): String = splitName(field).mkString("-")
-  }
+  val snakecase: FieldStyle = splitName(_).mkString("_")
+  val lowercase: FieldStyle = _.toLowerCase()
+  val uppercase: FieldStyle = _.toUpperCase()
+  val kebabcase: FieldStyle = splitName(_).mkString("-")
 
   val lowerSnakecase: FieldStyle = snakecase >> lowercase
   val upperSnakecase: FieldStyle = snakecase >> uppercase

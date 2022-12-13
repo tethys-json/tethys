@@ -13,7 +13,7 @@ private[impl] trait FieldStyle  { self =>
 
 
 private[impl] object FieldStyle {
-  def apply(fun: String => String): FieldStyle = (field: String) => fun(field)
+  def apply(fun: String => String): FieldStyle = fun(_)
 
   // Names transformations adopted from scala enumeratum
   private val regexp1: Pattern = Pattern.compile("([A-Z]+)([A-Z][a-z])")
@@ -25,13 +25,13 @@ private[impl] object FieldStyle {
     regexp2.matcher(first).replaceAll(replacement).split("_").toList
   }
 
-  val snakecase: FieldStyle = (field: String) => splitName(field).mkString("_")
-  val kebabcase: FieldStyle = (field: String) => splitName(field).mkString("-")
+  val snakecase: FieldStyle = splitName(_).mkString("_")
+  val kebabcase: FieldStyle = splitName(_).mkString("-")
 
-  val lowercase: FieldStyle = (field: String) => field.toLowerCase()
-  val uppercase: FieldStyle = (field: String) => field.toUpperCase()
+  val lowercase: FieldStyle = _.toLowerCase()
+  val uppercase: FieldStyle = _.toUpperCase()
 
-  val capitalize: FieldStyle = (field: String) => field.capitalize
+  val capitalize: FieldStyle = _.capitalize
   val uncapitalize: FieldStyle = (field: String) =>
     Character.toLowerCase(field.charAt(0)) + field.substring(1)
 

@@ -37,7 +37,7 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
   }
 
   it should "build description for ExtractFieldValue operation from lambdas" in {
-    val fun: (String, Any) => Int = (s, a) => 1
+    val fun: (String, Any) => Int = (_, _) => 1
 
     val description = describe {
       ReaderBuilder[Foo]
@@ -57,7 +57,7 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
   }
 
   it should "build description for ExtractFieldValue operation from ReaderField's" in {
-    val fun: (String, Any) => Int = (s, a) => 1
+    val fun: (String, Any) => Int = (_, _) => 1
 
     val description = describe {
       ReaderBuilder[Foo]
@@ -77,7 +77,7 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
   }
 
   it should "build description for ExtractFieldValue operation from lambdas and lambdas" in {
-    val fun: (String, Any) => Int = (s, a) => 1
+    val fun: (String, Any) => Int = (_, _) => 1
 
     val description = describe {
       ReaderBuilder[Foo]
@@ -97,7 +97,7 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
   }
 
   it should "build description for ExtractFieldValue operation from lambdas and ReaderField's" in {
-    val fun: (String, Any) => Int = (s, a) => 1
+    val fun: (String, Any) => Int = (_, _) => 1
 
     val description = describe {
       ReaderBuilder[Foo]
@@ -117,7 +117,7 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
   }
 
   it should "build description for ExtractFieldValue operation from ReaderField's and lambdas" in {
-    val fun: (String, Any) => Int = (s, a) => 1
+    val fun: (String, Any) => Int = (_, _) => 1
 
     val description = describe {
       ReaderBuilder[Foo]
@@ -137,7 +137,7 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
   }
 
   it should "build description for ExtractFieldValue operation from ReaderField's and ReaderField's" in {
-    val fun: (String, Any) => Int = (s, a) => 1
+    val fun: (String, Any) => Int = (_, _) => 1
 
     val description = describe {
       ReaderBuilder[Foo]
@@ -157,7 +157,7 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
   }
 
   it should "build description for ExtractFieldReader operation from lambdas" in {
-    val fun: (String, Any) => JsonReader[Int] = (s, a) => JsonReader.intReader
+    val fun: (String, Any) => JsonReader[Int] = (_, _) => JsonReader.intReader
 
     val description = describe {
       ReaderBuilder[Foo]
@@ -177,7 +177,7 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
   }
 
   it should "build description for ExtractFieldReader operation from ReaderField's" in {
-    val fun: (String, Any) => JsonReader[Int] = (s, a) => JsonReader.intReader
+    val fun: (String, Any) => JsonReader[Int] = (_, _) => JsonReader.intReader
 
     val description = describe {
       ReaderBuilder[Foo]
@@ -197,7 +197,7 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
   }
 
   it should "build description for ExtractFieldReader operation from lambdas and lambdas" in {
-    val fun: (String, Any) => JsonReader[Int] = (s, a) => JsonReader.intReader
+    val fun: (String, Any) => JsonReader[Int] = (_, _) => JsonReader.intReader
 
     val description = describe {
       ReaderBuilder[Foo]
@@ -217,7 +217,7 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
   }
 
   it should "build description for ExtractFieldReader operation from lambdas and ReaderField's" in {
-    val fun: (String, Any) => JsonReader[Int] = (s, a) => JsonReader.intReader
+    val fun: (String, Any) => JsonReader[Int] = (_, _) => JsonReader.intReader
 
     val description = describe {
       ReaderBuilder[Foo]
@@ -237,7 +237,7 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
   }
 
   it should "build description for ExtractFieldReader operation from ReaderField's and lambdas" in {
-    val fun: (String, Any) => JsonReader[Int] = (s, a) => JsonReader.intReader
+    val fun: (String, Any) => JsonReader[Int] = (_, _) => JsonReader.intReader
 
     val description = describe {
       ReaderBuilder[Foo]
@@ -257,7 +257,7 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
   }
 
   it should "build description for ExtractFieldReader operation from ReaderField's and ReaderField's" in {
-    val fun: (String, Any) => JsonReader[Int] = (s, a) => JsonReader.intReader
+    val fun: (String, Any) => JsonReader[Int] = (_, _) => JsonReader.intReader
 
     val description = describe {
       ReaderBuilder[Foo]
