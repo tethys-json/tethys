@@ -51,8 +51,8 @@ lazy val commonSettings = Seq(
 
 lazy val testSettings = Seq(
   libraryDependencies ++=  Seq(
-    "org.scalatest" %% "scalatest-flatspec"       % "3.2.10" % Test,
-    "org.scalatest" %% "scalatest-shouldmatchers" % "3.2.10" % Test
+    "org.scalatest" %% "scalatest-flatspec"       % "3.2.15" % Test,
+    "org.scalatest" %% "scalatest-shouldmatchers" % "3.2.15" % Test
   )
 )
 
