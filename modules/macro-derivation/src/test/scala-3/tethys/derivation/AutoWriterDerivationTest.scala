@@ -15,7 +15,11 @@ class AutoWriterDerivationTest extends AnyFlatSpec with Matchers {
 
   behavior of "auto derivation"
   it should "auto derive writer for simple classes tree" in {
-    JsonTreeTestData(a = 5, b = false, c = C(D(1))).asTokenList shouldBe obj(
+    JsonTreeTestData(
+      a = 5,
+      b = false,
+      c = C(D(1))
+    ).asTokenList shouldBe obj (
       "a" -> 5,
       "b" -> false,
       "c" -> obj(
@@ -100,7 +104,7 @@ class AutoWriterDerivationTest extends AnyFlatSpec with Matchers {
     implicit val simpleClassWriter: JsonObjectWriter[SimpleClass] = JsonWriter.obj[SimpleClass].addField("b")(_.b)
     implicit val justObjectWriter: JsonObjectWriter[JustObject.type] = JsonWriter.obj.addField("type")(_ => "JustObject")
 
-    implicit lazy val sealedWriter: JsonWriter[SimpleSealedType] = jsonWriter[SimpleSealedType]
+    implicit val sealedWriter: JsonWriter[SimpleSealedType] = jsonWriter[SimpleSealedType]
 
     def write(simpleSealedType: SimpleSealedType): List[TokenNode] = simpleSealedType.asTokenList
 

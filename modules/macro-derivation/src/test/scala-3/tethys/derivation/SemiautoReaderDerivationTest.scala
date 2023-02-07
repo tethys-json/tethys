@@ -44,7 +44,7 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
   }
 
   it should "derive reader for recursive type" in {
-    implicit lazy val recursiveReader: JsonReader[RecursiveType] = jsonReader[RecursiveType]
+    implicit val recursiveReader: JsonReader[RecursiveType] = jsonReader[RecursiveType]
 
     read[RecursiveType](obj(
       "a" -> 1,
@@ -62,7 +62,6 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
 
   }
 
-  // TODO: fix
   it should "derive reader for A => B => A cycle" in {
     implicit lazy val testReader1: JsonReader[ComplexRecursionA] = jsonReader[ComplexRecursionA]
     implicit lazy val testReader2: JsonReader[ComplexRecursionB] = jsonReader[ComplexRecursionB]
@@ -215,8 +214,7 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
 
   it should "derive reader for fieldStyle from description" in {
     implicit val reader: JsonReader[CamelCaseNames] = jsonReader[CamelCaseNames] {
-      ReaderBuilder[CamelCaseNames]
-        .fieldStyle(FieldStyle.LowerSnakeCase)
+      ReaderBuilder[CamelCaseNames].fieldStyle(FieldStyle.LowerSnakeCase)
     }
 
     read[CamelCaseNames](obj(
@@ -230,21 +228,21 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
     )
   }
 
-  //  it should "derive reader for fieldStyle from function in description" in {
-  implicit val reader: JsonReader[CamelCaseNames] = jsonReader[CamelCaseNames] {
-    ReaderBuilder[CamelCaseNames].fieldStyle(FieldStyle.Capitalize)
+  it should "derive reader for fieldStyle from function in description" in {
+    implicit val reader: JsonReader[CamelCaseNames] = jsonReader[CamelCaseNames] {
+      ReaderBuilder[CamelCaseNames].fieldStyle(FieldStyle.Capitalize)
+    }
+
+    read[CamelCaseNames](obj(
+      "SomeParam" -> 1,
+      "IDParam" -> 2,
+      "Simple" -> 3
+    )) shouldBe CamelCaseNames(
+      someParam = 1,
+      IDParam = 2,
+      simple = 3
+    )
   }
-
-  read[CamelCaseNames](obj(
-    "SomeParam" -> 1,
-    "IDParam" -> 2,
-    "Simple" -> 3
-  )) shouldBe CamelCaseNames(
-    someParam = 1,
-    IDParam = 2,
-    simple = 3
-  )
-
 
   it should "derive reader for extract field with same string param" in {
     implicit val reader: JsonReader[SimpleType] = jsonReader[SimpleType] {

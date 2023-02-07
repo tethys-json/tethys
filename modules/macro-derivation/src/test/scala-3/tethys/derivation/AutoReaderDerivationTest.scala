@@ -55,8 +55,7 @@ class AutoReaderDerivationTest extends AnyFlatSpec with Matchers {
 
   }
 
-  // TODO: Fix
-  it should "derive writer for A => B => A cycle" in {
+  it should "derive reader for A => B => A cycle" in {
     read[ComplexRecursionA](obj(
       "a" -> 1,
       "b" -> obj(

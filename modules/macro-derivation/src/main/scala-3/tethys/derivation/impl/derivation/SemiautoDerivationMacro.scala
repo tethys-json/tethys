@@ -13,15 +13,8 @@ class SemiautoDerivationMacro(val quotes: Quotes) extends WriterDerivation with 
   implicit val context: Quotes = quotes
   import context.reflect.*
 
-  def simpleJsonWriter[T: Type]: Expr[JsonObjectWriter[T]] = {
-    val tpe = TypeRepr.of[T]
-    val description = MacroWriteDescription(
-      tpe = tpe,
-      config = emptyWriterConfig,
-      operations = Seq()
-    )
-    jsonWriterWithMacroWriteDescription[T](description)
-  }
+  def simpleJsonWriter[T: Type]: Expr[JsonObjectWriter[T]] =
+    jsonWriterWithMacroWriteDescription[T](MacroWriteDescription.empty[T])
 
   def jsonWriterWithConfig[T: Type](config: Expr[WriterDerivationConfig]): Expr[JsonObjectWriter[T]] = {
     val tpe = TypeRepr.of[T]

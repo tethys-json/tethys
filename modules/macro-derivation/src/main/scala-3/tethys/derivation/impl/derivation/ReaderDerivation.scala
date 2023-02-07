@@ -53,7 +53,7 @@ trait ReaderDerivation extends ReaderBuilderCommons {
 
     '{
       new JsonReader[T] {
-        private[this] implicit def thisWriter: JsonReader[T] = this
+        private[this] implicit def thisReader: JsonReader[T] = this
 
         override def read(it: TokenIterator)(implicit fieldName: FieldName): T = {
           val curIt = it.collectExpression()
@@ -108,7 +108,7 @@ trait ReaderDerivation extends ReaderBuilderCommons {
 
     '{
       new JsonReader[T] {
-        private[this] implicit def thisWriter: JsonReader[T] = this
+        private[this] implicit def thisReader: JsonReader[T] = this
 
         override def read(it: TokenIterator)(implicit fieldName: FieldName): T = {
           if (!it.currentToken().isObjectStart)

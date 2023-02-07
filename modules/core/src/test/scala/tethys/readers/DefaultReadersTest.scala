@@ -60,7 +60,7 @@ class DefaultReadersTest extends AnyFlatSpec {
         iterator.currentToken() shouldBe Token.Empty
       }
 
-    case _ =>
+    case null =>
       fail("oops")
   }
 

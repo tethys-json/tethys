@@ -14,6 +14,7 @@ import tethys.derivation.builder.{
 import tethys.derivation.impl.builder.{ReaderDescriptionMacro, WriterDescriptionMacro}
 import tethys.derivation.impl.derivation.SemiautoDerivationMacro
 import scala.quoted.*
+import scala.annotation.compileTimeOnly
 
 trait SemiautoDerivation {
   inline def jsonWriter[T]: JsonObjectWriter[T] =
@@ -47,12 +48,12 @@ trait SemiautoDerivation {
     ${ SemiautoDerivation.describeReader[T]('builder) }
 
   implicit class ReaderFieldStringOps(val s: String) {
-//    @compileTimeOnly("ReaderFieldOps.as should be defined in describe block")
+    @compileTimeOnly("ReaderFieldOps.as should be defined in describe block")
     def as[A]: ReaderField[A] = throw new NotDescribedException
   }
 
   implicit class ReaderFieldSymbolOps(val s: Symbol) {
-//    @compileTimeOnly("ReaderFieldOps.as should be defined in describe block")
+    @compileTimeOnly("ReaderFieldOps.as should be defined in describe block")
     def as[A]: ReaderField[A] = throw new NotDescribedException
   }
 }

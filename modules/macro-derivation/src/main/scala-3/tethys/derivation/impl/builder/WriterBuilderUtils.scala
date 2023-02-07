@@ -1,12 +1,16 @@
 package tethys.derivation.impl.builder
 
+import scala.annotation.tailrec
 import scala.quoted.*
 
-import tethys.derivation.builder.{FieldStyle as ConfigFieldStyle, WriterDerivationConfig, WriterDescription}
+import tethys.derivation.builder.{WriterDerivationConfig, WriterDescription, FieldStyle as ConfigFieldStyle}
 import tethys.derivation.impl.{FieldStyle, Reflection}
 
 trait WriterBuilderUtils extends Reflection {
   import context.reflect.*
+
+  protected lazy val emptyWriterConfig: Expr[WriterDerivationConfig] =
+    '{ tethys.derivation.builder.WriterDerivationConfig.empty }
 
   case class MacroWriteDescription(
       tpe: TypeRepr,
@@ -18,6 +22,13 @@ trait WriterBuilderUtils extends Reflection {
   }
 
   object MacroWriteDescription {
+    def empty[T: Type]: MacroWriteDescription =
+      MacroWriteDescription(
+        tpe = TypeRepr.of[T],
+        config = emptyWriterConfig,
+        operations = Seq()
+      )
+
     def unlift[T: Type](wd: Expr[WriterDescription[T]]): MacroWriteDescription = {
       val withoutInlining = (wd.asTerm.underlying match {
         case Inlined(_, _, expansion) => expansion
@@ -37,8 +48,11 @@ trait WriterBuilderUtils extends Reflection {
         case WriterMacroOperation.Remove(tpe, field) =>
           tpe.asType match {
             case '[tpe] =>
-              '{ WriterDescription.BuilderOperation.Remove.apply[tpe](${ Expr(field) }) }
-                .asInstanceOf[Expr[WriterDescription.BuilderOperation[T]]]
+              '{
+                WriterDescription.BuilderOperation.Remove.apply[tpe](
+                  ${ Expr(field) }
+                )
+              }.asInstanceOf[Expr[WriterDescription.BuilderOperation[T]]]
           }
 
         case WriterMacroOperation.Update(tpe, field, name, fun, from, to) => {
@@ -58,34 +72,47 @@ trait WriterBuilderUtils extends Reflection {
           (tpe.asType, to.asType) match {
             case ('[tpe], '[to]) =>
               '{
-                WriterDescription.BuilderOperation.UpdateFromRoot
-                  .apply[tpe, to](${ Expr(field) }, $name, ${ fun.asExprOf[Function[tpe, to]] })
+                WriterDescription.BuilderOperation.UpdateFromRoot.apply[tpe, to](
+                  ${ Expr(field) },
+                  $name,
+                  ${ fun.asExprOf[Function[tpe, to]] }
+                )
               }.asInstanceOf[Expr[WriterDescription.BuilderOperation[T]]]
           }
 
-        case WriterMacroOperation.UpdatePartial(tpe, field, name, fun, to) =>
+        case WriterMacroOperation.UpdatePartial(tpe, field, name, fun, from, to) =>
+          (tpe.asType, from.asType, to.asType) match {
+            case ('[tpe], '[from], '[to]) =>
+              '{
+                WriterDescription.BuilderOperation.UpdatePartial.apply[tpe, from, to](
+                  ${ Expr(field) },
+                  $name,
+                  ${ fun.asExprOf[PartialFunction[from, to]] }
+                )
+              }.asInstanceOf[Expr[WriterDescription.BuilderOperation[T]]]
+          }
+
+        case WriterMacroOperation.UpdatePartialFromRoot(tpe, field, name, fun, to) =>
           (tpe.asType, to.asType) match {
             case ('[tpe], '[to]) =>
               '{
-                WriterDescription.BuilderOperation.UpdatePartial
-                  .apply[tpe, to](${ Expr(field) }, $name, ${ fun.asExprOf[PartialFunction[to, Any]] })
-              }.asInstanceOf[Expr[WriterDescription.BuilderOperation[T]]]
-          }
-
-        case WriterMacroOperation.UpdatePartialFromRoot(tpe, field, name, fun) =>
-          tpe.asType match {
-            case '[tpe] =>
-              '{
-                WriterDescription.BuilderOperation.UpdatePartialFromRoot
-                  .apply[tpe](${ Expr(field) }, $name, ${ fun.asExprOf[PartialFunction[tpe, Any]] })
+                WriterDescription.BuilderOperation.UpdatePartialFromRoot.apply[tpe, to](
+                  ${ Expr(field) },
+                  $name,
+                  ${ fun.asExprOf[PartialFunction[tpe, to]] }
+                )
               }.asInstanceOf[Expr[WriterDescription.BuilderOperation[T]]]
           }
 
         case WriterMacroOperation.Add(tpe, field, fun, to) =>
           (tpe.asType, to.asType) match {
             case ('[tpe], '[to]) =>
-              '{ WriterDescription.BuilderOperation.Add.apply[tpe, to]($field, ${ fun.asExprOf[Function[tpe, to]] }) }
-                .asInstanceOf[Expr[WriterDescription.BuilderOperation[T]]]
+              '{
+                WriterDescription.BuilderOperation.Add.apply[tpe, to](
+                  $field,
+                  ${ fun.asExprOf[Function[tpe, to]] }
+                )
+              }.asInstanceOf[Expr[WriterDescription.BuilderOperation[T]]]
           }
       }
   }
@@ -96,9 +123,9 @@ trait WriterBuilderUtils extends Reflection {
         extends WriterMacroOperation
     case class UpdateFromRoot(tpe: TypeRepr, field: String, name: Expr[Option[String]], fun: Term, to: TypeRepr)
         extends WriterMacroOperation
-    case class UpdatePartial(tpe: TypeRepr, field: String, name: Expr[Option[String]], fun: Term, from: TypeRepr)
+    case class UpdatePartial(tpe: TypeRepr, field: String, name: Expr[Option[String]], fun: Term, from: TypeRepr, to: TypeRepr)
         extends WriterMacroOperation
-    case class UpdatePartialFromRoot(tpe: TypeRepr, field: String, name: Expr[Option[String]], fun: Term)
+    case class UpdatePartialFromRoot(tpe: TypeRepr, field: String, name: Expr[Option[String]], fun: Term, to: TypeRepr)
         extends WriterMacroOperation
     case class Add(tpe: TypeRepr, field: Expr[String], fun: Term, to: TypeRepr) extends WriterMacroOperation
 
@@ -120,11 +147,18 @@ trait WriterBuilderUtils extends Reflection {
         case '{ WriterDescription.BuilderOperation.UpdateFromRoot.apply[tpe, to]($field, $name, $fun) } =>
           WriterMacroOperation.UpdateFromRoot(TypeRepr.of[tpe], field.valueOrAbort, name, fun.asTerm, TypeRepr.of[to])
 
-        case '{ WriterDescription.BuilderOperation.UpdatePartial.apply[tpe, from]($field, $name, $fun) } =>
-          WriterMacroOperation.UpdatePartial(TypeRepr.of[tpe], field.valueOrAbort, name, fun.asTerm, TypeRepr.of[from])
+        case '{ WriterDescription.BuilderOperation.UpdatePartial.apply[tpe, from, to]($field, $name, $fun) } =>
+          WriterMacroOperation.UpdatePartial(
+            tpe = TypeRepr.of[tpe],
+            field = field.valueOrAbort,
+            name = name,
+            fun = fun.asTerm,
+            from = TypeRepr.of[from],
+            to = TypeRepr.of[to]
+          )
 
-        case '{ WriterDescription.BuilderOperation.UpdatePartialFromRoot.apply[tpe]($field, $name, $fun) } =>
-          WriterMacroOperation.UpdatePartialFromRoot(TypeRepr.of[tpe], field.valueOrAbort, name, fun.asTerm)
+        case '{ WriterDescription.BuilderOperation.UpdatePartialFromRoot.apply[tpe, to]($field, $name, $fun) } =>
+          WriterMacroOperation.UpdatePartialFromRoot(TypeRepr.of[tpe], field.valueOrAbort, name, fun.asTerm, TypeRepr.of[to])
 
         case '{ WriterDescription.BuilderOperation.Add.apply[tpe, to]($field, $fun) } =>
           WriterMacroOperation.Add(TypeRepr.of[tpe], field, fun.asTerm, TypeRepr.of[to])
@@ -132,6 +166,7 @@ trait WriterBuilderUtils extends Reflection {
   }
 
   protected def evalWriterConfig(configExpr: Expr[WriterDerivationConfig]): (Option[FieldStyle], Option[String]) = {
+    @tailrec
     def parseConfigExpr(
         confExpr: Expr[WriterDerivationConfig],
         fieldStyleExpr: Option[Expr[ConfigFieldStyle]],

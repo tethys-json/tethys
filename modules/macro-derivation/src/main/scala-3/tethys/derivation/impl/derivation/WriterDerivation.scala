@@ -1,89 +1,154 @@
 package tethys.derivation.impl.derivation
 
-import scala.quoted.*
+import scala.annotation.tailrec
 import scala.compiletime.*
+import scala.quoted.*
 
+import tethys.commons.LowPriorityInstance
 import tethys.derivation.builder.WriterDerivationConfig
-import tethys.derivation.impl.FieldStyle
 import tethys.derivation.impl.builder.{WriterBuilderCommons, WriterBuilderUtils}
-import tethys.writers.EmptyWriters
+import tethys.derivation.impl.FieldStyle
 import tethys.writers.tokens.TokenWriter
 import tethys.{JsonObjectWriter, JsonWriter}
 
 trait WriterDerivation extends WriterBuilderCommons {
   import context.reflect.*
 
-  // ---------------------------------------- CASE CLASS ---------------------------------------- //
+  // ---------------------------------- CASE CLASS ----------------------------------
   def deriveCaseClassWriter[T: Type](
       description: MacroWriteDescription
   ): Expr[JsonObjectWriter[T]] = {
     val (fieldStyle, _) = evalWriterConfig(description.config)
+    val caseClassTpe: TypeRepr = TypeRepr.of[T]
 
-    '{
-      new JsonObjectWriter[T] {
-        private[this] implicit def thisWriter: JsonWriter[T] =
-          $searchWriterWithSameType.getOrElse(this)
+    val defaultTypes: List[TypeRepr] = caseClassTpe.typeSymbol.caseFields.map(sym => caseClassTpe.memberType(sym))
+    val additionalTypes: List[TypeRepr] = getAdditionalTypes(description.operations.toList)
+    val allTypes: List[TypeRepr] = (defaultTypes ++ additionalTypes).distinctBy(_.show)
+    val (nonCaseClassTypes, caseClassTypes) = allTypes.partition(_.typeSymbol.caseFields.isEmpty)
 
-        override def writeValues(value: T, tokenWriter: TokenWriter): Unit = ${
-          val valueTerm = 'value.asTerm
-          val tokenWriterTerm = 'tokenWriter.asTerm
-          val writerFields = applyFieldStyle(fieldStyle)
-            .andThen(applyDescriptionOperations(valueTerm, description.operations))
-            .apply(makeFields[T](valueTerm))
+    def collectClsDecls(clsSym: Symbol): List[Symbol] =
+      createThisWriterSym(clsSym, caseClassTpe) +:
+        allTypes.zipWithIndex.map { case (tpe, i) => createInnerWriterSym(clsSym, tpe.wrappedTo[JsonWriter], i) } :+
+        createWriteValuesMethodSym(clsSym, tpe = caseClassTpe)
 
-          val writerInfos = allocateWriters(writerFields)
+    val clsSym: Symbol = createClsSym(caseClassTpe, collectClsDecls)
 
-          val fieldWriteTerms = writerFields.map {
-            case SimpleWriterField(_, jsonName, fieldTpe, extractor) =>
-              val valueTerm = extractor match {
-                case InlineExtract(term) =>
-                  term
-                case FunctionExtractor(arg, _, _, func) =>
-                  func.selectFirstMethod("apply").appliedTo(arg.term)
-              }
+    val thisWriterValDef: ValDef = ValDef(symbol = clsSym.declaredField("thisWriter"), rhs = Some(This(clsSym)))
 
-              val writerTerm = writerInfos.find(_._1 =:= fieldTpe.widen).get._2
-              writerTerm.selectWrite3Method.appliedTo(jsonName.asTerm, valueTerm, tokenWriterTerm)
+    val tpeTermPairs: List[(TypeRepr, Term)] = createNonCaseClassWriterTerms(nonCaseClassTypes) ++ createCaseClassWriterTerms(caseClassTypes)
+    val innerWriterDefs: List[ValDef] = createInnerWriterDefs(clsSym, tpeTermPairs)
 
-            case PartialExtractedField(_, jsonName, argExtractor, cases) =>
-              val valueTerm = argExtractor match {
-                case InlineExtract(term) =>
-                  term
-                case FunctionExtractor(arg, _, _, func) =>
-                  func.selectFirstMethod("apply").appliedTo(arg.term)
-              }
+    val writeValuesMethodDef: DefDef = createWriteValuesMethodDef[T](
+      symbol = clsSym.declaredMethod("writeValues").head,
+      fieldStyle,
+      operations = description.operations,
+      writerDefs = innerWriterDefs
+    )
 
-              val resultCases = cases.map { case CaseDef(p, g, rhs) =>
-                val writerTerm = writerInfos.find(_._1 =:= rhs.tpe.widen).get._2
-                CaseDef(p, g, writerTerm.selectWrite3Method.appliedTo(jsonName.asTerm, rhs, tokenWriterTerm))
-              }
+    val derivedWriterClsParents: List[TypeTree] = List(TypeTree.of[Object], TypeTree.of[JsonObjectWriter[T]])
+    val clsBody: List[Statement] = thisWriterValDef +: innerWriterDefs :+ writeValuesMethodDef
+    createDerivedWriterExpr[T](clsSym, derivedWriterClsParents, clsBody)
+  }
 
-              Match(valueTerm, resultCases)
-          }
-
-          Block(fieldWriteTerms, '{ () }.asTerm).asExprOf[Unit]
-        }
+  private def createInnerWriterDefs(clsSym: Symbol, tpeTermPairs: List[(TypeRepr, Term)]): List[ValDef] =
+    tpeTermPairs.flatMap { case (tpe, writerTerm) =>
+      clsSym.declaredFields.find(tpe.memberType(_).widen <:< tpe).fold(List.empty) { writerSym =>
+        ValDef(symbol = writerSym, rhs = Some(writerTerm)) :: Nil
       }
     }
+
+  private def createDerivedWriterExpr[T: Type](
+                                                clsSym: Symbol,
+                                                clsParents: List[Tree],
+                                                clsBody: List[Statement]
+                                              ): Expr[JsonObjectWriter[T]] = {
+    val derivedWriterClassDef: ClassDef = ClassDef(cls = clsSym, parents = clsParents, body = clsBody)
+    val derivedWriterInstance: Typed = Typed(
+      expr = Apply(
+        fun = Select(New(TypeIdent(clsSym)), clsSym.primaryConstructor),
+        args = Nil
+      ),
+      tpt = TypeTree.of[JsonObjectWriter[T]]
+    )
+
+    Block(stats = List(derivedWriterClassDef), expr = derivedWriterInstance).asExprOf[JsonObjectWriter[T]]
   }
 
-  private def allocateWriters(writerFields: List[WriterField]): List[(TypeRepr, Term)] = {
-    val fieldInfos: List[TypeRepr] = writerFields.flatMap {
-      case SimpleWriterField(_, _, tpe, _)       => List(tpe)
-      case PartialExtractedField(_, _, _, cases) => cases.map { case CaseDef(_, _, rhs) => rhs.tpe.widen }
+  private def getAdditionalTypes(operations: List[WriterMacroOperation]): List[TypeRepr] = {
+    def searchAdditionalTypes(tpe: TypeRepr): List[TypeRepr] = {
+      @tailrec
+      def loop(acc: List[TypeRepr], unchecked: List[TypeRepr]): List[TypeRepr] =
+        unchecked match
+          case head :: tail =>
+            head match {
+              case OrType(lhs, rhs) =>
+                loop(acc, tail ++ List(lhs, rhs))
+              case _ =>
+                loop(acc :+ head, tail)
+            }
+          case Nil => acc
+
+      loop(acc = Nil, unchecked = tpe :: Nil)
     }
 
-    fieldInfos.foldLeft(List[(TypeRepr, Term)]()) {
-      case (info, fieldTpe) if !info.exists(_._1 =:= fieldTpe) =>
-        val term =
-          if (fieldTpe =:= TypeRepr.of[Nothing]) '{ EmptyWriters.emptyWriter[Nothing] }.asTerm
-          else fieldTpe.searchInlineJsonWriter
-
-        (fieldTpe, term) :: info
-
-      case (res, _) => res
+    operations.flatMap {
+      case _: WriterMacroOperation.Remove =>
+        List.empty
+      case op: WriterMacroOperation.Update =>
+        searchAdditionalTypes(op.to)
+      case op: WriterMacroOperation.UpdateFromRoot =>
+        searchAdditionalTypes(op.to)
+      case op: WriterMacroOperation.UpdatePartial =>
+        searchAdditionalTypes(op.to)
+      case op: WriterMacroOperation.UpdatePartialFromRoot =>
+        searchAdditionalTypes(op.to)
+      case op: WriterMacroOperation.Add =>
+        searchAdditionalTypes(op.to)
     }
   }
+
+  private def createNonCaseClassWriterTerms(tpes: List[TypeRepr]): List[(TypeRepr, Term)] =
+    tpes.foldLeft(List.empty) {
+      case (rest, fieldTpe) if !rest.exists(_._1 <:< fieldTpe.widen) =>
+        val writerTpe: TypeRepr = fieldTpe.wrappedTo[JsonWriter]
+        val writerTerm: Term = fieldTpe.createWriterTerm(_.searchInlineJsonWriter)
+        rest :+ (writerTpe, writerTerm)
+      case (rest, _) => rest
+    }
+
+  private def createCaseClassWriterTerms(tpes: List[TypeRepr]): List[(TypeRepr, Term)] =
+    tpes.map {
+      _.asType match {
+        case '[t] =>
+          def derivedWriter: Expr[JsonWriter[t]] = deriveCaseClassWriter[t](MacroWriteDescription.empty[t])
+          val writerTerm: Term = Expr.summon[JsonWriter[t]].getOrElse(derivedWriter).asTerm
+          TypeRepr.of[JsonWriter[t]] -> writerTerm
+      }
+    }
+
+  private def createWriteValuesMethodDef[T: Type](
+                                                   symbol: Symbol,
+                                                   fieldStyle: Option[FieldStyle],
+                                                   operations: Seq[WriterMacroOperation],
+                                                   writerDefs: List[ValDef]
+                                                 ): DefDef =
+    DefDef(
+      symbol = symbol,
+      rhsFn = params => {
+        val term: Term = {
+          val (valueTerm, tokenWriterTerm) = getValueAndTokenWriterTerms(params)
+
+          val writerFields: List[WriterField] = applyFieldStyle(fieldStyle)
+            .andThen(applyDescriptionOperations(valueTerm, operations))
+            .apply(makeFields[T](valueTerm))
+          val stats: List[Statement] = createWriterStatements(writerFields, writerDefs, tokenWriterTerm)
+
+          Block(stats, expr = '{ () }.asTerm)
+        }
+
+        Some(term.changeOwner(symbol))
+      }
+    )
 
   private def applyFieldStyle(fieldStyle: Option[FieldStyle]): List[WriterField] => List[WriterField] = writerFields =>
     fieldStyle.fold(writerFields) { style =>
@@ -97,12 +162,11 @@ trait WriterDerivation extends WriterBuilderCommons {
       valueTerm: Term,
       operations: Seq[WriterMacroOperation]
   ): List[WriterField] => List[WriterField] = writerFields => {
-    def mapField(fields: List[WriterField], name: String)(f: SimpleWriterField => WriterField): List[WriterField] = {
+    def mapField(fields: List[WriterField], name: String)(f: SimpleWriterField => WriterField): List[WriterField] =
       fields.map {
         case field: SimpleWriterField if field.name == name => f(field)
         case field                                          => field
       }
-    }
 
     operations.foldLeft(writerFields) { case (fields, operation) =>
       operation match {
@@ -139,7 +203,7 @@ trait WriterDerivation extends WriterBuilderCommons {
             )
           )
 
-        case WriterMacroOperation.UpdatePartial(_, field, name, fun, _) =>
+        case WriterMacroOperation.UpdatePartial(_, field, name, fun, _, _) =>
           mapField(fields, field)(f =>
             PartialExtractedField(
               name = field,
@@ -151,7 +215,7 @@ trait WriterDerivation extends WriterBuilderCommons {
             )
           )
 
-        case WriterMacroOperation.UpdatePartialFromRoot(_, field, name, fun) =>
+        case WriterMacroOperation.UpdatePartialFromRoot(_, field, name, fun, _) =>
           mapField(fields, field)(f =>
             PartialExtractedField(
               name = field,
@@ -164,17 +228,15 @@ trait WriterDerivation extends WriterBuilderCommons {
           )
 
         case WriterMacroOperation.Add(tpe, field, fun, to) =>
-          fields ::: List(
-            SimpleWriterField(
-              name = "__---nope---__",
-              jsonName = field,
-              tpe = to,
-              extractor = FunctionExtractor(
-                arg = InlineExtract(valueTerm),
-                from = tpe,
-                to = to,
-                body = fun
-              )
+          fields :+ SimpleWriterField(
+            name = "__---nope---__",
+            jsonName = field,
+            tpe = to,
+            extractor = FunctionExtractor(
+              arg = InlineExtract(valueTerm),
+              from = tpe,
+              to = to,
+              body = fun
             )
           )
       }
@@ -194,51 +256,156 @@ trait WriterDerivation extends WriterBuilderCommons {
     }
   }
 
-  // -------------------------- SEALED (TRAIT | ABSTRACT CLASS) OR ENUM ------------------------------- //
+  private def createWriterStatements(
+                                      writerFields: List[WriterField],
+                                      writerDefs: List[ValDef],
+                                      tokenWriterTerm: Term
+                                    ): List[Statement] =
+    writerFields.map {
+      case SimpleWriterField(_, jsonName, fieldTpe, extractor) =>
+        getWriterDefRef(writerDefs, fieldTpe)
+          .selectWrite3Method
+          .appliedTo(jsonName.asTerm, getValueTerm(extractor), tokenWriterTerm)
+
+      case PartialExtractedField(_, jsonName, argExtractor, cases) =>
+        val newCases: List[CaseDef] = cases.map { case CaseDef(pattern, guard, rhs) =>
+          val writerTerm: Term = rhs.tpe.widen.createWriterTerm(getWriterDefRef(writerDefs, _))
+          val newRhs: Term = writerTerm
+            .selectWrite3Method
+            .appliedTo(jsonName.asTerm, rhs, tokenWriterTerm)
+          CaseDef(pattern, guard, rhs = newRhs)
+        }
+        Match(selector = getValueTerm(argExtractor), cases = newCases)
+    }
+
+  private def getWriterDefRef(writerDefs: List[ValDef], fieldTpe: TypeRepr): Ref = {
+    val fieldWriterTpe: TypeRepr = fieldTpe.wrappedTo[JsonWriter]
+    val reqWriter: ValDef = writerDefs.find(_.tpt.tpe <:< fieldWriterTpe).getOrElse {
+      report.errorAndAbort(
+        s"Writer for type ${fieldTpe.show} hasn't been found between writer definitions: ${writerDefs.map(_.show)}"
+      )
+    }
+    Ref(reqWriter.symbol)
+  }
+
+  private def getValueTerm(extractor: Extractor): Term = extractor match {
+    case InlineExtract(term) =>
+      term
+    case FunctionExtractor(arg, _, _, func) =>
+      func.selectFirstMethod("apply").appliedTo(arg.term)
+  }
+
+  // -------------------- SEALED (TRAIT | ABSTRACT CLASS) OR ENUM -------------------
   def deriveSealedClassWriter[T: Type](
-      cfg: Expr[WriterDerivationConfig]
-  ): Expr[JsonObjectWriter[T]] = {
-    val parentTpr = TypeRepr.of[T]
+                                        cfg: Expr[WriterDerivationConfig]
+                                      ): Expr[JsonObjectWriter[T]] = {
+    val parentTpe: TypeRepr = TypeRepr.of[T]
+    val isSameTypeWriterExists: Boolean = Expr.summon[JsonWriter[T]].nonEmpty
+
     val (_, discriminator) = evalWriterConfig(cfg)
-    val children = collectDistinctSubtypes(parentTpr).sortBy(_.typeSymbol.fullName)
+    val childTpes: List[TypeRepr] = collectDistinctSubtypes(parentTpe).sortBy(_.typeSymbol.fullName)
 
-    if (children.isEmpty) report.errorAndAbort(s"${parentTpr.show} has no known direct subclasses")
+    if (childTpes.isEmpty)
+      report.errorAndAbort(s"${parentTpe.show} has no known direct subclasses")
 
-    '{
-      new JsonObjectWriter[T] { self =>
-        private[this] implicit def thisWriter: JsonWriter[T] =
-          $searchWriterWithSameType.getOrElse(this)
+    def collectClsDecls(clsSym: Symbol): List[Symbol] =
+      (if (isSameTypeWriterExists) Nil else List(createThisWriterSym(clsSym, parentTpe))) appendedAll
+        childTpes.zipWithIndex.map { case (tpe, i) =>
+          createInnerWriterSym(clsSym, tpe.wrappedTo[JsonObjectWriter], i)
+        } appendedAll List(
+          createWriteValuesMethodSym(clsSym, name = "write", tpe = parentTpe),
+          createWriteValuesMethodSym(clsSym, tpe = parentTpe)
+        )
 
-        override def write(value: T, tokenWriter: TokenWriter): Unit = ${
-          val cases = children.map {
+    val clsSym: Symbol = createClsSym(parentTpe, collectClsDecls)
+
+    val writeMethodDefSym: Symbol = clsSym.declaredMethod("write").head
+    val writeValuesMethodDefSym: Symbol = clsSym.declaredMethod("writeValues").head
+
+    lazy val thisWriterDef: ValDef = ValDef(symbol = clsSym.declaredField("thisWriter"), rhs = Some(This(clsSym)))
+
+    val tpeTermPairs: List[(TypeRepr, Term)] = createWriterTpeTermPairs(childTpes)
+    val innerWriterDefs: List[ValDef] = createInnerWriterDefs(clsSym, tpeTermPairs)
+
+    val writeMethodDef: DefDef = createSealedWriteMethodDef[T](writeMethodDefSym, childTpes, writeValuesMethodDefSym)
+    val writeValuesMethodDef: DefDef = createSealedWriteValuesMethodDef[T](
+      writeValuesMethodDefSym, childTpes, innerWriterDefs, discriminator
+    )
+
+    val derivedWriterClsParents: List[TypeTree] = List(TypeTree.of[Object], TypeTree.of[JsonObjectWriter[T]])
+    val clsBody: List[Statement] = (if (isSameTypeWriterExists) Nil else List(thisWriterDef)) appendedAll
+      innerWriterDefs appendedAll List(writeMethodDef, writeValuesMethodDef)
+
+    createDerivedWriterExpr[T](clsSym, derivedWriterClsParents, clsBody)
+  }
+
+  private def createWriterTpeTermPairs(tpes: List[TypeRepr]): List[(TypeRepr, Term)] =
+    tpes.foldLeft(List.empty) {
+      case (rest, fieldTpe) if !rest.exists(_._1 <:< fieldTpe.widen) =>
+        val writerTpe: TypeRepr = fieldTpe.wrappedTo[JsonWriter]
+        val writerTerm: Term = fieldTpe.createWriterTerm(_.searchInlineJsonObjectWriter)
+        rest :+ (writerTpe, writerTerm)
+      case (rest, _) => rest
+    }
+
+  private def createSealedWriteMethodDef[T: Type](
+                                                   sym: Symbol,
+                                                   childTpes: List[TypeRepr],
+                                                   writeValuesMethodDefSym: Symbol
+                                                 ): DefDef =
+    DefDef(
+      symbol = sym,
+      rhsFn = params => {
+        val term: Term = {
+          val (valueTerm, tokenWriterTerm) = getValueAndTokenWriterTerms(params)
+
+          val cases: List[CaseDef] = childTpes.map {
             case typeChildTpr if typeChildTpr.termSymbol.isNoSymbol =>
-              val typeChildTpt = typeChildTpr.asType match { case '[t] => TypeTree.of[t] }
+              val typeChildTpt: TypeTree = typeChildTpr.asType match {
+                case '[t] => TypeTree.of[t]
+              }
               val typeChildBind = Symbol.newBind(Symbol.spliceOwner, "c", Flags.EmptyFlags, typeChildTpr)
-              val rhs = '{
-                tokenWriter.writeObjectStart()
-                writeValues(value, tokenWriter)
-                tokenWriter.writeObjectEnd()
-                ()
-              }.asTerm
+              val terms: List[Term] = {
+                val writeObjectStartTerm = tokenWriterTerm.selectFirstMethod("writeObjectStart").appliedToNone
+                val writeValuesTerm = Ref(writeValuesMethodDefSym).appliedTo(valueTerm, tokenWriterTerm)
+                val writeObjectEndTerm = tokenWriterTerm.selectFirstMethod("writeObjectEnd").appliedToNone
+                List(writeObjectStartTerm, writeValuesTerm, writeObjectEndTerm)
+              }
+              val rhs = Block(terms, '{ () }.asTerm)
               CaseDef(Bind(typeChildBind, Typed(Ref(typeChildBind), typeChildTpt)), None, rhs)
             case termChildTpr =>
-              val termChildSym = termChildTpr.termSymbol
-              val termChildRef = Ref(termChildSym)
-              val rhs = '{ writeValues(value, tokenWriter) }.asTerm
+              val termChildSym: Symbol = termChildTpr.termSymbol
+              val termChildRef: Ref = Ref(termChildSym)
+              val rhs: Term = Ref(writeValuesMethodDefSym).appliedTo(valueTerm, tokenWriterTerm)
               CaseDef(termChildRef, None, rhs)
           }
 
-          Match('value.asTerm, cases).asExprOf[Unit]
+          Match(valueTerm, cases)
         }
 
-        override def writeValues(value: T, tokenWriter: TokenWriter): Unit = ${
-          val valueTerm = 'value.asTerm
-          val tokenWriterTerm = 'tokenWriter.asTerm
+        Some(term.changeOwner(sym))
+      }
+    )
 
-          val cases = children.map {
+  private def createSealedWriteValuesMethodDef[T: Type](
+                                                         sym: Symbol,
+                                                         childTpes: List[TypeRepr],
+                                                         writerDefs: List[ValDef],
+                                                         discriminator: Option[String]
+                                                       ): DefDef =
+    DefDef(
+      symbol = sym,
+      rhsFn = params => {
+        val term: Term = {
+          val (valueTerm, tokenWriterTerm) = getValueAndTokenWriterTerms(params)
+
+          val cases: List[CaseDef] = childTpes.map {
             case typeChildTpr if typeChildTpr.termSymbol.isNoSymbol =>
-              val typeChildTpt = typeChildTpr.asType match { case '[t] => TypeTree.of[t] }
-              val typeChildWriteValuesMethod = typeChildTpr.searchInlineJsonObjectWriter.selectWriteValuesMethod
+              val typeChildTpt: TypeTree = typeChildTpr.asType match {
+                case '[t] => TypeTree.of[t]
+              }
+              val termChildWriter: Ref = getWriterDefRef(writerDefs, typeChildTpr)
+              val typeChildWriteValuesMethod = termChildWriter.selectWriteValuesMethod
               val typeChildBind = Symbol.newBind(Symbol.spliceOwner, "c", Flags.EmptyFlags, typeChildTpr)
               val writeValuesTerm = typeChildWriteValuesMethod.appliedTo(Ref(typeChildBind), tokenWriterTerm)
               val discriminatorTerm = discriminator.fold(Literal(UnitConstant())) { discriminator =>
@@ -253,7 +420,7 @@ trait WriterDerivation extends WriterBuilderCommons {
               val termChildSym = termChildTpr.termSymbol
               val termChildRef = Ref(termChildSym)
               val termChildNameTerm = Expr(termChildSym.name).asTerm
-              val termChildWriter = termChildTpr.searchJsonObjectWriter
+              val termChildWriter = getWriterDefRef(writerDefs, termChildTpr)
               val discriminatorTerm = discriminator.fold(Literal(UnitConstant())) { discriminator =>
                 TypeRepr
                   .of[String]
@@ -276,18 +443,16 @@ trait WriterDerivation extends WriterBuilderCommons {
               CaseDef(termChildRef, None, rhs)
           }
 
-          Match(valueTerm, cases).asExprOf[Unit]
+          Match(valueTerm, cases)
         }
-      }
-    }
-  }
 
-  // -------------------------------- TERM (case objects, simple enums) ------------------------------- //
+        Some(term.changeOwner(sym))
+      }
+    )
+
+  // ----------------------- TERM (case objects, simple enums) ----------------------
   def deriveTermWriter[T: Type]: Expr[JsonObjectWriter[T]] = {
-    val termTpr = TypeRepr.of[T]
-    val termSym = termTpr.termSymbol
-    val termRef = Ref(termSym)
-    val termNameTerm = Expr(termSym.name).asTerm
+    val termNameTerm = Expr(TypeRepr.of[T].termSymbol.name).asTerm
 
     '{
       new JsonObjectWriter[T] {
@@ -302,8 +467,52 @@ trait WriterDerivation extends WriterBuilderCommons {
     }
   }
 
-  private implicit def searchWriterWithSameType[T: Type]: Expr[Option[JsonWriter[T]]] =
-    Expr.summon[JsonWriter[T]].map(w => '{ Some($w) }).getOrElse('{ None })
+  // ------------------------------------ COMMON ------------------------------------
+  private def createClsSym(tpe: TypeRepr, declsFn: Symbol => List[Symbol]): Symbol =
+    Symbol.newClass(
+      parent = Symbol.spliceOwner,
+      name = tpe.typeSymbol.name + "_DerivedWriter",
+      parents = List(TypeRepr.of[Object], tpe.wrappedTo[JsonObjectWriter]),
+      decls = declsFn,
+      selfType = None
+    )
+
+  private def createThisWriterSym(parentSymbol: Symbol, tpe: TypeRepr): Symbol =
+    Symbol.newVal(
+      parent = parentSymbol,
+      name = "thisWriter",
+      tpe = tpe.wrappedTo[JsonObjectWriter],
+      flags = Flags.Lazy | Flags.Implicit,
+      privateWithin = Symbol.noSymbol
+    )
+
+  private def createInnerWriterSym(parentSymbol: Symbol, tpe: TypeRepr, idx: Int): Symbol =
+    Symbol.newVal(
+      parent = parentSymbol,
+      name = s"innerWriter_$idx",
+      tpe = tpe,
+      flags = Flags.Lazy,
+      privateWithin = Symbol.noSymbol
+    )
+
+  private def createWriteValuesMethodSym(parentSymbol: Symbol, name: String = "writeValues", tpe: TypeRepr): Symbol =
+    Symbol.newMethod(
+      parent = parentSymbol,
+      name = name,
+      tpe = MethodType(paramNames = List("value", "tokenWriter"))(
+        paramInfosExp = _ => List(tpe, TypeRepr.of[TokenWriter]),
+        resultTypeExp = _ => TypeRepr.of[Unit]
+      ),
+      flags = Flags.Override,
+      privateWithin = Symbol.noSymbol
+    )
+
+  private def getValueAndTokenWriterTerms[T: Type](params: List[List[Tree]]): (Term, Term) = {
+    val value: Expr[T] = params.head.head.asExprOf[T]
+    val tokenWriter: Expr[TokenWriter] = params.head(1).asExprOf[TokenWriter]
+
+    value.asTerm -> tokenWriter.asTerm
+  }
 
   private sealed trait Extractor
   private case class InlineExtract(term: Term) extends Extractor

@@ -16,9 +16,9 @@ class SemiautoWriterDerivationTest extends AnyFlatSpec with Matchers {
   behavior of "semiauto derivation"
   it should "generate proper writer from WriterDescription" in {
     def freeVariable: String = "e"
-    implicit lazy val dWriter: JsonWriter[D] = jsonWriter[D](WriterDerivationConfig.withFieldStyle(FieldStyle.UpperCase))
+    implicit val dWriter: JsonWriter[D] = jsonWriter[D](WriterDerivationConfig.withFieldStyle(FieldStyle.UpperCase))
 
-    implicit lazy val testWriter: JsonWriter[JsonTreeTestData] = jsonWriter {
+    implicit val testWriter: JsonWriter[JsonTreeTestData] = jsonWriter {
       WriterBuilder[JsonTreeTestData]
         .remove(_.b)
         .update(_.a).fromRoot(d => d.a.toDouble + d.c.d.a)
@@ -37,7 +37,7 @@ class SemiautoWriterDerivationTest extends AnyFlatSpec with Matchers {
   }
 
   it should "derive writer for update partial" in {
-    implicit lazy val partialWriter: JsonWriter[D] = jsonWriter {
+    implicit val partialWriter: JsonWriter[D] = jsonWriter {
       describe {
         WriterBuilder[D]
           .updatePartial(_.a) {
@@ -59,7 +59,7 @@ class SemiautoWriterDerivationTest extends AnyFlatSpec with Matchers {
   }
 
   it should "derive writer for update partial from root" in {
-    implicit lazy val partialWriter: JsonWriter[D] = jsonWriter {
+    implicit val partialWriter: JsonWriter[D] = jsonWriter {
       describe {
         WriterBuilder[D]
           .updatePartial(_.a).fromRoot {
@@ -134,7 +134,9 @@ class SemiautoWriterDerivationTest extends AnyFlatSpec with Matchers {
       }
       simpleJsonWriter ++ jsonWriter[ADTWithType[B]]
     }
+
     implicit def recursionTraitWithTypeAWriter[B: JsonWriter]: JsonObjectWriter[ADTWithTypeA[B]] = jsonWriter[ADTWithTypeA[B]]
+
     implicit def recursionTraitWithTypeBWriter[B: JsonWriter]: JsonObjectWriter[ADTWithTypeB[B]] = jsonWriter[ADTWithTypeB[B]]
 
     (ADTWithTypeB[Int](1, ADTWithTypeA[Int](2)): ADTWithType[Int]).asTokenList shouldBe obj(
@@ -156,12 +158,12 @@ class SemiautoWriterDerivationTest extends AnyFlatSpec with Matchers {
   }
 
   it should "derive writer for simple sealed trait with hierarchy" in {
-    implicit lazy val caseClassWriter: JsonObjectWriter[CaseClass] = jsonWriter[CaseClass]
-    implicit lazy val simpleClassWriter: JsonObjectWriter[SimpleClass] = JsonWriter.obj[SimpleClass].addField("b")(_.b)
-    implicit lazy val justObjectWriter: JsonObjectWriter[JustObject.type] = JsonWriter.obj.addField("type")(_ => "JustObject")
-    implicit lazy val subChildWriter: JsonObjectWriter[SubChild] = jsonWriter[SubChild]
+    implicit val caseClassWriter: JsonObjectWriter[CaseClass] = jsonWriter[CaseClass]
+    implicit val simpleClassWriter: JsonObjectWriter[SimpleClass] = JsonWriter.obj[SimpleClass].addField("b")(_.b)
+    implicit val justObjectWriter: JsonObjectWriter[JustObject.type] = JsonWriter.obj.addField("type")(_ => "JustObject")
+    implicit val subChildWriter: JsonObjectWriter[SubChild] = jsonWriter[SubChild]
 
-    implicit lazy val sealedWriter: JsonWriter[SimpleSealedType] = jsonWriter[SimpleSealedType]
+    implicit val sealedWriter: JsonWriter[SimpleSealedType] = jsonWriter[SimpleSealedType]
 
     def write(simpleSealedType: SimpleSealedType): List[TokenNode] = simpleSealedType.asTokenList
 
@@ -172,12 +174,12 @@ class SemiautoWriterDerivationTest extends AnyFlatSpec with Matchers {
   }
 
   it should "derive writer for simple sealed trait with hierarchy with discriminator" in {
-    implicit lazy val caseClassWriter: JsonObjectWriter[CaseClass] = jsonWriter[CaseClass]
-    implicit lazy val simpleClassWriter: JsonObjectWriter[SimpleClass] = JsonWriter.obj[SimpleClass].addField("b")(_.b)
-    implicit lazy val justObjectWriter: JsonObjectWriter[JustObject.type] = JsonWriter.obj
-    implicit lazy val subChildWriter: JsonObjectWriter[SubChild] = jsonWriter[SubChild]
+    implicit val caseClassWriter: JsonObjectWriter[CaseClass] = jsonWriter[CaseClass]
+    implicit val simpleClassWriter: JsonObjectWriter[SimpleClass] = JsonWriter.obj[SimpleClass].addField("b")(_.b)
+    implicit val justObjectWriter: JsonObjectWriter[JustObject.type] = JsonWriter.obj
+    implicit val subChildWriter: JsonObjectWriter[SubChild] = jsonWriter[SubChild]
 
-    implicit lazy val sealedWriter: JsonWriter[SimpleSealedType] = jsonWriter[SimpleSealedType](
+    implicit val sealedWriter: JsonWriter[SimpleSealedType] = jsonWriter[SimpleSealedType](
       WriterDerivationConfig.empty.withDiscriminator("__type")
     )
 

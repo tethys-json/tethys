@@ -1,7 +1,11 @@
 lazy val scala213 = "2.13.10"
-lazy val scala32 = "3.2.1"
+/* FIXME
+Return to use a stable version when 'scala.quoted.Quotes.reflectModuleSymbol.newClass'
+and 'scala.quoted.Quotes.reflectModule.ClassDef.apply' are no longer experimental methods
+ */
+lazy val scala3 = "3.3.1-RC1-bin-20230318-7226ba6-NIGHTLY"
 
-ThisBuild / scalaVersion := scala32
+ThisBuild / scalaVersion := scala3
 
 lazy val commonSettings = Seq(
   version := "0.28.0",
@@ -62,7 +66,7 @@ def crossScalaSettings = {
     }
 
   Seq(
-    crossScalaVersions := Seq(scala213, scala32),
+    crossScalaVersions := Seq(scala213, scala3),
     Compile / unmanagedSourceDirectories ++= addDirsByScalaVersion("src/main").value,
     Test / unmanagedSourceDirectories ++= addDirsByScalaVersion("src/test").value
   )
@@ -153,7 +157,7 @@ lazy val `jackson-213` = project.in(modules / "jackson-213")
   .settings(
     name := "tethys-jackson213",
     libraryDependencies ++= Seq(
-      "com.fasterxml.jackson.core" % "jackson-core" % "2.13.4"
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.13.5"
     )
   )
   .dependsOn(core)
@@ -165,7 +169,7 @@ lazy val circe = project.in(modules / "circe")
   .settings(
     name := "tethys-circe",
     libraryDependencies ++= Seq(
-      "io.circe" %% "circe-core" % "0.14.4"
+      "io.circe" %% "circe-core" % "0.14.5"
     )
   )
   .dependsOn(core, `jackson-212` % Test)
@@ -177,7 +181,7 @@ lazy val json4s = project.in(modules / "json4s")
   .settings(
     name := "tethys-json4s",
     libraryDependencies ++= Seq(
-      "org.json4s" %% "json4s-core" % "4.0.6"
+      "org.json4s" %% "json4s-ast" % "4.0.6"
     )
   )
   .dependsOn(core)
@@ -206,7 +210,7 @@ lazy val refined = project.in(modules / "refined")
   .settings(
     name := "tethys-refined",
     libraryDependencies ++= Seq(
-      "eu.timepit" %% "refined" % "0.10.1"
+      "eu.timepit" %% "refined" % "0.10.2"
     )
   )
   .dependsOn(core)

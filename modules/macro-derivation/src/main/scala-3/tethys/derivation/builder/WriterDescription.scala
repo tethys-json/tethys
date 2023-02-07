@@ -19,11 +19,11 @@ object WriterDescription {
   trait BuilderOperation[A]
 
   object BuilderOperation {
-    case class Remove[A](field: String) extends BuilderOperation[A]
-    case class Update[A, B, C](field: String, name: Option[String], fun: B => C) extends BuilderOperation[A]
-    case class UpdateFromRoot[A, C](field: String, name: Option[String], fun: A => C) extends BuilderOperation[A]
-    case class UpdatePartial[A, B](field: String, name: Option[String], fun: PartialFunction[B, Any]) extends BuilderOperation[A]
-    case class UpdatePartialFromRoot[A](field: String, name: Option[String], fun: PartialFunction[A, Any]) extends BuilderOperation[A]
-    case class Add[A, B](field: String, fun: A => B) extends BuilderOperation[A]
+    case class Remove[T](field: String) extends BuilderOperation[T]
+    case class Update[T, From, To](field: String, name: Option[String], fun: From => To) extends BuilderOperation[T]
+    case class UpdateFromRoot[T, To](field: String, name: Option[String], fun: T => To) extends BuilderOperation[T]
+    case class UpdatePartial[T, From, To](field: String, name: Option[String], fun: PartialFunction[From, To]) extends BuilderOperation[T]
+    case class UpdatePartialFromRoot[T, To](field: String, name: Option[String], fun: PartialFunction[T, To]) extends BuilderOperation[T]
+    case class Add[T, To](field: String, fun: T => To) extends BuilderOperation[T]
   }
 }

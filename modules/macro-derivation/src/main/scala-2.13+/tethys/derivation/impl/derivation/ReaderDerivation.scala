@@ -590,8 +590,8 @@ trait ReaderDerivation
   private def provideThisReaderImplicit(tpe: Type): Tree = {
     c.typecheck(q"implicitly[$jsonReaderType[$tpe]]", silent = true) match {
       case EmptyTree =>
-        val thisWriterTerm = TermName(c.freshName("thisWriter"))
-        q"implicit private[this] def $thisWriterTerm: $jsonReaderType[$tpe] = this"
+        val thisReaderTerm = TermName(c.freshName("thisReader"))
+        q"implicit private[this] def $thisReaderTerm: $jsonReaderType[$tpe] = this"
       case _ => EmptyTree
     }
   }

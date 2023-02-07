@@ -13,7 +13,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        scala: [2.13.10, 3.2.1]
+        # FIXME Use stable scala version
+        scala: [2.13.10, 3.3.1-RC1-bin-20230318-7226ba6-NIGHTLY]
 
     steps:
       - uses: actions/checkout@v3

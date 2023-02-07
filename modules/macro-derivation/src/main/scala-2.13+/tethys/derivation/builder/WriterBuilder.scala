@@ -25,7 +25,7 @@ sealed trait WriterBuilder[A] {
 
 object WriterBuilder {
 
-  @compileTimeOnly("ReaderBuilder should be defined in describe, jsonWriter of jsonReader macro")
+  @compileTimeOnly("WriterBuilder should be defined in describe, jsonWriter of jsonReader macro")
   def apply[A <: Product]: WriterBuilder[A] = throw new NotDescribedException
 
   sealed trait WithRename[Res] {

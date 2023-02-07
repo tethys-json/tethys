@@ -4,6 +4,7 @@ import scala.quoted.*
 
 import tethys.readers.JsonReaderDefaultValue
 import tethys.{JsonObjectWriter, JsonReader, JsonWriter}
+import tethys.writers.EmptyWriters
 
 trait Reflection {
   given Quotes = context
@@ -21,13 +22,20 @@ trait Reflection {
 
     def searchInlineJsonObjectWriter: Term = searchInline[JsonObjectWriter]
 
-    def searchJsonObjectWriter: Term = searchUnsafe[JsonObjectWriter]
-
-    def safeSearchJsonObjectWriter: Option[Term] = searchSafe[JsonObjectWriter]
-
     def searchJsonReaderDefaultValue: Term = searchUnsafe[JsonReaderDefaultValue]
 
     def getDealiasFullName: String = underlying.dealias.typeSymbol.fullName
+
+    def wrappedTo[F[_] : Type]: TypeRepr =
+      underlying.asType match {
+        case '[t] => TypeRepr.of[F[t]]
+      }
+      
+    def createWriterTerm(f: TypeRepr => Term): Term =
+      if (underlying =:= TypeRepr.of[Nothing])
+        '{ EmptyWriters.emptyWriter[Nothing] }.asTerm
+      else 
+        f(underlying)
 
     private def searchInline[F[_]: Type]: Term = underlying.asType match {
       case '[t] => '{ scala.compiletime.summonInline[F[t]] }.asTerm
@@ -45,7 +53,7 @@ trait Reflection {
   }
 
   extension (underlying: Term) {
-    def selectFirstMethod(methodName: String) =
+    def selectFirstMethod(methodName: String): Select =
       underlying.select(underlying.tpe.typeSymbol.getFirstMethod(methodName))
 
     def selectField(fieldName: String): Term =
@@ -53,7 +61,7 @@ trait Reflection {
 
     def foldOption(ifEmpty: Term)(f: Term => Term): Term = {
       underlying.tpe.asType match {
-        case '[Option[_]] => {
+        case '[Option[_]] =>
           val underlyingSym = underlying.tpe.typeSymbol
           val isDefinedMethod = underlyingSym.getFirstMethod("isDefined")
           val getMethod = underlyingSym.getFirstMethod("get")
@@ -62,7 +70,6 @@ trait Reflection {
             f(underlying.select(getMethod)),
             ifEmpty
           )
-        }
         case _ => report.errorAndAbort(s"Field ${underlying.show} is not Option[_]")
       }
     }
@@ -157,7 +164,7 @@ trait Reflection {
       childTpe.appliedTo(args)
     }
 
-    val tpes = children.map { childSym =>
+    val tpes: List[TypeRepr] = children.map { childSym =>
       if (childSym.isType)
         substituteArgs(TypeIdent(childSym).tpe, childSym)
       else

@@ -1,5 +1,6 @@
 package tethys.derivation.impl.builder
 
+import scala.annotation.tailrec
 import scala.quoted.*
 
 import tethys.derivation.builder.{WriterBuilder, WriterDerivationConfig, WriterDescription}
@@ -20,163 +21,151 @@ trait WriterBuilderCommons extends WriterBuilderUtils {
     description.lift
   }
 
-  protected lazy val emptyWriterConfig: Expr[WriterDerivationConfig] =
-    '{ tethys.derivation.builder.WriterDerivationConfig.empty }
+  private def extractSimpleDescription[T <: Product : Type](expr: Expr[WriterBuilder[T]]): MacroWriteDescription = {
+    @tailrec
+    def loop(
+      expr: Expr[WriterBuilder[T]],
+      config: Expr[WriterDerivationConfig],
+      operations: Seq[WriterMacroOperation]
+    ): (Expr[WriterDerivationConfig], Seq[WriterMacroOperation]) = {
+      expr match {
+        case '{
+          type tpe <: T;
+          WriterBuilder.apply[`tpe`]
+        } => config -> operations
 
-  private def extractSimpleDescription[T <: Product: Type](expr: Expr[WriterBuilder[T]]): MacroWriteDescription = {
-    expr match {
-      case '{
-        type tpe <: T
-        WriterBuilder.apply[`tpe`]
-      } => MacroWriteDescription(TypeRepr.of[tpe], emptyWriterConfig, Seq())
+        // ===== remove =====
+        case '{ ($rest: WriterBuilder[T]).remove(${ BuilderField(f) }) } =>
+          val op: WriterMacroOperation = WriterMacroOperation.Remove(tpe = TypeRepr.of[T], field = f.name)
+          loop(rest, config, op +: operations)
 
-      // ===== remove =====
-      case '{ ($rest: WriterBuilder[T]).remove[tpe](${BuilderField(f)}) } =>
-        val description = extractSimpleDescription(rest)
-        description.copy(operations =
-          description.operations :+
-            WriterMacroOperation.Remove(description.tpe, f.name)
-        )
+        // ===== rename =====
+        case '{ ($rest: WriterBuilder[T]).rename[from](${ BuilderField(f) })($rename) } =>
+          val fromTpe = TypeRepr.of[from]
+          val op: WriterMacroOperation = WriterMacroOperation.Update(
+            tpe = TypeRepr.of[T],
+            field = f.name,
+            name = '{ Some($rename) },
+            fun = '{ identity[from] }.asTerm,
+            from = fromTpe,
+            to = fromTpe
+          )
+          loop(rest, config, op +: operations)
 
-      // ===== rename =====
-      case '{ ($rest: WriterBuilder[T]).rename[a](${BuilderField(f)})($rename) } =>
-        val description = extractSimpleDescription(rest)
-        val aTpr = TypeRepr.of[a]
-        description.copy(operations =
-          description.operations :+
-            WriterMacroOperation.Update(
-              description.tpe,
-              f.name,
-              '{ Some($rename) },
-              '{ identity[a] }.asTerm,
-              aTpr,
-              aTpr
-            )
-        )
+        // ===== update =====
+        case '{ ($rest: WriterBuilder[T]).update[from](${ BuilderField(f) }).apply[to]($updater) } =>
+          val op: WriterMacroOperation = WriterMacroOperation.Update(
+            tpe = TypeRepr.of[T],
+            field = f.name,
+            name = '{ None },
+            fun = updater.asTerm,
+            from = TypeRepr.of[from],
+            to = TypeRepr.of[to]
+          )
+          loop(rest, config, op +: operations)
 
-      // ===== update =====
-      case '{ ($rest: WriterBuilder[T]).update[a](${BuilderField(f)}).apply[b]($updater) } =>
-        val description = extractSimpleDescription(rest)
-        description.copy(operations =
-          description.operations :+
-            WriterMacroOperation.Update(
-              description.tpe,
-              f.name,
-              '{ None },
-              updater.asTerm,
-              TypeRepr.of[a],
-              TypeRepr.of[b]
-            )
-        )
+        // ===== update with rename =====
+        case '{ ($rest: WriterBuilder[T]).update[from](${ BuilderField(f) }).withRename($rename).apply[to]($updater) } =>
+          val op: WriterMacroOperation = WriterMacroOperation.Update(
+            tpe = TypeRepr.of[T],
+            field = f.name,
+            name = '{ Some($rename) },
+            fun = updater.asTerm,
+            from = TypeRepr.of[from],
+            to = TypeRepr.of[to]
+          )
+          loop(rest, config, op +: operations)
 
-      // ===== update with rename =====
-      case '{ ($rest: WriterBuilder[T]).update[a](${BuilderField(f)}).withRename($rename).apply[b]($updater) } =>
-        val description = extractSimpleDescription(rest)
-        description.copy(operations =
-          description.operations :+
-            WriterMacroOperation.Update(
-              description.tpe,
-              f.name,
-              '{ Some($rename) },
-              updater.asTerm,
-              TypeRepr.of[a],
-              TypeRepr.of[b]
-            )
-        )
+        // ===== update from root =====
+        case '{ ($rest: WriterBuilder[T]).update(${ BuilderField(f) }).fromRoot[to]($updater) } =>
+          val op: WriterMacroOperation = WriterMacroOperation.UpdateFromRoot(
+            tpe = TypeRepr.of[T],
+            field = f.name,
+            name = '{ None },
+            fun = updater.asTerm,
+            to = TypeRepr.of[to]
+          )
+          loop(rest, config, op +: operations)
 
-      // ===== update from root =====
-      case '{ ($rest: WriterBuilder[T]).update(${BuilderField(f)}).fromRoot[b]($updater) } =>
-        val description = extractSimpleDescription(rest)
-        description.copy(operations =
-          description.operations :+
-            WriterMacroOperation.UpdateFromRoot(
-              description.tpe,
-              f.name,
-              '{ None },
-              updater.asTerm,
-              TypeRepr.of[b]
-            )
-        )
+        // ===== update from root with rename =====
+        case '{ ($rest: WriterBuilder[T]).update(${ BuilderField(f) }).withRename($rename).fromRoot[to]($updater) } =>
+          val op: WriterMacroOperation = WriterMacroOperation.UpdateFromRoot(
+            tpe = TypeRepr.of[T],
+            field = f.name,
+            name = '{ Some($rename) },
+            fun = updater.asTerm,
+            to = TypeRepr.of[to]
+          )
+          loop(rest, config, op +: operations)
 
-      // ===== update from root with rename =====
-      case '{ ($rest: WriterBuilder[T]).update(${BuilderField(f)}).withRename($rename).fromRoot[b]($updater) } =>
-        val description = extractSimpleDescription(rest)
-        description.copy(operations =
-          description.operations :+
-            WriterMacroOperation.UpdateFromRoot(
-              description.tpe,
-              f.name,
-              '{ Some($rename) },
-              updater.asTerm,
-              TypeRepr.of[b]
-            )
-        )
+        // ===== update partial =====
+        case '{ ($rest: WriterBuilder[T]).updatePartial[from](${ BuilderField(f) }).apply[to]($updater) } =>
+          val op: WriterMacroOperation = WriterMacroOperation.UpdatePartial(
+            tpe = TypeRepr.of[T],
+            field = f.name,
+            name = '{ None },
+            fun = updater.asTerm,
+            from = TypeRepr.of[from],
+            to = TypeRepr.of[to]
+          )
+          loop(rest, config, op +: operations)
 
-      // ===== add =====
-      case '{ ($rest: WriterBuilder[T]).add($name).apply[a]($updater) } =>
-        val description = extractSimpleDescription(rest)
-        description.copy(operations =
-          description.operations :+
-            WriterMacroOperation.Add(description.tpe, name, updater.asTerm, TypeRepr.of[a])
-        )
+        // ===== update partial with rename =====
+        case '{ ($rest: WriterBuilder[T]).updatePartial[from](${ BuilderField(f) }).withRename($rename).apply[to]($updater) } =>
+          val op: WriterMacroOperation = WriterMacroOperation.UpdatePartial(
+            tpe = TypeRepr.of[T],
+            field = f.name,
+            name = '{ Some($rename) },
+            fun = updater.asTerm,
+            from = TypeRepr.of[from],
+            to = TypeRepr.of[to]
+          )
+          loop(rest, config, op +: operations)
 
-      // ===== update partial =====
-      case '{ ($rest: WriterBuilder[T]).updatePartial[a](${BuilderField(f)}).apply($updater) } =>
-        val description = extractSimpleDescription(rest)
-        description.copy(operations =
-          description.operations :+
-            WriterMacroOperation.UpdatePartial(
-              description.tpe,
-              f.name,
-              '{ None },
-              updater.asTerm,
-              TypeRepr.of[a]
-            )
-        )
+        // ===== update partial from root =====
+        case '{ ($rest: WriterBuilder[T]).updatePartial(${ BuilderField(f) }).fromRoot[to]($updater) } =>
+          val op = WriterMacroOperation.UpdatePartialFromRoot(
+            tpe = TypeRepr.of[T],
+            field = f.name,
+            name = '{ None },
+            fun = updater.asTerm,
+            to = TypeRepr.of[to]
+          )
+          loop(rest, config, op +: operations)
 
-      // ===== update partial with rename =====
-      case '{ ($rest: WriterBuilder[T]).updatePartial[a](${BuilderField(f)}).withRename($rename).apply($updater) } =>
-        val description = extractSimpleDescription(rest)
-        description.copy(operations =
-          description.operations :+
-            WriterMacroOperation.UpdatePartial(
-              description.tpe,
-              f.name,
-              '{ Some($rename) },
-              updater.asTerm,
-              TypeRepr.of[a]
-            )
-        )
+        // ===== update partial from root with rename =====
+        case '{ ($rest: WriterBuilder[T]).updatePartial(${ BuilderField(f) }).withRename($rename).fromRoot[to]($updater) } =>
+          val op = WriterMacroOperation.UpdatePartialFromRoot(
+            tpe = TypeRepr.of[T],
+            field = f.name,
+            name = '{ Some($rename) },
+            fun = updater.asTerm,
+            to = TypeRepr.of[to]
+          )
+          loop(rest, config, op +: operations)
 
-      // ===== update partial from root =====
-      case '{ ($rest: WriterBuilder[T]).updatePartial[a](${BuilderField(f)}).fromRoot($updater) } =>
-        val description = extractSimpleDescription(rest)
-        description.copy(operations =
-          description.operations :+
-            WriterMacroOperation.UpdatePartialFromRoot(description.tpe, f.name, '{ None }, updater.asTerm)
-        )
+        // ===== add =====
+        case '{ ($rest: WriterBuilder[T]).add($field).apply[to]($updater) } =>
+          val op: WriterMacroOperation = WriterMacroOperation.Add(
+            tpe = TypeRepr.of[T],
+            field = field,
+            fun = updater.asTerm,
+            to = TypeRepr.of[to]
+          )
+          loop(rest, config, op +: operations)
 
-      // ===== update partial from root with rename =====
-      case '{ ($rest: WriterBuilder[T]).updatePartial[a](${BuilderField(f)}).withRename($rename).fromRoot($updater) } =>
-        val description = extractSimpleDescription(rest)
-        description.copy(operations =
-          description.operations :+
-            WriterMacroOperation.UpdatePartialFromRoot(
-              description.tpe,
-              f.name,
-              '{ Some($rename) },
-              updater.asTerm
-            )
-        )
+        // ===== FieldStyle =====
+        case '{ ($rest: WriterBuilder[T]).fieldStyle($style) } =>
+          val cfg: Expr[WriterDerivationConfig] = '{ (${ config }: WriterDerivationConfig).withFieldStyle($style) }
+          loop(rest, config = cfg, operations)
 
-      // ===== FieldStyle =====
-      case '{ ($rest: WriterBuilder[T]).fieldStyle($style) } =>
-        val description = extractSimpleDescription(rest)
-        description.copy(config = '{ (${ description.config }: WriterDerivationConfig).withFieldStyle($style) })
-
-      // ===== NOPE =====
-      case _ => report.errorAndAbort(s"unknown tree: ${expr.asTerm.show}")
+        // ===== NOPE =====
+        case _ => report.errorAndAbort(s"unknown tree: ${expr.asTerm.show}")
+      }
     }
+
+    val (config, operations) = loop(expr, config = emptyWriterConfig, operations = Seq())
+    MacroWriteDescription(TypeRepr.of[T], config, operations)
   }
 
   private def checkOperations(operations: Seq[WriterMacroOperation]): Unit = {
