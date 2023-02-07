@@ -13,25 +13,25 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        scala: [2.12.17, 2.13.8]
+        scala: [2.12.17, 2.13.10]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Cache jabba
-        uses: actions/cache@v2.1.7
+        uses: actions/cache@v3.2.4
         with:
           path: ~/.jabba
           key: ${{ runner.os }}-jabba-cache-${{ hashFiles('**/workflows/scala.yml') }}
 
       - name: Cache SBT ivy cache
-        uses: actions/cache@v2.1.7
+        uses: actions/cache@v3.2.4
         with:
           path: ~/.ivy2/cache
           key: ${{ runner.os }}-sbt-ivy-cache-${{ hashFiles('**/build.sbt') }}
 
       - name: Cache SBT
-        uses: actions/cache@v2.1.7
+        uses: actions/cache@v3.2.4
         with:
           path: ~/.sbt
           key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
