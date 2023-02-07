@@ -72,6 +72,10 @@ trait AllJsonWriters extends OptionWriters with EitherWriters {
     override def write(value: java.lang.Boolean, tokenWriter: TokenWriter): Unit = tokenWriter.writeBoolean(value)
   }
 
+  implicit lazy val uuidWriter: JsonWriter[java.util.UUID] = new JsonWriter[java.util.UUID] {
+    override def write(value: java.util.UUID, tokenWriter: TokenWriter): Unit = tokenWriter.writeString(value.toString)
+  }
+
   implicit lazy val nullWriter: JsonWriter[Null] = new JsonWriter[Null] {
     override def write(value: Null, tokenWriter: TokenWriter): Unit = tokenWriter.writeNull()
   }
