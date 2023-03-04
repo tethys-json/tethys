@@ -161,7 +161,7 @@ lazy val refined = project.in(modules / "refined")
   .settings(
     name := "tethys-refined",
     libraryDependencies ++= Seq(
-      "eu.timepit" %% "refined" % "0.10.1"
+      "eu.timepit" %% "refined" % "0.10.2"
     )
   )
   .dependsOn(core)
