@@ -168,9 +168,9 @@ trait WriterBuilderUtils extends Reflection {
   protected def evalWriterConfig(configExpr: Expr[WriterDerivationConfig]): (Option[FieldStyle], Option[String]) = {
     @tailrec
     def parseConfigExpr(
-        confExpr: Expr[WriterDerivationConfig],
-        fieldStyleExpr: Option[Expr[ConfigFieldStyle]],
-        discriminatorExpr: Option[Expr[String]]
+      confExpr: Expr[WriterDerivationConfig],
+      fieldStyleExpr: Option[Expr[ConfigFieldStyle]],
+      discriminatorExpr: Option[Expr[String]]
     ): (Option[Expr[ConfigFieldStyle]], Option[Expr[String]]) =
       confExpr match {
         case '{ WriterDerivationConfig.empty } =>

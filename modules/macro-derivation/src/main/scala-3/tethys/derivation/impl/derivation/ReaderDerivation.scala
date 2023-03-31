@@ -70,7 +70,7 @@ trait ReaderDerivation extends ReaderBuilderCommons {
   }
 
   def deriveCaseClassReader[T: Type](
-      description: MacroReaderDescription
+    description: MacroReaderDescription
   ): Expr[JsonReader[T]] = {
     val (fieldStyle, isStrict) = evalReaderConfig(description.config)
 
@@ -306,7 +306,7 @@ trait ReaderDerivation extends ReaderBuilderCommons {
     )
 
   private def allocateDefaultValuesForNotInitialized(
-      readerFields: List[ReaderField]
+    readerFields: List[ReaderField]
   ): Expr[List[(String, String, Any)]] = {
     val fieldInfos = readerFields.flatMap {
       case f: SimpleField         => List(f.name -> f.tpe)
@@ -337,8 +337,8 @@ trait ReaderDerivation extends ReaderBuilderCommons {
   }
 
   private def allocateReadersExpr(
-      readerFields: List[ReaderField],
-      readers: List[(TypeRepr, Term)]
+    readerFields: List[ReaderField],
+    readers: List[(TypeRepr, Term)]
   ): (Expr[Map[String, List[(String, String, JsonReader[?])]]], Expr[Set[String]]) = {
     case class FieldDef(name: String, jsonName: String, tpeFullName: String, reader: Term)
 
@@ -419,7 +419,7 @@ trait ReaderDerivation extends ReaderBuilderCommons {
   }
 
   private def applyDescriptionOperations(
-      operations: Seq[ReaderMacroOperation]
+    operations: Seq[ReaderMacroOperation]
   ): List[ReaderField] => List[ReaderField] = readerFields => {
     def mapField(fields: List[ReaderField], name: String)(f: SimpleField => ReaderField): List[ReaderField] = {
       fields.map {

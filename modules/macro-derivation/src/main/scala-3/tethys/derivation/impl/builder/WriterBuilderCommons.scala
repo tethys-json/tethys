@@ -10,7 +10,7 @@ trait WriterBuilderCommons extends WriterBuilderUtils {
   import context.reflect.*
 
   protected def convertWriterBuilder[T <: Product: Type](
-      builder: Expr[WriterBuilder[T]]
+    builder: Expr[WriterBuilder[T]]
   ): Expr[WriterDescription[T]] = {
     val withoutInlining = (builder.asTerm match {
       case Inlined(_, _, expansion) => expansion
