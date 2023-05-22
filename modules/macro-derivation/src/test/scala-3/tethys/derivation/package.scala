@@ -24,4 +24,13 @@ package object derivation {
   case class SeqMaster4(a: Seq[Int])
 
   case class CamelCaseNames(someParam: Int, IDParam: Int, simple: Int)
+
+  enum SimpleEnum {
+    case ONE, TWO
+  }
+
+  enum ParametrizedEnum(val i: Int) {
+    case ONE extends ParametrizedEnum(1)
+    case TWO extends ParametrizedEnum(2)
+  }
 }
