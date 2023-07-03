@@ -1,5 +1,6 @@
 package tethys.writers
 
+@FunctionalInterface
 trait KeyWriter[A] {
   def toKey(value: A): String
 }

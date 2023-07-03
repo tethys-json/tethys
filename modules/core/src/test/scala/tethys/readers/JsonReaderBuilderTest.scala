@@ -7,6 +7,7 @@ import tethys.commons.{Token, TokenNode}
 import tethys.commons.TokenNode._
 import tethys.readers.JsonReaderBuilderTest._
 import tethys.readers.tokens.QueueIterator
+import tethys.TokenIteratorOps
 
 class JsonReaderBuilderTest extends AnyFlatSpec with Matchers {
   behavior of "JsonReaderBuilder"
@@ -91,7 +92,8 @@ class JsonReaderBuilderTest extends AnyFlatSpec with Matchers {
         .buildStrictReader(i => B(i.getOrElse(0)))
     }
 
-    the [ReaderError] thrownBy read[B](obj("j" -> 1)) should have message "Illegal json at '[ROOT]': unexpected field 'j', expected one of 'i'"
+    val thrown = the [ReaderError] thrownBy read[B](obj("j" -> 1))
+    thrown.getMessage should equal ("Illegal json at '[ROOT]': unexpected field 'j', expected one of 'i'")
   }
 
   it should "allow to build reader with more than 22 fields" in {

@@ -133,7 +133,8 @@ object TokenNode {
     }
   }
 
-  implicit class TokenListOps(val tokens: Seq[TokenNode]) extends AnyVal {
+  implicit class TokenListOps(private val tokens: Seq[TokenNode]) extends AnyVal {
+    import tethys.TokenIteratorOps
     def tokensAs[A: JsonReader]: A = QueueIterator(tokens).readJson[A].fold(throw _, identity)
   }
 }

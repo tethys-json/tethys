@@ -15,10 +15,10 @@ object CirceBench {
   }
 
   object CirceJawnDataReader extends DataReader {
-    override def read(json: String): Seq[Data] = jawn.decode[Seq[Data]](json).right.get
+    override def read(json: String): Seq[Data] = jawn.decode[Seq[Data]](json).toOption.get
   }
 
   object CirceJacksonDataReader extends DataReader {
-    override def read(json: String): Seq[Data] = jackson.decode[Seq[Data]](json).right.get
+    override def read(json: String): Seq[Data] = jackson.decode[Seq[Data]](json).toOption.get
   }
 }
