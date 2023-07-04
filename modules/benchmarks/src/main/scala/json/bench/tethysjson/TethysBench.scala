@@ -18,6 +18,6 @@ object TethysBench {
 
     override def write(seq: Seq[Data]): String = seq.asJson
 
-    override def read(json: String): Seq[Data] = json.jsonAs[Seq[Data]].right.get
+    override def read(json: String): Seq[Data] = json.jsonAs[Seq[Data]].toOption.get
   }
 }
