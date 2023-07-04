@@ -7,9 +7,9 @@ import tethys.{JsonObjectWriter, JsonReader}
 import scala.reflect.macros.blackbox
 
 class SemiautoDerivationMacro(val c: blackbox.Context)
-  extends WriterDerivation
-  with ReaderDerivation
-  with WriterBuilderCommons {
+    extends WriterDerivation
+    with ReaderDerivation
+    with WriterBuilderCommons {
 
   import c.universe._
 
@@ -25,12 +25,18 @@ class SemiautoDerivationMacro(val c: blackbox.Context)
     }
   }
 
-  def jsonWriterWithBuilder[A: WeakTypeTag](builder: Expr[WriterBuilder[A]]): Expr[JsonObjectWriter[A]] = {
+  def jsonWriterWithBuilder[A: WeakTypeTag](
+      builder: Expr[WriterBuilder[A]]
+  ): Expr[JsonObjectWriter[A]] = {
     val description = convertWriterBuilder[A](builder)
-    describedJsonWriter[A](c.Expr[WriterDescription[A]](c.typecheck(description.tree)))
+    describedJsonWriter[A](
+      c.Expr[WriterDescription[A]](c.typecheck(description.tree))
+    )
   }
 
-  def jsonWriterWithConfig[A: WeakTypeTag](config: Expr[WriterDerivationConfig]): Expr[JsonObjectWriter[A]] = {
+  def jsonWriterWithConfig[A: WeakTypeTag](
+      config: Expr[WriterDerivationConfig]
+  ): Expr[JsonObjectWriter[A]] = {
     val tpe = weakTypeOf[A]
     val clazz = classSym(tpe)
 
@@ -43,13 +49,17 @@ class SemiautoDerivationMacro(val c: blackbox.Context)
         )
       )
     } else if (clazz.isSealed) {
-      deriveWriterForSealedClass[A](c.Expr[WriterDerivationConfig](c.untypecheck(config.tree)))
+      deriveWriterForSealedClass[A](
+        c.Expr[WriterDerivationConfig](c.untypecheck(config.tree))
+      )
     } else {
       abort(s"Can't auto derive JsonWriter[$tpe]")
     }
   }
 
-  def describedJsonWriter[A: WeakTypeTag](description: Expr[WriterDescription[A]]): Expr[JsonObjectWriter[A]] = {
+  def describedJsonWriter[A: WeakTypeTag](
+      description: Expr[WriterDescription[A]]
+  ): Expr[JsonObjectWriter[A]] = {
     val tpe = weakTypeOf[A]
     if (!isCaseClass(tpe)) {
       abort(s"Can't auto derive JsonWriter[$tpe]")
@@ -67,12 +77,18 @@ class SemiautoDerivationMacro(val c: blackbox.Context)
     }
   }
 
-  def jsonReaderWithBuilder[A: WeakTypeTag](builder: Expr[ReaderBuilder[A]]): Expr[JsonReader[A]] = {
+  def jsonReaderWithBuilder[A: WeakTypeTag](
+      builder: Expr[ReaderBuilder[A]]
+  ): Expr[JsonReader[A]] = {
     val description = convertReaderBuilder[A](builder)
-    describedJsonReader[A](c.Expr[ReaderDescription[A]](c.typecheck(description.tree)))
+    describedJsonReader[A](
+      c.Expr[ReaderDescription[A]](c.typecheck(description.tree))
+    )
   }
 
-  def describedJsonReader[A: WeakTypeTag](description: Expr[ReaderDescription[A]]): Expr[JsonReader[A]] = {
+  def describedJsonReader[A: WeakTypeTag](
+      description: Expr[ReaderDescription[A]]
+  ): Expr[JsonReader[A]] = {
     val tpe = weakTypeOf[A]
     if (isCaseClass(tpe)) {
       deriveReader[A](unliftReaderMacroDescription(description))
@@ -81,29 +97,35 @@ class SemiautoDerivationMacro(val c: blackbox.Context)
     }
   }
 
-  def jsonReaderWithConfig[A: WeakTypeTag](config: Expr[ReaderDerivationConfig]): Expr[JsonReader[A]] = {
+  def jsonReaderWithConfig[A: WeakTypeTag](
+      config: Expr[ReaderDerivationConfig]
+  ): Expr[JsonReader[A]] = {
     val tpe = weakTypeOf[A]
     if (isCaseClass(tpe)) {
-      deriveReader[A](ReaderMacroDescription(
-        config = c.Expr[ReaderDerivationConfig](c.untypecheck(config.tree)),
-        operations = Seq()
-      ))
+      deriveReader[A](
+        ReaderMacroDescription(
+          config = c.Expr[ReaderDerivationConfig](c.untypecheck(config.tree)),
+          operations = Seq()
+        )
+      )
     } else {
       fail(s"Can't auto derive JsonReader[$tpe]")
     }
   }
 
-  private def unliftWriterMacroDescription[A: WeakTypeTag](description: Expr[WriterDescription[A]]): MacroWriteDescription = {
+  private def unliftWriterMacroDescription[A: WeakTypeTag](
+      description: Expr[WriterDescription[A]]
+  ): MacroWriteDescription = {
     description.tree match {
       case Untyped(q"${description: MacroWriteDescription}") => description
     }
   }
 
-  private def unliftReaderMacroDescription[A: WeakTypeTag](description: Expr[ReaderDescription[A]]): ReaderMacroDescription = {
+  private def unliftReaderMacroDescription[A: WeakTypeTag](
+      description: Expr[ReaderDescription[A]]
+  ): ReaderMacroDescription = {
     description.tree match {
       case Untyped(q"${description: ReaderMacroDescription}") => description
     }
   }
 }
-
-

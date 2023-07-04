@@ -50,7 +50,8 @@ class WriterDescriptionTest extends AnyFlatSpec with Matchers {
         .update(_.a)(_.toString)
     }
 
-    val Seq(u: BuilderOperation.Update[BuilderTestData, Int, String]) = description.operations: @unchecked
+    val Seq(u: BuilderOperation.Update[BuilderTestData, Int, String]) =
+      description.operations: @unchecked
 
     u.field shouldBe "a"
     u.fun(1) shouldBe "1"
@@ -143,7 +144,10 @@ class WriterDescriptionTest extends AnyFlatSpec with Matchers {
   }
 
   it should "extract rename" in {
-    val WriterDescription(_, Seq(op: BuilderOperation.Update[BuilderTestData, Int, Int])) = describe {
+    val WriterDescription(
+      _,
+      Seq(op: BuilderOperation.Update[BuilderTestData, Int, Int])
+    ) = describe {
       WriterBuilder[BuilderTestData].rename(_.a)("aa")
     }: @unchecked
 
@@ -176,7 +180,13 @@ class WriterDescriptionTest extends AnyFlatSpec with Matchers {
 }
 
 object WriterDescriptionTest {
-  case class BuilderTestData(a: Int, b: String, c: Boolean, d: Long, inner: InnerCls)
+  case class BuilderTestData(
+      a: Int,
+      b: String,
+      c: Boolean,
+      d: Long,
+      inner: InnerCls
+  )
 
   case class InnerCls(a: Int)
 }
