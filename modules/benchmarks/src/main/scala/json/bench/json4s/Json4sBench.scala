@@ -5,7 +5,7 @@ import json.bench.{DataReader, DataWriter}
 import org.json4s._
 
 object Json4sBench {
-  implicit val format = DefaultFormats
+  implicit val format: DefaultFormats.type = DefaultFormats
 
   object Json4sNativeDataProcessor extends DataWriter with DataReader {
     override def write(seq: Seq[Data]): String = org.json4s.native.Serialization.write(seq)
