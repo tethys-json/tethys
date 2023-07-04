@@ -60,7 +60,7 @@ class DefaultWritersTest extends AnyFlatSpec {
         value.asTokenList(jsonWriter) shouldBe result
       }
 
-    case _ =>
+    case null =>
       fail("oops")
   }
 
