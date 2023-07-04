@@ -13,28 +13,28 @@ import tethys.readers.ReaderError
 import tethys.writers.tokens.SimpleTokenWriter._
 
 class RefinedSupportTest extends AnyFlatSpec with Matchers {
-  val posInt: PosInt = refineMV[Positive](5)
-  val nonNegInt: NonNegInt = refineMV[NonNegative](0)
-  val negInt: NegInt = refineMV[Negative](-5)
+  val posInt: PosInt = refineV[Positive].unsafeFrom(5)
+  val nonNegInt: NonNegInt = refineV[NonNegative].unsafeFrom(0)
+  val negInt: NegInt = refineV[Negative].unsafeFrom(-5)
 
-  val posLong: PosLong = refineMV[Positive](5L)
-  val nonNegLong: NonNegLong = refineMV[NonNegative](0L)
-  val negLong: NegLong = refineMV[Negative](-5L)
+  val posLong: PosLong = refineV[Positive].unsafeFrom(5L)
+  val nonNegLong: NonNegLong = refineV[NonNegative].unsafeFrom(0L)
+  val negLong: NegLong = refineV[Negative].unsafeFrom(-5L)
 
-  val posDouble: PosDouble = refineMV[Positive](5.0)
-  val nonNegDouble: NonNegDouble = refineMV[NonNegative](0.0)
-  val negDouble: NegDouble = refineMV[Negative](-5.0)
-  val nonNaNDouble: NonNaNDouble = refineMV[NonNaN](5.0)
+  val posDouble: PosDouble = refineV[Positive].unsafeFrom(5.0)
+  val nonNegDouble: NonNegDouble = refineV[NonNegative].unsafeFrom(0.0)
+  val negDouble: NegDouble = refineV[Negative].unsafeFrom(-5.0)
+  val nonNaNDouble: NonNaNDouble = refineV[NonNaN].unsafeFrom(5.0)
 
-  val posFloat: PosFloat = refineMV[Positive](5.0f)
-  val nonNegFloat: NonNegFloat = refineMV[NonNegative](0.0f)
-  val negFloat: NegFloat = refineMV[Negative](-5.0f)
-  val nonNaNFloat: NonNaNFloat = refineMV[NonNaN](5.0f)
+  val posFloat: PosFloat = refineV[Positive].unsafeFrom(5.0f)
+  val nonNegFloat: NonNegFloat = refineV[NonNegative].unsafeFrom(0.0f)
+  val negFloat: NegFloat = refineV[Negative].unsafeFrom(-5.0f)
+  val nonNaNFloat: NonNaNFloat = refineV[NonNaN].unsafeFrom(5.0f)
 
-  val ipV4: String Refined IPv4 = refineMV[IPv4]("192.168.0.1")
+  val ipV4: String Refined IPv4 = refineV[IPv4].unsafeFrom("192.168.0.1")
 
   val nel: List[String] Refined NonEmpty =
-    refineV[NonEmpty](List("a", "b")).getOrElse(throw new RuntimeException("Empty list"))
+    refineV[NonEmpty].unsafeFrom(List("a", "b"))
 
   behavior of "RefinedJsonWriter"
 
@@ -133,7 +133,7 @@ class RefinedSupportTest extends AnyFlatSpec with Matchers {
   it should "work with refined strings" in {
     type Limits = Map[String Refined IPv4, Int]
 
-    val limits: Limits = Map(refineMV[IPv4]("192.168.0.1") -> 1, refineMV[IPv4]("192.168.1.1") -> 2)
+    val limits: Limits = Map(refineV[IPv4].unsafeFrom("192.168.0.1") -> 1, refineV[IPv4].unsafeFrom("192.168.1.1") -> 2)
 
     obj("192.168.0.1" -> 1, "192.168.1.1" -> 2).tokensAs[Limits] shouldBe limits
 

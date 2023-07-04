@@ -7,6 +7,7 @@ import tethys.commons.{Token, TokenNode}
 import tethys.commons.TokenNode._
 import tethys.readers.DefaultReadersTest.TestDefinition
 import tethys.readers.tokens._
+import tethys.TokenIteratorOps
 
 import scala.reflect.ClassTag
 
@@ -59,7 +60,7 @@ class DefaultReadersTest extends AnyFlatSpec {
         iterator.currentToken() shouldBe Token.Empty
       }
 
-    case _ =>
+    case null =>
       fail("oops")
   }
 

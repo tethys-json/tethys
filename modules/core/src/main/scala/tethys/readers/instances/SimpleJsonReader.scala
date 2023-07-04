@@ -6,6 +6,7 @@ import tethys.readers.tokens.TokenIterator
 import tethys.readers.{FieldName, ReaderError}
 
 import scala.annotation.tailrec
+import scala.collection.mutable
 
 private[readers] class SimpleJsonReader[A](fields: Array[FieldDefinition[_]], mapper: Array[Any] => A, strict: Boolean) extends JsonReader[A] {
 
@@ -17,14 +18,14 @@ private[readers] class SimpleJsonReader[A](fields: Array[FieldDefinition[_]], ma
       it.nextToken()
       val extracted: Array[Any] = recRead(it, defaults.clone())
 
-      val notExtracted = collectNotExtracted(0, hasErrors = false, extracted, new StringBuilder())
+      val notExtracted = collectNotExtracted(0, hasErrors = false, extracted, new mutable.StringBuilder())
       if(notExtracted.nonEmpty) ReaderError.wrongJson(s"Can not extract fields $notExtracted")
       else mapper(extracted)
     }
   }
 
   @tailrec
-  private def collectNotExtracted(i: Int, hasErrors: Boolean, extracted: Array[Any], builder: StringBuilder): String = {
+  private def collectNotExtracted(i: Int, hasErrors: Boolean, extracted: Array[Any], builder: mutable.StringBuilder): String = {
     if(i >= extracted.length) {
       if(hasErrors) builder.append('\'').result()
       else ""

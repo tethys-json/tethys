@@ -87,5 +87,4 @@ private[tethys] trait LowPriorityIterableReaders extends LowPriorityJsonReaders 
       }
     }
   }
-
 }

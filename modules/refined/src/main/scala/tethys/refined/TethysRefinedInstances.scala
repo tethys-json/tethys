@@ -10,7 +10,7 @@ trait TethysRefinedInstances {
     JsonWriter[T].contramap(RefType[F].unwrap)
 
   implicit final def RefinedJsonReader[T: JsonReader, P, F[_, _]: RefType](
-      implicit validate: Validate[T, P]
+    implicit validate: Validate[T, P]
   ): JsonReader[F[T, P]] =
     new JsonReader[F[T, P]] {
       override def read(it: TokenIterator)(implicit fieldName: FieldName): F[T, P] =
@@ -18,8 +18,8 @@ trait TethysRefinedInstances {
     }
 
   implicit final def RefinedKeyReader[T, P, F[_, _]: RefType](
-      implicit reader: KeyReader[T],
-      validate: Validate[T, P]
+    implicit reader: KeyReader[T],
+    validate: Validate[T, P]
   ): KeyReader[F[T, P]] = new KeyReader[F[T, P]] {
     override def read(s: String)(implicit fieldName: FieldName): F[T, P] =
       fromEither(RefType[F].refine(reader.read(s)))

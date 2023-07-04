@@ -11,7 +11,7 @@ class JacksonTokenIteratorTest extends AnyFlatSpec with Matchers {
 
   it should "properly iterate over json string" in {
     val json = """{"a":1,"b":["s",true,{"a":null},1.0,false]}"""
-    val Right(it) = json.toTokenIterator
+    val it = json.toTokenIterator.fold(throw _, identity)
     it.currentToken().isObjectStart shouldBe true
 
     it.nextToken().isFieldName shouldBe true
@@ -49,7 +49,7 @@ class JacksonTokenIteratorTest extends AnyFlatSpec with Matchers {
 
   it should "correctly skip next expressions" in {
     val json = """{"a":1,"b":["s",true,{"a":null},1.0,false]}"""
-    val Right(it) = json.toTokenIterator
+    val it = json.toTokenIterator.fold(throw _, identity)
     it.currentToken().isObjectStart shouldBe true
 
     it.nextToken().isFieldName shouldBe true
@@ -66,7 +66,7 @@ class JacksonTokenIteratorTest extends AnyFlatSpec with Matchers {
 
   it should "correctly collect expressions" in {
     val json = """{"a":1,"b":["s",true,{"a":null},1.0,false]}"""
-    val Right(it) = json.toTokenIterator
+    val it = json.toTokenIterator.fold(throw _, identity)
     it.currentToken().isObjectStart shouldBe true
 
     it.nextToken().isFieldName shouldBe true
