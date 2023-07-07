@@ -4,17 +4,18 @@ import java.util.regex.Pattern
 
 import scala.annotation.StaticAnnotation
 
-trait FieldStyle  { self =>
+trait FieldStyle { self =>
   def applyStyle(field: String): String
 
-  def andThen(that: FieldStyle): FieldStyle = field => that.applyStyle(self.applyStyle(field))
+  def andThen(that: FieldStyle): FieldStyle = field =>
+    that.applyStyle(self.applyStyle(field))
 
-  def andThen(that: String => String): FieldStyle = field => that.apply(self.applyStyle(field))
+  def andThen(that: String => String): FieldStyle = field =>
+    that.apply(self.applyStyle(field))
 
   def >>(that: FieldStyle): FieldStyle = andThen(that)
   def >>(that: String => String): FieldStyle = andThen(that)
 }
-
 
 object FieldStyle {
 
@@ -22,7 +23,8 @@ object FieldStyle {
 
   class Ref(fieldStyle: FieldStyle) extends StaticAnnotation
   trait StyleReference extends FieldStyle {
-    final override def applyStyle(field: String): String = throw new RuntimeException("StyleReference should not be used at runtime")
+    final override def applyStyle(field: String): String =
+      throw new RuntimeException("StyleReference should not be used at runtime")
   }
 
   // Names transformations adopted from scala enumeratum

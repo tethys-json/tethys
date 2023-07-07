@@ -23,7 +23,7 @@ class CirceSupportTest extends AnyFlatSpec with Matchers {
   }
 
   it should "parse Double" in {
-    token(100.0D).tokensAs[Json] shouldBe Json.fromDoubleOrNull(100.0D)
+    token(100.0d).tokensAs[Json] shouldBe Json.fromDoubleOrNull(100.0d)
   }
 
   it should "parse BigInt" in {
@@ -31,7 +31,9 @@ class CirceSupportTest extends AnyFlatSpec with Matchers {
   }
 
   it should "parse BigDecimal" in {
-    token(BigDecimal(100.0D)).tokensAs[Json] shouldBe Json.fromBigDecimal(100.0D)
+    token(BigDecimal(100.0d)).tokensAs[Json] shouldBe Json.fromBigDecimal(
+      100.0d
+    )
   }
 
   it should "parse String" in {
@@ -52,7 +54,9 @@ class CirceSupportTest extends AnyFlatSpec with Matchers {
 
   it should "parse Array" in {
     arr(1, 2L, 3).tokensAs[Json] shouldBe
-      Json.fromValues(List(Json.fromLong(1L), Json.fromLong(2L), Json.fromLong(3L)))
+      Json.fromValues(
+        List(Json.fromLong(1L), Json.fromLong(2L), Json.fromLong(3L))
+      )
   }
 
   it should "parse JsonObject" in {
@@ -72,12 +76,14 @@ class CirceSupportTest extends AnyFlatSpec with Matchers {
   }
 
   it should "parse Array of JsonObject" in {
-    arr(obj("a" -> "b"), obj("c" -> "d")).tokensAs[Json] shouldBe Json.fromValues(List(
-      Json.fromJsonObject(JsonObject("a" -> Json.fromString("b"))),
-      Json.fromJsonObject(JsonObject("c" -> Json.fromString("d")))
-    ))
+    arr(obj("a" -> "b"), obj("c" -> "d"))
+      .tokensAs[Json] shouldBe Json.fromValues(
+      List(
+        Json.fromJsonObject(JsonObject("a" -> Json.fromString("b"))),
+        Json.fromJsonObject(JsonObject("c" -> Json.fromString("d")))
+      )
+    )
   }
-
 
   behavior of "Circe ast JsonWriter"
 
@@ -94,19 +100,21 @@ class CirceSupportTest extends AnyFlatSpec with Matchers {
   }
 
   it should "write Double" in {
-    Json.fromDouble(100.0D).asTokenList shouldBe token(100.0D)
+    Json.fromDouble(100.0d).asTokenList shouldBe token(100.0d)
   }
 
   it should "write BigInt" in {
     Json.fromBigInt(BigInt("10000000000")).asTokenList match {
       case DoubleValueNode(d) :: Nil => d shouldBe 1.0e10 // 2.11 only behavior
-      case LongValueNode(l) :: Nil => l shouldBe 10000000000L
-      case _ => fail()
+      case LongValueNode(l) :: Nil   => l shouldBe 10000000000L
+      case _                         => fail()
     }
   }
 
   it should "write BigDecimal" in {
-    Json.fromBigDecimal(BigDecimal(100.0D)).asTokenList shouldBe token(BigDecimal(100.0D))
+    Json.fromBigDecimal(BigDecimal(100.0d)).asTokenList shouldBe token(
+      BigDecimal(100.0d)
+    )
   }
 
   it should "write String" in {
@@ -126,11 +134,15 @@ class CirceSupportTest extends AnyFlatSpec with Matchers {
   }
 
   it should "write Array" in {
-    Json.fromValues(List(
-      Json.fromInt(1),
-      Json.fromInt(2),
-      Json.fromInt(3)
-    )).asTokenList shouldBe arr(1L, 2L, 3L)
+    Json
+      .fromValues(
+        List(
+          Json.fromInt(1),
+          Json.fromInt(2),
+          Json.fromInt(3)
+        )
+      )
+      .asTokenList shouldBe arr(1L, 2L, 3L)
   }
 
   it should "write JsonObject" in {

@@ -13,7 +13,8 @@ class AutoDerivationMacro(val quotes: Quotes)
   import context.reflect.*
 
   // TODO: recursive A => B => A derivation check
-  def simpleJsonWriter[T: Type]: Expr[LowPriorityInstance[JsonObjectWriter[T]]] = {
+  def simpleJsonWriter[T: Type]
+      : Expr[LowPriorityInstance[JsonObjectWriter[T]]] = {
     val tpe: TypeRepr = TypeRepr.of[T]
     val tpeSym: Symbol = tpe.typeSymbol
     val description: MacroWriteDescription = MacroWriteDescription.empty[T]
@@ -23,7 +24,9 @@ class AutoDerivationMacro(val quotes: Quotes)
           deriveCaseClassWriter[T](description)
         else if (
           tpeSym.flags.is(Flags.Enum) ||
-            (tpeSym.flags.is(Flags.Sealed) && (tpeSym.flags.is(Flags.Trait) || tpeSym.flags.is(Flags.Abstract)))
+          (tpeSym.flags.is(Flags.Sealed) && (tpeSym.flags.is(
+            Flags.Trait
+          ) || tpeSym.flags.is(Flags.Abstract)))
         )
           deriveSealedClassWriter[T](description.config)
         else
