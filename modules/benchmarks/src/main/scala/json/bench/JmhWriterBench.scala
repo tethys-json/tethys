@@ -12,13 +12,15 @@ import org.openjdk.jmh.annotations._
 @Fork(value = 1, jvmArgsAppend = Array("-Xms1G", "-Xmx1G"))
 @State(Scope.Benchmark)
 class JmhWriterBench {
-  @Param(Array(
-    "128b",
-    "1kb",
-    "128kb",
-    "1mb",
-    "32mb"
-  ))
+  @Param(
+    Array(
+      "128b",
+      "1kb",
+      "128kb",
+      "1mb",
+      "32mb"
+    )
+  )
   var jsonSize: String = _
 
   val seed = 10000
@@ -27,25 +29,27 @@ class JmhWriterBench {
   @Setup(Level.Trial)
   def setup(): Unit = {
     data = jsonSize match {
-      case "128b" => Data.dataSamples(1, seed)
-      case "1kb" => Data.dataSamples(8, seed)
+      case "128b"  => Data.dataSamples(1, seed)
+      case "1kb"   => Data.dataSamples(8, seed)
       case "128kb" => Data.dataSamples(128 * 8, seed)
-      case "1mb" => Data.dataSamples(8 * 128 * 8, seed)
-      case "32mb" => Data.dataSamples(32 * 8 * 128 * 8, seed)
+      case "1mb"   => Data.dataSamples(8 * 128 * 8, seed)
+      case "32mb"  => Data.dataSamples(32 * 8 * 128 * 8, seed)
     }
   }
 
-  @Param(Array(
-    "tethys-jackson",
-    "pure-jackson",
-    "circe",
-    "java.lang.StringBuilder",
-    "scala.StringBuilder",
-    "json4s-jackson",
-    "json4s-native",
-    "play-json",
-    "spray-json"
-  ))
+  @Param(
+    Array(
+      "tethys-jackson",
+      "pure-jackson",
+      "circe",
+      "java.lang.StringBuilder",
+      "scala.StringBuilder",
+      "json4s-jackson",
+      "json4s-native",
+      "play-json",
+      "spray-json"
+    )
+  )
   var processorName: String = _
 
   @Benchmark
