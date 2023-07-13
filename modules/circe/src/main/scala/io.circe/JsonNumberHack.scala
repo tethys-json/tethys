@@ -4,7 +4,7 @@ import tethys.writers.tokens.TokenWriter
 
 trait JsonNumberHack {
   protected def writeNumber(number: JsonNumber, writer: TokenWriter): Unit = {
-    if(JsonNumberHack.isHackCompatible) {
+    if (JsonNumberHack.isHackCompatible) {
       number match {
         case value: JsonDecimal =>
           writer.writeRawJson(value.toString)
@@ -27,17 +27,18 @@ trait JsonNumberHack {
 }
 
 object JsonNumberHack {
-  private val isHackCompatible: Boolean = try {
-    val loader = getClass.getClassLoader
-    loader.loadClass("io.circe.BiggerDecimalJsonNumber")
-    loader.loadClass("io.circe.JsonDecimal")
-    loader.loadClass("io.circe.JsonBiggerDecimal")
-    loader.loadClass("io.circe.JsonBigDecimal")
-    loader.loadClass("io.circe.JsonLong")
-    loader.loadClass("io.circe.JsonDouble")
-    loader.loadClass("io.circe.JsonFloat")
-    true
-  } catch {
-    case _: ClassNotFoundException => false
-  }
+  private val isHackCompatible: Boolean =
+    try {
+      val loader = getClass.getClassLoader
+      loader.loadClass("io.circe.BiggerDecimalJsonNumber")
+      loader.loadClass("io.circe.JsonDecimal")
+      loader.loadClass("io.circe.JsonBiggerDecimal")
+      loader.loadClass("io.circe.JsonBigDecimal")
+      loader.loadClass("io.circe.JsonLong")
+      loader.loadClass("io.circe.JsonDouble")
+      loader.loadClass("io.circe.JsonFloat")
+      true
+    } catch {
+      case _: ClassNotFoundException => false
+    }
 }

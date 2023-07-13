@@ -29,13 +29,16 @@ class RedundantJsonReaderTest extends AnyFlatSpec with Matchers {
     implicit val reader: JsonReader[BaseClass] = jsonReader[BaseClass] {
       describe {
         ReaderBuilder[BaseClass]
-          .extract(_.r).from("intField".as[Int])(RedundantClass.apply)
+          .extract(_.r)
+          .from("intField".as[Int])(RedundantClass.apply)
       }
     }
 
-    read[BaseClass](obj(
-      "intField" -> 1
-    )) shouldBe BaseClass(RedundantClass(1))
+    read[BaseClass](
+      obj(
+        "intField" -> 1
+      )
+    ) shouldBe BaseClass(RedundantClass(1))
   }
 
 }
