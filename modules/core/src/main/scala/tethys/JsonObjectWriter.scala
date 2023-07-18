@@ -16,25 +16,31 @@ trait JsonObjectWriter[A] extends JsonWriter[A] {
 
   def ++(that: JsonObjectWriter[A]): JsonObjectWriter[A] = concat(that)
 
-  def concat(that: JsonObjectWriter[A]): JsonObjectWriter[A] = new JsonObjectWriter[A] {
-    override def writeValues(value: A, tokenWriter: TokenWriter): Unit = {
-      self.writeValues(value, tokenWriter)
-      that.writeValues(value, tokenWriter)
+  def concat(that: JsonObjectWriter[A]): JsonObjectWriter[A] =
+    new JsonObjectWriter[A] {
+      override def writeValues(value: A, tokenWriter: TokenWriter): Unit = {
+        self.writeValues(value, tokenWriter)
+        that.writeValues(value, tokenWriter)
+      }
     }
-  }
 
-  override def contramap[B](fun: B => A): JsonObjectWriter[B] = new JsonObjectWriter[B] {
-    override def writeValues(value: B, tokenWriter: TokenWriter): Unit =
-      self.writeValues(fun(value), tokenWriter)
-  }
+  override def contramap[B](fun: B => A): JsonObjectWriter[B] =
+    new JsonObjectWriter[B] {
+      override def writeValues(value: B, tokenWriter: TokenWriter): Unit =
+        self.writeValues(fun(value), tokenWriter)
+    }
 }
 
 object JsonObjectWriter extends LowPriorityJsonObjectWriters {
-  def apply[A](implicit jsonObjectWriter: JsonObjectWriter[A]): JsonObjectWriter[A] = jsonObjectWriter
+  def apply[A](implicit
+      jsonObjectWriter: JsonObjectWriter[A]
+  ): JsonObjectWriter[A] = jsonObjectWriter
 }
 
 private[tethys] trait LowPriorityJsonObjectWriters {
-  implicit final def lowPriorityWriter[A](implicit lowPriorityInstance: LowPriorityInstance[JsonObjectWriter[A]]): JsonObjectWriter[A] = {
+  implicit final def lowPriorityWriter[A](implicit
+      lowPriorityInstance: LowPriorityInstance[JsonObjectWriter[A]]
+  ): JsonObjectWriter[A] = {
     lowPriorityInstance.instance
   }
 }
