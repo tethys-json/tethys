@@ -3,7 +3,7 @@ package tethys.derivation
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 import tethys.JsonReader
-import tethys.commons.TokenNode.*
+import tethys.commons.TokenNode.{value => token, *}
 import tethys.commons.{Token, TokenNode}
 import tethys.derivation.builder.{FieldStyle, ReaderBuilder, ReaderDerivationConfig}
 import tethys.derivation.semiauto.*
@@ -322,5 +322,34 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
         "simple" -> 3
       ))
     }).getMessage shouldBe "Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'simple', 'id_param', 'some_param'"
+  }
+
+
+  it should "derive reader for simple enum" in {
+    implicit val oneReader: JsonReader[SimpleEnum.ONE.type] = jsonReader[SimpleEnum.ONE.type]
+    implicit val twoReader: JsonReader[SimpleEnum.TWO.type] = jsonReader[SimpleEnum.TWO.type]
+    implicit val simpleEnumReader: JsonReader[SimpleEnum] = jsonReader[SimpleEnum]
+
+    read[SimpleEnum](
+      token(SimpleEnum.ONE.toString)
+    )shouldBe SimpleEnum.ONE
+
+    read[SimpleEnum](
+      token(SimpleEnum.TWO.toString)
+    ) shouldBe SimpleEnum.TWO
+  }
+
+  it should "derive reader for parametrized enum" in {
+    implicit val oneReader: JsonReader[ParametrizedEnum.ONE.type] = jsonReader[ParametrizedEnum.ONE.type]
+    implicit val twoReader: JsonReader[ParametrizedEnum.TWO.type] = jsonReader[ParametrizedEnum.TWO.type]
+    implicit val parametrizedEnumReader: JsonReader[ParametrizedEnum] = jsonReader[ParametrizedEnum]
+
+    read[ParametrizedEnum](
+      token(ParametrizedEnum.ONE.toString)
+    ) shouldBe ParametrizedEnum.ONE
+
+    read[ParametrizedEnum](
+      token(ParametrizedEnum.TWO.toString)
+    ) shouldBe ParametrizedEnum.TWO
   }
 }

@@ -3,7 +3,7 @@ package tethys.derivation
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 import tethys.commons.TokenNode
-import tethys.commons.TokenNode.*
+import tethys.commons.TokenNode.{value => token,*}
 import tethys.derivation.ADTWithType.*
 import tethys.derivation.auto.*
 import tethys.derivation.semiauto.*
@@ -112,5 +112,15 @@ class AutoWriterDerivationTest extends AnyFlatSpec with Matchers {
     write(new SimpleClass(2)) shouldBe obj("b" -> 2)
     write(JustObject) shouldBe obj("type" -> "JustObject")
     write(SubChild(3)) shouldBe obj("c" -> 3)
+  }
+
+  it should "derive writer for simple enum" in {
+    SimpleEnum.ONE.asTokenList shouldBe token("ONE")
+    SimpleEnum.TWO.asTokenList shouldBe token("TWO")
+  }
+
+  it should "derive writer for parametrized enum" in {
+    ParametrizedEnum.ONE.asTokenList shouldBe token("ONE")
+    ParametrizedEnum.TWO.asTokenList shouldBe token("TWO")
   }
 }

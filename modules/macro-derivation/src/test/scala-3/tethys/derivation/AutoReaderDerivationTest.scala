@@ -4,7 +4,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 import tethys.JsonReader
 import tethys.commons.{Token, TokenNode}
-import tethys.commons.TokenNode.*
+import tethys.commons.TokenNode.{value => token, *}
 import tethys.derivation.auto.*
 import tethys.readers.ReaderError
 import tethys.readers.tokens.QueueIterator
@@ -65,5 +65,25 @@ class AutoReaderDerivationTest extends AnyFlatSpec with Matchers {
         )
       )
     )) shouldBe ComplexRecursionA(1, Some(ComplexRecursionB(2, ComplexRecursionA(3, None))))
+  }
+
+  it should "derive reader for simple enum" in {
+    read[SimpleEnum](
+      token(SimpleEnum.ONE.toString)
+    ) shouldBe SimpleEnum.ONE
+
+    read[SimpleEnum](
+      token(SimpleEnum.TWO.toString)
+    ) shouldBe SimpleEnum.TWO
+  }
+
+  it should "derive reader for parametrized enum" in {
+    read[ParametrizedEnum](
+      token(ParametrizedEnum.ONE.toString)
+    ) shouldBe ParametrizedEnum.ONE
+
+    read[ParametrizedEnum](
+      token(ParametrizedEnum.TWO.toString)
+    ) shouldBe ParametrizedEnum.TWO
   }
 }

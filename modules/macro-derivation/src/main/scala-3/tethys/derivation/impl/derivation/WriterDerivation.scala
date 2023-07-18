@@ -3,12 +3,12 @@ package tethys.derivation.impl.derivation
 import scala.annotation.tailrec
 import scala.compiletime.*
 import scala.quoted.*
-
 import tethys.commons.LowPriorityInstance
+import tethys.commons.TokenNode.FieldNameNode
 import tethys.derivation.builder.WriterDerivationConfig
 import tethys.derivation.impl.builder.{WriterBuilderCommons, WriterBuilderUtils}
 import tethys.derivation.impl.FieldStyle
-import tethys.writers.tokens.TokenWriter
+import tethys.writers.tokens.{SimpleTokenWriter, TokenWriter}
 import tethys.{JsonObjectWriter, JsonWriter}
 
 trait WriterDerivation extends WriterBuilderCommons {
@@ -436,16 +436,16 @@ trait WriterDerivation extends WriterBuilderCommons {
                   .getWrite3Method
                   .appliedTo(Expr(discriminator).asTerm, termChildNameTerm, tokenWriterTerm)
               }
+              val writeObjectStartTerm = tokenWriterTerm.selectFirstMethod("writeObjectStart").appliedToNone
+              val writeObjectEndTerm = tokenWriterTerm.selectFirstMethod("writeObjectEnd").appliedToNone
               val terms: List[Term] =
-                if (termChildWriter.underlying.symbol.flags.is(Flags.Macro))
-                  List(
-                    termChildWriter.selectWriteValuesMethod.appliedTo(termChildRef, tokenWriterTerm),
-                    discriminatorTerm
-                  )
-                else {
-                  val writeObjectStartTerm = tokenWriterTerm.selectFirstMethod("writeObjectStart").appliedToNone
+                if (termChildSym.flags.is(Flags.Enum)) {
+                  if (discriminator.isEmpty)
+                    List(termChildWriter.selectWriteValuesMethod.appliedTo(termChildRef, tokenWriterTerm))
+                  else
+                    List(writeObjectStartTerm, discriminatorTerm, writeObjectEndTerm)
+                } else {
                   val writeValuesTerm = termChildWriter.selectWriteValuesMethod.appliedTo(termChildRef, tokenWriterTerm)
-                  val writeObjectEndTerm = tokenWriterTerm.selectFirstMethod("writeObjectEnd").appliedToNone
                   List(writeObjectStartTerm, writeValuesTerm, discriminatorTerm, writeObjectEndTerm)
                 }
               val rhs = Block(terms, '{ () }.asTerm)
