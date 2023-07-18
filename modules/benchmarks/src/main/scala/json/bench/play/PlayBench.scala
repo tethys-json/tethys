@@ -10,8 +10,7 @@ object PlayBench {
   implicit val dataReads: Reads[Data] = Json.reads[Data]
 
   object PlayDataProcessor extends DataWriter with DataReader {
-    override def write(seq: Seq[Data]): String =
-      Json.stringify(Json.toJson(seq))
+    override def write(seq: Seq[Data]): String = Json.stringify(Json.toJson(seq))
 
     override def read(json: String): Seq[Data] = Json.parse(json).as[Seq[Data]]
   }

@@ -4,11 +4,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 import tethys.JsonReader
 import tethys.derivation.builder.ReaderDescription.BuilderOperation
-import tethys.derivation.builder.{
-  FieldStyle,
-  ReaderDerivationConfig,
-  ReaderDescription
-}
+import tethys.derivation.builder.{FieldStyle, ReaderDerivationConfig, ReaderDescription}
 import tethys.derivation.builder.ReaderDescriptionTest.Foo
 import tethys.derivation.semiauto.*
 
@@ -17,16 +13,11 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
   behavior of "describe"
 
   it should "build empty description from empty builder" in {
-    describe(ReaderBuilder[Foo]) shouldBe ReaderDescription[Foo](
-      ReaderDerivationConfig.empty,
-      Seq()
-    )
+    describe(ReaderBuilder[Foo]) shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq())
   }
 
   it should "build description with config" in {
-    describe(
-      ReaderBuilder[Foo].fieldStyle(FieldStyle.UpperCase).strict
-    ) shouldBe ReaderDescription[Foo](
+    describe(ReaderBuilder[Foo].fieldStyle(FieldStyle.UpperCase).strict) shouldBe ReaderDescription[Foo](
       ReaderDerivationConfig.withFieldStyle(FieldStyle.UpperCase).strict,
       Seq()
     )
@@ -37,16 +28,12 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
 
     val description = describe {
       ReaderBuilder[Foo]
-        .extract(_.a)
-        .as[Option[Int]](fun)
+        .extract(_.a).as[Option[Int]](fun)
     }
 
-    description shouldBe ReaderDescription[Foo](
-      ReaderDerivationConfig.empty,
-      Seq(
-        BuilderOperation.ExtractFieldAs("a", fun)
-      )
-    )
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
+      BuilderOperation.ExtractFieldAs("a", fun)
+    ))
   }
 
   it should "build description for ExtractFieldValue operation from lambdas" in {
@@ -54,23 +41,19 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
 
     val description = describe {
       ReaderBuilder[Foo]
-        .extract(_.a)
-        .from(_.b, _.c)(fun)
+        .extract(_.a).from(_.b, _.c)(fun)
     }
 
-    description shouldBe ReaderDescription[Foo](
-      ReaderDerivationConfig.empty,
-      Seq(
-        ReaderDescription.BuilderOperation.ExtractFieldValue(
-          field = "a",
-          from = Seq(
-            ReaderDescription.Field.ClassField[String]("b"),
-            ReaderDescription.Field.ClassField[Any]("c")
-          ),
-          fun = fun
-        )
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
+      ReaderDescription.BuilderOperation.ExtractFieldValue(
+        field = "a",
+        from = Seq(
+          ReaderDescription.Field.ClassField[String]("b"),
+          ReaderDescription.Field.ClassField[Any]("c")
+        ),
+        fun = fun
       )
-    )
+    ))
   }
 
   it should "build description for ExtractFieldValue operation from ReaderField's" in {
@@ -78,23 +61,19 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
 
     val description = describe {
       ReaderBuilder[Foo]
-        .extract(_.a)
-        .from(Symbol("b").as[String], "c".as[Any])(fun)
+        .extract(_.a).from(Symbol("b").as[String], "c".as[Any])(fun)
     }
 
-    description shouldBe ReaderDescription[Foo](
-      ReaderDerivationConfig.empty,
-      Seq(
-        ReaderDescription.BuilderOperation.ExtractFieldValue(
-          field = "a",
-          from = Seq(
-            ReaderDescription.Field.RawField[String]("b"),
-            ReaderDescription.Field.RawField[Any]("c")
-          ),
-          fun = fun
-        )
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
+      ReaderDescription.BuilderOperation.ExtractFieldValue(
+        field = "a",
+        from = Seq(
+          ReaderDescription.Field.RawField[String]("b"),
+          ReaderDescription.Field.RawField[Any]("c")
+        ),
+        fun = fun
       )
-    )
+    ))
   }
 
   it should "build description for ExtractFieldValue operation from lambdas and lambdas" in {
@@ -102,24 +81,19 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
 
     val description = describe {
       ReaderBuilder[Foo]
-        .extract(_.a)
-        .from(_.b)
-        .and(_.c)(fun)
+        .extract(_.a).from(_.b).and(_.c)(fun)
     }
 
-    description shouldBe ReaderDescription[Foo](
-      ReaderDerivationConfig.empty,
-      Seq(
-        ReaderDescription.BuilderOperation.ExtractFieldValue(
-          field = "a",
-          from = Seq(
-            ReaderDescription.Field.ClassField[String]("b"),
-            ReaderDescription.Field.ClassField[Any]("c")
-          ),
-          fun = fun
-        )
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
+      ReaderDescription.BuilderOperation.ExtractFieldValue(
+        field = "a",
+        from = Seq(
+          ReaderDescription.Field.ClassField[String]("b"),
+          ReaderDescription.Field.ClassField[Any]("c")
+        ),
+        fun = fun
       )
-    )
+    ))
   }
 
   it should "build description for ExtractFieldValue operation from lambdas and ReaderField's" in {
@@ -127,24 +101,19 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
 
     val description = describe {
       ReaderBuilder[Foo]
-        .extract(_.a)
-        .from(_.b)
-        .and(Symbol("c").as[Any])(fun)
+        .extract(_.a).from(_.b).and(Symbol("c").as[Any])(fun)
     }
 
-    description shouldBe ReaderDescription[Foo](
-      ReaderDerivationConfig.empty,
-      Seq(
-        ReaderDescription.BuilderOperation.ExtractFieldValue(
-          field = "a",
-          from = Seq(
-            ReaderDescription.Field.ClassField[String]("b"),
-            ReaderDescription.Field.RawField[Any]("c")
-          ),
-          fun = fun
-        )
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
+      ReaderDescription.BuilderOperation.ExtractFieldValue(
+        field = "a",
+        from = Seq(
+          ReaderDescription.Field.ClassField[String]("b"),
+          ReaderDescription.Field.RawField[Any]("c")
+        ),
+        fun = fun
       )
-    )
+    ))
   }
 
   it should "build description for ExtractFieldValue operation from ReaderField's and lambdas" in {
@@ -152,24 +121,19 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
 
     val description = describe {
       ReaderBuilder[Foo]
-        .extract(_.a)
-        .from(Symbol("b").as[String])
-        .and(_.c)(fun)
+        .extract(_.a).from(Symbol("b").as[String]).and(_.c)(fun)
     }
 
-    description shouldBe ReaderDescription[Foo](
-      ReaderDerivationConfig.empty,
-      Seq(
-        ReaderDescription.BuilderOperation.ExtractFieldValue(
-          field = "a",
-          from = Seq(
-            ReaderDescription.Field.RawField[String]("b"),
-            ReaderDescription.Field.ClassField[Any]("c")
-          ),
-          fun = fun
-        )
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
+      ReaderDescription.BuilderOperation.ExtractFieldValue(
+        field = "a",
+        from = Seq(
+          ReaderDescription.Field.RawField[String]("b"),
+          ReaderDescription.Field.ClassField[Any]("c")
+        ),
+        fun = fun
       )
-    )
+    ))
   }
 
   it should "build description for ExtractFieldValue operation from ReaderField's and ReaderField's" in {
@@ -177,24 +141,19 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
 
     val description = describe {
       ReaderBuilder[Foo]
-        .extract(_.a)
-        .from(Symbol("b").as[String])
-        .and(Symbol("c").as[Any])(fun)
+        .extract(_.a).from(Symbol("b").as[String]).and(Symbol("c").as[Any])(fun)
     }
 
-    description shouldBe ReaderDescription[Foo](
-      ReaderDerivationConfig.empty,
-      Seq(
-        ReaderDescription.BuilderOperation.ExtractFieldValue(
-          field = "a",
-          from = Seq(
-            ReaderDescription.Field.RawField[String]("b"),
-            ReaderDescription.Field.RawField[Any]("c")
-          ),
-          fun = fun
-        )
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
+      ReaderDescription.BuilderOperation.ExtractFieldValue(
+        field = "a",
+        from = Seq(
+          ReaderDescription.Field.RawField[String]("b"),
+          ReaderDescription.Field.RawField[Any]("c")
+        ),
+        fun = fun
       )
-    )
+    ))
   }
 
   it should "build description for ExtractFieldReader operation from lambdas" in {
@@ -202,23 +161,19 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
 
     val description = describe {
       ReaderBuilder[Foo]
-        .extractReader(_.a)
-        .from(_.b, _.c)(fun)
+        .extractReader(_.a).from(_.b, _.c)(fun)
     }
 
-    description shouldBe ReaderDescription[Foo](
-      ReaderDerivationConfig.empty,
-      Seq(
-        ReaderDescription.BuilderOperation.ExtractFieldReader(
-          field = "a",
-          from = Seq(
-            ReaderDescription.Field.ClassField[String]("b"),
-            ReaderDescription.Field.ClassField[Any]("c")
-          ),
-          fun = fun
-        )
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
+      ReaderDescription.BuilderOperation.ExtractFieldReader(
+        field = "a",
+        from = Seq(
+          ReaderDescription.Field.ClassField[String]("b"),
+          ReaderDescription.Field.ClassField[Any]("c")
+        ),
+        fun = fun
       )
-    )
+    ))
   }
 
   it should "build description for ExtractFieldReader operation from ReaderField's" in {
@@ -226,23 +181,19 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
 
     val description = describe {
       ReaderBuilder[Foo]
-        .extractReader(_.a)
-        .from(Symbol("b").as[String], "c".as[Any])(fun)
+        .extractReader(_.a).from(Symbol("b").as[String], "c".as[Any])(fun)
     }
 
-    description shouldBe ReaderDescription[Foo](
-      ReaderDerivationConfig.empty,
-      Seq(
-        ReaderDescription.BuilderOperation.ExtractFieldReader(
-          field = "a",
-          from = Seq(
-            ReaderDescription.Field.RawField[String]("b"),
-            ReaderDescription.Field.RawField[Any]("c")
-          ),
-          fun = fun
-        )
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
+      ReaderDescription.BuilderOperation.ExtractFieldReader(
+        field = "a",
+        from = Seq(
+          ReaderDescription.Field.RawField[String]("b"),
+          ReaderDescription.Field.RawField[Any]("c")
+        ),
+        fun = fun
       )
-    )
+    ))
   }
 
   it should "build description for ExtractFieldReader operation from lambdas and lambdas" in {
@@ -250,24 +201,19 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
 
     val description = describe {
       ReaderBuilder[Foo]
-        .extractReader(_.a)
-        .from(_.b)
-        .and(_.c)(fun)
+        .extractReader(_.a).from(_.b).and(_.c)(fun)
     }
 
-    description shouldBe ReaderDescription[Foo](
-      ReaderDerivationConfig.empty,
-      Seq(
-        ReaderDescription.BuilderOperation.ExtractFieldReader(
-          field = "a",
-          from = Seq(
-            ReaderDescription.Field.ClassField[String]("b"),
-            ReaderDescription.Field.ClassField[Any]("c")
-          ),
-          fun = fun
-        )
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
+      ReaderDescription.BuilderOperation.ExtractFieldReader(
+        field = "a",
+        from = Seq(
+          ReaderDescription.Field.ClassField[String]("b"),
+          ReaderDescription.Field.ClassField[Any]("c")
+        ),
+        fun = fun
       )
-    )
+    ))
   }
 
   it should "build description for ExtractFieldReader operation from lambdas and ReaderField's" in {
@@ -275,24 +221,19 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
 
     val description = describe {
       ReaderBuilder[Foo]
-        .extractReader(_.a)
-        .from(_.b)
-        .and(Symbol("c").as[Any])(fun)
+        .extractReader(_.a).from(_.b).and(Symbol("c").as[Any])(fun)
     }
 
-    description shouldBe ReaderDescription[Foo](
-      ReaderDerivationConfig.empty,
-      Seq(
-        ReaderDescription.BuilderOperation.ExtractFieldReader(
-          field = "a",
-          from = Seq(
-            ReaderDescription.Field.ClassField[String]("b"),
-            ReaderDescription.Field.RawField[Any]("c")
-          ),
-          fun = fun
-        )
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
+      ReaderDescription.BuilderOperation.ExtractFieldReader(
+        field = "a",
+        from = Seq(
+          ReaderDescription.Field.ClassField[String]("b"),
+          ReaderDescription.Field.RawField[Any]("c")
+        ),
+        fun = fun
       )
-    )
+    ))
   }
 
   it should "build description for ExtractFieldReader operation from ReaderField's and lambdas" in {
@@ -300,24 +241,19 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
 
     val description = describe {
       ReaderBuilder[Foo]
-        .extractReader(_.a)
-        .from(Symbol("b").as[String])
-        .and(_.c)(fun)
+        .extractReader(_.a).from(Symbol("b").as[String]).and(_.c)(fun)
     }
 
-    description shouldBe ReaderDescription[Foo](
-      ReaderDerivationConfig.empty,
-      Seq(
-        ReaderDescription.BuilderOperation.ExtractFieldReader(
-          field = "a",
-          from = Seq(
-            ReaderDescription.Field.RawField[String]("b"),
-            ReaderDescription.Field.ClassField[Any]("c")
-          ),
-          fun = fun
-        )
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
+      ReaderDescription.BuilderOperation.ExtractFieldReader(
+        field = "a",
+        from = Seq(
+          ReaderDescription.Field.RawField[String]("b"),
+          ReaderDescription.Field.ClassField[Any]("c")
+        ),
+        fun = fun
       )
-    )
+    ))
   }
 
   it should "build description for ExtractFieldReader operation from ReaderField's and ReaderField's" in {
@@ -325,25 +261,21 @@ class ReaderDescriptionTest extends AnyFlatSpec with Matchers {
 
     val description = describe {
       ReaderBuilder[Foo]
-        .extractReader(_.a)
-        .from(Symbol("b").as[String])
-        .and(Symbol("c").as[Any])(fun)
+        .extractReader(_.a).from(Symbol("b").as[String]).and(Symbol("c").as[Any])(fun)
     }
 
-    description shouldBe ReaderDescription[Foo](
-      ReaderDerivationConfig.empty,
-      Seq(
-        ReaderDescription.BuilderOperation.ExtractFieldReader(
-          field = "a",
-          from = Seq(
-            ReaderDescription.Field.RawField[String]("b"),
-            ReaderDescription.Field.RawField[Any]("c")
-          ),
-          fun = fun
-        )
+    description shouldBe ReaderDescription[Foo](ReaderDerivationConfig.empty, Seq(
+      ReaderDescription.BuilderOperation.ExtractFieldReader(
+        field = "a",
+        from = Seq(
+          ReaderDescription.Field.RawField[String]("b"),
+          ReaderDescription.Field.RawField[Any]("c")
+        ),
+        fun = fun
       )
-    )
+    ))
   }
+
 
 }
 

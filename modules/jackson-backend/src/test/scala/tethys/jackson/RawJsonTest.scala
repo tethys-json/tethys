@@ -28,9 +28,7 @@ class RawJsonTest extends AnyFlatSpec with Matchers {
     "null".jsonAs[RawJson] shouldBe Right(RawJson("null"))
   }
   it should "read arrays" in {
-    "[1, 2, true,3.0,\"a\"]".jsonAs[RawJson] shouldBe Right(
-      RawJson("[1,2,true,3.0,\"a\"]")
-    )
+    "[1, 2, true,3.0,\"a\"]".jsonAs[RawJson] shouldBe Right(RawJson("[1,2,true,3.0,\"a\"]"))
   }
   it should "read objects" in {
     """
@@ -41,9 +39,7 @@ class RawJsonTest extends AnyFlatSpec with Matchers {
         "e": { "f": null },
         "g": [1,2,3]
       }
-    """.jsonAs[RawJson] shouldBe Right(
-      RawJson("""{"a":1,"b":false,"c":"d","e":{"f":null},"g":[1,2,3]}""")
-    )
+    """.jsonAs[RawJson] shouldBe Right(RawJson("""{"a":1,"b":false,"c":"d","e":{"f":null},"g":[1,2,3]}"""))
   }
 
   behavior of "RawJson.writer"
@@ -60,8 +56,7 @@ class RawJsonTest extends AnyFlatSpec with Matchers {
   }
   it should "write json as is in middle of object" in {
     case class Foo(a: Int, b: RawJson, c: Boolean)
-    implicit val fooWriter: JsonWriter[Foo] = JsonWriter
-      .obj[Foo]
+    implicit val fooWriter: JsonWriter[Foo] = JsonWriter.obj[Foo]
       .addField("a")(_.a)
       .addField("b")(_.b)
       .addField("c")(_.c)
@@ -89,10 +84,7 @@ class RawJsonTest extends AnyFlatSpec with Matchers {
         tokenWriter.writeArrayStart()
         JsonWriter.intWriter.write(value(0).asInstanceOf[Int], tokenWriter)
         RawJson.rawJsonWriter.write(value(1).asInstanceOf[RawJson], tokenWriter)
-        JsonWriter.booleanWriter.write(
-          value(2).asInstanceOf[Boolean],
-          tokenWriter
-        )
+        JsonWriter.booleanWriter.write(value(2).asInstanceOf[Boolean], tokenWriter)
         tokenWriter.writeArrayEnd()
       }
     }
