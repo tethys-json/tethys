@@ -7,12 +7,18 @@ import tethys.readers.tokens.TokenIteratorProducer
 import tethys.writers.tokens.{TokenWriter, TokenWriterProducer}
 
 package object pretty {
-  implicit def prettyJacksonTokenWriterProducer(implicit jsonFactory: JsonFactory = defaultJsonFactory): TokenWriterProducer = new TokenWriterProducer {
+  implicit def prettyJacksonTokenWriterProducer(implicit
+      jsonFactory: JsonFactory = defaultJsonFactory
+  ): TokenWriterProducer = new TokenWriterProducer {
     override def forWriter(writer: Writer): TokenWriter = {
-      new JacksonTokenWriter(jsonFactory.createGenerator(writer).useDefaultPrettyPrinter())
+      new JacksonTokenWriter(
+        jsonFactory.createGenerator(writer).useDefaultPrettyPrinter()
+      )
     }
   }
 
-  implicit def jacksonTokenIteratorProducer(implicit jsonFactory: JsonFactory = defaultJsonFactory): TokenIteratorProducer =
+  implicit def jacksonTokenIteratorProducer(implicit
+      jsonFactory: JsonFactory = defaultJsonFactory
+  ): TokenIteratorProducer =
     tethys.jackson.jacksonTokenIteratorProducer
 }

@@ -4,13 +4,13 @@ import java.util.regex.Pattern
 
 import tethys.derivation.builder.{FieldStyle => ConfigFieldStyle}
 
-private[impl] trait FieldStyle  { self =>
+private[impl] trait FieldStyle { self =>
   def applyStyle(field: String): String
 
-  private def andThen(that: FieldStyle): FieldStyle = (field: String) => that.applyStyle(self.applyStyle(field))
+  private def andThen(that: FieldStyle): FieldStyle = (field: String) =>
+    that.applyStyle(self.applyStyle(field))
   private def >>(that: FieldStyle): FieldStyle = andThen(that)
 }
-
 
 private[impl] object FieldStyle {
   def apply(fun: String => String): FieldStyle = fun(_)

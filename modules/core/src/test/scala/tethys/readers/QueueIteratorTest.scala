@@ -112,7 +112,6 @@ class QueueIteratorTest extends AnyFlatSpec with Matchers {
     b.nextToken().isArrayEnd shouldBe true
     b.nextToken().isEmpty shouldBe true
 
-
     it.currentToken().isObjectEnd shouldBe true
 
     it.nextToken().isEmpty shouldBe true
