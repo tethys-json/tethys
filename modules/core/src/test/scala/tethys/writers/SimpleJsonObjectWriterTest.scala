@@ -13,7 +13,8 @@ class SimpleJsonObjectWriterTest extends AnyFlatSpec {
 
   it should "write correct object to TokenWriter" in {
     implicit val testWriter: SimpleJsonObjectWriter[TestData] = {
-      JsonWriter.obj[TestData]
+      JsonWriter
+        .obj[TestData]
         .addField("a")(_.a)
         .addField("b")(_.b)
         .addField("c")(_.b.isEmpty)
@@ -28,7 +29,9 @@ class SimpleJsonObjectWriterTest extends AnyFlatSpec {
 
   it should "write correct object to TokenWriter for concatenated writers" in {
     implicit val testWriter: JsonObjectWriter[TestData] = {
-      JsonWriter.obj[TestData].addField("a")(_.a)
+      JsonWriter
+        .obj[TestData]
+        .addField("a")(_.a)
         .concat(JsonWriter.obj[TestData].addField("b")(_.b))
         .addField("c")(_.b.isEmpty)
     }

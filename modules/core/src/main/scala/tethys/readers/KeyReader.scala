@@ -9,9 +9,12 @@ object KeyReader {
     override def read(s: String)(implicit fieldName: FieldName): String = s
   }
 
-  implicit lazy val uuidKeyReader: KeyReader[java.util.UUID] = new KeyReader[java.util.UUID] {
-    override def read(s: String)(implicit fieldName: FieldName): java.util.UUID = java.util.UUID.fromString(s)
-  }
+  implicit lazy val uuidKeyReader: KeyReader[java.util.UUID] =
+    new KeyReader[java.util.UUID] {
+      override def read(s: String)(implicit
+          fieldName: FieldName
+      ): java.util.UUID = java.util.UUID.fromString(s)
+    }
 
   implicit lazy val intKeyReader: KeyReader[Int] = new KeyReader[Int] {
     override def read(s: String)(implicit fieldName: FieldName): Int = s.toInt
