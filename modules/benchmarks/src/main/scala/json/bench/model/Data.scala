@@ -2,16 +2,22 @@ package json.bench.model
 
 import scala.util.Random
 
-case class Data(string: String,
-                int: Int,
-                boolean: Boolean,
-                bigDecimal: BigDecimal,
-                seqInt: Seq[Int],
-                mapStringInt: Map[String, Int])
+case class Data(
+    string: String,
+    int: Int,
+    boolean: Boolean,
+    bigDecimal: BigDecimal,
+    seqInt: Seq[Int],
+    mapStringInt: Map[String, Int]
+)
 
 object Data {
 
-  def samples[JAst](dataBuilder: DataBuilder[JAst], count: Int, seed: Int): JAst = {
+  def samples[JAst](
+      dataBuilder: DataBuilder[JAst],
+      count: Int,
+      seed: Int
+  ): JAst = {
     val asts = dataSamples(count, seed).map(dataBuilder.ast)
     dataBuilder.array(asts)
   }
@@ -27,7 +33,7 @@ object Data {
 
     (1 to count).toList.map { i =>
       val flag = (i % 2) == 0
-      //128 bytes entity
+      // 128 bytes entity
       Data( // 2 bytes
         string = rndString(6 - (if (flag) 0 else 1)), // 9 + 8 (7) + 1 bytes
         int = rndInt(3), // 6 + 3 + 1 bytes

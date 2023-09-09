@@ -24,10 +24,13 @@ class WriterDescriptionTest extends AnyFlatSpec with Matchers {
       WriterBuilder[BuilderTestData]
         .remove(_.a)
         .remove(_.inner)
-    } shouldBe WriterDescription(WriterDerivationConfig.empty, Seq(
-      BuilderOperation.Remove[BuilderTestData]("a"),
-      BuilderOperation.Remove[BuilderTestData]("inner")
-    ))
+    } shouldBe WriterDescription(
+      WriterDerivationConfig.empty,
+      Seq(
+        BuilderOperation.Remove[BuilderTestData]("a"),
+        BuilderOperation.Remove[BuilderTestData]("inner")
+      )
+    )
   }
 
   it should "not compile if we try to remove field from inner class" in {
@@ -46,7 +49,8 @@ class WriterDescriptionTest extends AnyFlatSpec with Matchers {
         .update(_.a)(_.toString)
     }
 
-    val Seq(u: BuilderOperation.Update[BuilderTestData, Int, String]) = description.operations
+    val Seq(u: BuilderOperation.Update[BuilderTestData, Int, String]) =
+      description.operations
 
     u.field shouldBe "a"
     u.fun(1) shouldBe "1"
@@ -55,10 +59,12 @@ class WriterDescriptionTest extends AnyFlatSpec with Matchers {
   it should "extract update from root operations" in {
     val description = describe {
       WriterBuilder[BuilderTestData]
-        .update(_.a).fromRoot(_.a.toString)
+        .update(_.a)
+        .fromRoot(_.a.toString)
     }
 
-    val Seq(u: BuilderOperation.UpdateFromRoot[BuilderTestData, String]) = description.operations
+    val Seq(u: BuilderOperation.UpdateFromRoot[BuilderTestData, String]) =
+      description.operations
 
     u.field shouldBe "a"
     u.fun(BuilderTestData(1, "s", c = true, 1L, InnerCls(2))) shouldBe "1"
@@ -74,7 +80,8 @@ class WriterDescriptionTest extends AnyFlatSpec with Matchers {
         }
     }
 
-    val Seq(up: BuilderOperation.UpdatePartial[BuilderTestData, Int]) = description.operations
+    val Seq(up: BuilderOperation.UpdatePartial[BuilderTestData, Int]) =
+      description.operations
 
     up.field shouldBe "a"
     up.fun(1) shouldBe "uno!"
@@ -85,14 +92,16 @@ class WriterDescriptionTest extends AnyFlatSpec with Matchers {
   it should "extract update partial from root operations" in {
     val description = describe {
       WriterBuilder[BuilderTestData]
-        .updatePartial(_.a).fromRoot {
-        case d if d.a == 1 => "uno!"
-        case d if d.a == 2 => 4
-        case d => d.a * 3
-      }
+        .updatePartial(_.a)
+        .fromRoot {
+          case d if d.a == 1 => "uno!"
+          case d if d.a == 2 => 4
+          case d             => d.a * 3
+        }
     }
 
-    val Seq(up: BuilderOperation.UpdatePartialFromRoot[BuilderTestData]) = description.operations
+    val Seq(up: BuilderOperation.UpdatePartialFromRoot[BuilderTestData]) =
+      description.operations
 
     up.field shouldBe "a"
 
@@ -118,19 +127,24 @@ class WriterDescriptionTest extends AnyFlatSpec with Matchers {
 
     operations(1) shouldBe a[BuilderOperation.Update[_, _, _]]
 
-    val u = operations(1).asInstanceOf[BuilderOperation.Update[BuilderTestData, Boolean, Boolean]]
+    val u = operations(1)
+      .asInstanceOf[BuilderOperation.Update[BuilderTestData, Boolean, Boolean]]
     u.field shouldBe "c"
     u.fun(true) shouldBe false
 
     operations(2) shouldBe a[BuilderOperation.Add[_, _]]
 
-    val add = operations(2).asInstanceOf[BuilderOperation.Add[BuilderTestData, Int]]
+    val add =
+      operations(2).asInstanceOf[BuilderOperation.Add[BuilderTestData, Int]]
     add.field shouldBe "e"
     add.fun(testData) shouldBe 2
   }
 
   it should "extract rename" in {
-    val WriterDescription(_, Seq(op: BuilderOperation.Update[BuilderTestData, Int, Int])) = describe {
+    val WriterDescription(
+      _,
+      Seq(op: BuilderOperation.Update[BuilderTestData, Int, Int])
+    ) = describe {
       WriterBuilder[BuilderTestData].rename(_.a)("aa")
     }
 
@@ -150,8 +164,8 @@ class WriterDescriptionTest extends AnyFlatSpec with Matchers {
   }
 
   it should "extract update from root with rename" in {
-    val fun: PartialFunction[BuilderTestData, Int] = {
-      case d => d.a
+    val fun: PartialFunction[BuilderTestData, Int] = { case d =>
+      d.a
     }
 
     describe {
@@ -164,10 +178,14 @@ class WriterDescriptionTest extends AnyFlatSpec with Matchers {
 
 object WriterDescriptionTest {
 
-  case class BuilderTestData(a: Int, b: String, c: Boolean, d: Long, inner: InnerCls)
+  case class BuilderTestData(
+      a: Int,
+      b: String,
+      c: Boolean,
+      d: Long,
+      inner: InnerCls
+  )
 
   case class InnerCls(a: Int)
 
 }
-
-

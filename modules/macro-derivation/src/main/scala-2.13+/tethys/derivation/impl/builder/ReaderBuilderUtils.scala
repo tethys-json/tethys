@@ -9,7 +9,10 @@ trait ReaderBuilderUtils extends MacroUtils {
   val c: blackbox.Context
   import c.universe._
 
-  case class ReaderMacroDescription(config: c.Expr[ReaderDerivationConfig], operations: Seq[ReaderMacroOperation])
+  case class ReaderMacroDescription(
+      config: c.Expr[ReaderDerivationConfig],
+      operations: Seq[ReaderMacroOperation]
+  )
 
   sealed trait Field {
     def name: String
@@ -24,19 +27,38 @@ trait ReaderBuilderUtils extends MacroUtils {
     def field: String
   }
   object ReaderMacroOperation {
-    final case class ExtractFieldAs(field: String, tpe: Type, as: Type, fun: Tree) extends ReaderMacroOperation
-    final case class ExtractFieldValue(field: String, from: Seq[Field], fun: Tree) extends ReaderMacroOperation
-    final case class ExtractFieldReader(field: String, from: Seq[Field], fun: Tree) extends ReaderMacroOperation
+    final case class ExtractFieldAs(
+        field: String,
+        tpe: Type,
+        as: Type,
+        fun: Tree
+    ) extends ReaderMacroOperation
+    final case class ExtractFieldValue(
+        field: String,
+        from: Seq[Field],
+        fun: Tree
+    ) extends ReaderMacroOperation
+    final case class ExtractFieldReader(
+        field: String,
+        from: Seq[Field],
+        fun: Tree
+    ) extends ReaderMacroOperation
   }
 
-  implicit lazy val readerMacroDescriptionLiftable: Liftable[ReaderMacroDescription] = Liftable[ReaderMacroDescription] {
+  implicit lazy val readerMacroDescriptionLiftable
+      : Liftable[ReaderMacroDescription] = Liftable[ReaderMacroDescription] {
     case ReaderMacroDescription(config, operations) =>
       q"$buildersPack.ReaderDescription(${config.tree} ,_root_.scala.Seq(..$operations))"
   }
 
-  implicit lazy val readerMacroDescriptionUnliftable: Unliftable[ReaderMacroDescription] = Unliftable[ReaderMacroDescription] {
+  implicit lazy val readerMacroDescriptionUnliftable: Unliftable[
+    ReaderMacroDescription
+  ] = Unliftable[ReaderMacroDescription] {
     case q"$_.ReaderDescription.apply[$_](${config: Tree} ,$_.Seq.apply[$_](..${operations: Seq[ReaderMacroOperation]}))" =>
-      ReaderMacroDescription(c.Expr[ReaderDerivationConfig](c.untypecheck(config)), operations)
+      ReaderMacroDescription(
+        c.Expr[ReaderDerivationConfig](c.untypecheck(config)),
+        operations
+      )
   }
 
   implicit lazy val fieldLiftable: Liftable[Field] = Liftable[Field] {
@@ -64,7 +86,8 @@ trait ReaderBuilderUtils extends MacroUtils {
       Field.RawField(name, tpe.tpe)
   }
 
-  implicit lazy val readerMacroOperationLiftable: Liftable[ReaderMacroOperation] = Liftable[ReaderMacroOperation] {
+  implicit lazy val readerMacroOperationLiftable
+      : Liftable[ReaderMacroOperation] = Liftable[ReaderMacroOperation] {
     case ReaderMacroOperation.ExtractFieldAs(field, tpe, as, fun) =>
       q"$buildersPack.ReaderDescription.BuilderOperation.ExtractFieldAs[$as, $tpe]($field, $fun)"
 
@@ -75,8 +98,8 @@ trait ReaderBuilderUtils extends MacroUtils {
       q"$buildersPack.ReaderDescription.BuilderOperation.ExtractFieldReader($field, _root_.scala.Seq(..$from), $fun)"
   }
 
-
-  implicit lazy val readerMacroOperationUnliftable: Unliftable[ReaderMacroOperation] = Unliftable[ReaderMacroOperation] {
+  implicit lazy val readerMacroOperationUnliftable
+      : Unliftable[ReaderMacroOperation] = Unliftable[ReaderMacroOperation] {
     case q"$_.ReaderDescription.BuilderOperation.ExtractFieldAs.apply[${as: Tree}, ${tpe: Tree}](${field: String}, ${fun: Tree})" =>
       ReaderMacroOperation.ExtractFieldAs(field, tpe.tpe, as.tpe, fun)
 

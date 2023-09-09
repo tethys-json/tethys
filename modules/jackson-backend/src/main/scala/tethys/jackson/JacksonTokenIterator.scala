@@ -7,14 +7,15 @@ import tethys.readers.tokens.{BaseTokenIterator, TokenIterator}
 
 import scala.annotation.switch
 
-final class JacksonTokenIterator(jsonParser: JsonParser) extends BaseTokenIterator {
+final class JacksonTokenIterator(jsonParser: JsonParser)
+    extends BaseTokenIterator {
   private[this] var token: Token = fromId(jsonParser.currentTokenId())
   override def currentToken(): Token = token
 
   override def nextToken(): Token = {
     val t = jsonParser.nextToken()
     token = {
-      if(t == null) Token.Empty
+      if (t == null) Token.Empty
       else fromId(t.id())
     }
     token
@@ -40,23 +41,23 @@ final class JacksonTokenIterator(jsonParser: JsonParser) extends BaseTokenIterat
 
   private def fromId(tokenId: Int): Token = (tokenId: @switch) match {
     case JsonTokenId.ID_START_OBJECT => ObjectStartToken
-    case JsonTokenId.ID_END_OBJECT => ObjectEndToken
-    case JsonTokenId.ID_START_ARRAY => ArrayStartToken
-    case JsonTokenId.ID_END_ARRAY => ArrayEndToken
-    case JsonTokenId.ID_FIELD_NAME => FieldNameToken
-    case JsonTokenId.ID_STRING => StringValueToken
-    case JsonTokenId.ID_NUMBER_INT => NumberValueToken
+    case JsonTokenId.ID_END_OBJECT   => ObjectEndToken
+    case JsonTokenId.ID_START_ARRAY  => ArrayStartToken
+    case JsonTokenId.ID_END_ARRAY    => ArrayEndToken
+    case JsonTokenId.ID_FIELD_NAME   => FieldNameToken
+    case JsonTokenId.ID_STRING       => StringValueToken
+    case JsonTokenId.ID_NUMBER_INT   => NumberValueToken
     case JsonTokenId.ID_NUMBER_FLOAT => NumberValueToken
-    case JsonTokenId.ID_TRUE => BooleanValueToken
-    case JsonTokenId.ID_FALSE => BooleanValueToken
-    case JsonTokenId.ID_NULL => NullValueToken
-    case _ => Token.Empty
+    case JsonTokenId.ID_TRUE         => BooleanValueToken
+    case JsonTokenId.ID_FALSE        => BooleanValueToken
+    case JsonTokenId.ID_NULL         => NullValueToken
+    case _                           => Token.Empty
   }
 }
 
 object JacksonTokenIterator {
   def fromFreshParser(parser: JsonParser): TokenIterator = {
-    parser.nextToken()// move parser to first token
+    parser.nextToken() // move parser to first token
     new JacksonTokenIterator(parser)
   }
 }

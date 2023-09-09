@@ -20,18 +20,19 @@ class AutoReaderDerivationTest extends AnyFlatSpec with Matchers {
     res
   }
 
-
   behavior of "auto derivation"
   it should "derive readers for simple case class hierarchy" in {
-    read[JsonTreeTestData](obj(
-      "a" -> 1,
-      "b" -> true,
-      "c" -> obj(
-        "d" -> obj(
-          "a" -> 2
+    read[JsonTreeTestData](
+      obj(
+        "a" -> 1,
+        "b" -> true,
+        "c" -> obj(
+          "d" -> obj(
+            "a" -> 2
+          )
         )
       )
-    )) shouldBe JsonTreeTestData(
+    ) shouldBe JsonTreeTestData(
       a = 1,
       b = true,
       c = C(D(2))
@@ -39,32 +40,39 @@ class AutoReaderDerivationTest extends AnyFlatSpec with Matchers {
   }
 
   it should "derive reader for recursive type" in {
-    read[RecursiveType](obj(
-      "a" -> 1,
-      "children" -> arr(
-        obj(
-          "a" -> 2,
-          "children" -> arr()
-        ),
-        obj(
-          "a" -> 3,
-          "children" -> arr()
+    read[RecursiveType](
+      obj(
+        "a" -> 1,
+        "children" -> arr(
+          obj(
+            "a" -> 2,
+            "children" -> arr()
+          ),
+          obj(
+            "a" -> 3,
+            "children" -> arr()
+          )
         )
       )
-    )) shouldBe RecursiveType(1, Seq(RecursiveType(2), RecursiveType(3)))
+    ) shouldBe RecursiveType(1, Seq(RecursiveType(2), RecursiveType(3)))
 
   }
 
   it should "derive reader for A => B => A cycle" in {
-    read[ComplexRecursionA](obj(
-      "a" -> 1,
-      "b" -> obj(
-        "b" -> 2,
-        "a" -> obj(
-          "a" -> 3
+    read[ComplexRecursionA](
+      obj(
+        "a" -> 1,
+        "b" -> obj(
+          "b" -> 2,
+          "a" -> obj(
+            "a" -> 3
+          )
         )
       )
-    )) shouldBe ComplexRecursionA(1, Some(ComplexRecursionB(2, ComplexRecursionA(3, None))))
+    ) shouldBe ComplexRecursionA(
+      1,
+      Some(ComplexRecursionB(2, ComplexRecursionA(3, None)))
+    )
   }
 
   it should "derive reader for simple enum" in {
