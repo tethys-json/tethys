@@ -14,16 +14,23 @@ package object jackson {
     f
   }
 
-
-  implicit def jacksonTokenWriterProducer(implicit jsonFactory: JsonFactory = defaultJsonFactory): TokenWriterProducer = new TokenWriterProducer {
+  implicit def jacksonTokenWriterProducer(implicit
+      jsonFactory: JsonFactory = defaultJsonFactory
+  ): TokenWriterProducer = new TokenWriterProducer {
     override def forWriter(writer: Writer): TokenWriter = {
       new JacksonTokenWriter(jsonFactory.createGenerator(writer))
     }
   }
 
-  implicit def jacksonTokenIteratorProducer(implicit jsonFactory: JsonFactory = defaultJsonFactory): TokenIteratorProducer = new TokenIteratorProducer {
-    override def fromReader(reader: Reader): Either[ReaderError, TokenIterator] = {
-      ReaderError.catchNonFatal(JacksonTokenIterator.fromFreshParser(jsonFactory.createParser(reader)))(FieldName())
+  implicit def jacksonTokenIteratorProducer(implicit
+      jsonFactory: JsonFactory = defaultJsonFactory
+  ): TokenIteratorProducer = new TokenIteratorProducer {
+    override def fromReader(
+        reader: Reader
+    ): Either[ReaderError, TokenIterator] = {
+      ReaderError.catchNonFatal(
+        JacksonTokenIterator.fromFreshParser(jsonFactory.createParser(reader))
+      )(FieldName())
     }
   }
 }
