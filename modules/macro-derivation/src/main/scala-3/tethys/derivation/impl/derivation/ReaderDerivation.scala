@@ -20,14 +20,18 @@ trait ReaderDerivation extends ReaderBuilderCommons {
 
     '{
       new JsonReader[T] {
-        override def read(it: TokenIterator)(implicit fieldName: FieldName): T = {
+        override def read(
+            it: TokenIterator
+        )(implicit fieldName: FieldName): T = {
           val actualValue = it.string()
           val expectedValue = $expectedValueExpr
 
           if (actualValue == expectedValue)
             ${ Ref(termSym).asExprOf[T] }
           else
-            ReaderError.wrongJson(s"expected value '$expectedValue', but actual is '$actualValue'")
+            ReaderError.wrongJson(
+              s"expected value '$expectedValue', but actual is '$actualValue'"
+            )
         }
       }
     }
@@ -39,30 +43,48 @@ trait ReaderDerivation extends ReaderBuilderCommons {
 
     val classesWithTheSameParams = children
       .filter(_.termSymbol.isNoSymbol)
-      .groupBy(_.typeSymbol.caseFields.map(fieldSym => (fieldSym.name, parentTpr.memberType(fieldSym))))
+      .groupBy(
+        _.typeSymbol.caseFields.map(fieldSym =>
+          (fieldSym.name, parentTpr.memberType(fieldSym))
+        )
+      )
       .collect { case (_, tpes) if tpes.length > 1 => tpes.map(_.show) }
 
     if (classesWithTheSameParams.nonEmpty)
       report.errorAndAbort(
         s"""Can't derive reader for enum ${parentTpr.show}. Several classes has the same parameters:
-           |  ${ classesWithTheSameParams.zipWithIndex.map { case (clss, i) => s"${i+1}) ${clss.mkString(", ")}" }.mkString("\n  ")}""".stripMargin
+           |  ${classesWithTheSameParams.zipWithIndex
+            .map { case (clss, i) => s"${i + 1}) ${clss.mkString(", ")}" }
+            .mkString("\n  ")}""".stripMargin
       )
 
     val childrenReadersExpr: Expr[List[JsonReader[?]]] =
-      Expr.ofList(children.map(_.searchInlineJsonReader.asExprOf[JsonReader[?]]))
+      Expr.ofList(
+        children.map(_.searchInlineJsonReader.asExprOf[JsonReader[?]])
+      )
 
     '{
       new JsonReader[T] {
         private[this] implicit def thisReader: JsonReader[T] = this
 
-        override def read(it: TokenIterator)(implicit fieldName: FieldName): T = {
+        override def read(
+            it: TokenIterator
+        )(implicit fieldName: FieldName): T = {
           val curIt = it.collectExpression()
           val values =
-            $childrenReadersExpr.flatMap(childReader => scala.util.Try(childReader.read(curIt.copy())).toOption)
+            $childrenReadersExpr.flatMap(childReader =>
+              scala.util.Try(childReader.read(curIt.copy())).toOption
+            )
           values match {
-            case Nil                => ReaderError.wrongJson(s"unexpected value for enum ${${ Expr(parentTpr.show) }}")
+            case Nil =>
+              ReaderError.wrongJson(
+                s"unexpected value for enum ${${ Expr(parentTpr.show) }}"
+              )
             case singleValue :: Nil => singleValue.asInstanceOf[T]
-            case _                  => ReaderError.wrongJson(s"ambiguous value for enum ${${ Expr(parentTpr.show) }}")
+            case _ =>
+              ReaderError.wrongJson(
+                s"ambiguous value for enum ${${ Expr(parentTpr.show) }}"
+              )
           }
         }
       }
@@ -70,7 +92,7 @@ trait ReaderDerivation extends ReaderBuilderCommons {
   }
 
   def deriveCaseClassReader[T: Type](
-    description: MacroReaderDescription
+      description: MacroReaderDescription
   ): Expr[JsonReader[T]] = {
     val (fieldStyle, isStrict) = evalReaderConfig(description.config)
 
@@ -92,36 +114,52 @@ trait ReaderDerivation extends ReaderBuilderCommons {
         }
       )
 
-    val fieldsToReadFirstFromJson: List[String] = notSortedReaderFields.flatMap {
-      case SimpleField(name, _, _) => List(name)
-      case ExtractedField(_, _, args, _) =>
-        args.collect { case FunctionArgument(Field.RawField(jsonName, _)) => jsonName }
-      case FromExtractedReader(_, _, _, args, _) =>
-        args.collect { case FunctionArgument(Field.RawField(jsonName, _)) => jsonName }
-    }.distinct
-    val sortedReaderFields = sortFieldsByProcessing(fieldsToReadFirstFromJson, notSortedReaderFields)
+    val fieldsToReadFirstFromJson: List[String] =
+      notSortedReaderFields.flatMap {
+        case SimpleField(name, _, _) => List(name)
+        case ExtractedField(_, _, args, _) =>
+          args.collect { case FunctionArgument(Field.RawField(jsonName, _)) =>
+            jsonName
+          }
+        case FromExtractedReader(_, _, _, args, _) =>
+          args.collect { case FunctionArgument(Field.RawField(jsonName, _)) =>
+            jsonName
+          }
+      }.distinct
+    val sortedReaderFields =
+      sortFieldsByProcessing(fieldsToReadFirstFromJson, notSortedReaderFields)
 
     val typeReadersInfos = allocateTypeReadersInfos(notSortedReaderFields)
     val defaultValuesExpr = allocateDefaultValuesFromDefinition[T]
-    val possiblyNotInitializedExpr = allocateDefaultValuesForNotInitialized(sortedReaderFields)
-    val (readersExpr, fieldsWithoutReadersExpr) = allocateReadersExpr(sortedReaderFields, typeReadersInfos)
+    val possiblyNotInitializedExpr = allocateDefaultValuesForNotInitialized(
+      sortedReaderFields
+    )
+    val (readersExpr, fieldsWithoutReadersExpr) =
+      allocateReadersExpr(sortedReaderFields, typeReadersInfos)
 
     '{
       new JsonReader[T] {
         private[this] implicit def thisReader: JsonReader[T] = this
 
-        override def read(it: TokenIterator)(implicit fieldName: FieldName): T = {
+        override def read(
+            it: TokenIterator
+        )(implicit fieldName: FieldName): T = {
           if (!it.currentToken().isObjectStart)
-            ReaderError.wrongJson("Expected object start but found: " + it.currentToken().toString)
+            ReaderError.wrongJson(
+              "Expected object start but found: " + it.currentToken().toString
+            )
           else {
             it.nextToken()
-            val readFields = new MutableMap[String, MutableMap[String, Any]].empty.withDefaultValue(MutableMap.empty)
+            val readFields =
+              new MutableMap[String, MutableMap[String, Any]].empty
+                .withDefaultValue(MutableMap.empty)
             val notComputedFields = new MutableMap[String, TokenIterator].empty
             val resultFields = new MutableMap[String, Any].empty
 
             val readers: Map[String, List[(String, String, JsonReader[?])]] =
               $readersExpr // jsonName -> (name, tpeName, reader)
-            val fieldsWithoutReaders: Set[String] = $fieldsWithoutReadersExpr // jsonNames
+            val fieldsWithoutReaders: Set[String] =
+              $fieldsWithoutReadersExpr // jsonNames
 
             while (!it.currentToken().isObjectEnd) {
               val jsonName = it.fieldName()
@@ -131,14 +169,20 @@ trait ReaderDerivation extends ReaderBuilderCommons {
               readers
                 .get(jsonName)
                 .fold(
-                  if (fieldsWithoutReaders.contains(jsonName)) notComputedFields.update(jsonName, currentIt)
+                  if (fieldsWithoutReaders.contains(jsonName))
+                    notComputedFields.update(jsonName, currentIt)
                   else if (${ Expr(isStrict) }) {
                     val unexpectedName = jsonName
-                    val expectedNames = readers.keySet.union(fieldsWithoutReaders).mkString("'", "', '", "'")
-                    ReaderError.wrongJson(s"unexpected field '$unexpectedName', expected one of $expectedNames")
+                    val expectedNames = readers.keySet
+                      .union(fieldsWithoutReaders)
+                      .mkString("'", "', '", "'")
+                    ReaderError.wrongJson(
+                      s"unexpected field '$unexpectedName', expected one of $expectedNames"
+                    )
                   }
                 )(_.foreach { case (name, tpeName, reader) =>
-                  val value: Any = reader.read(currentIt.copy())(fieldName.appendFieldName(jsonName))
+                  val value: Any = reader
+                    .read(currentIt.copy())(fieldName.appendFieldName(jsonName))
                   readFields.updateWith(name) {
                     case None         => Some(MutableMap(tpeName -> value))
                     case Some(values) => Some(values.addOne(tpeName, value))
@@ -147,14 +191,23 @@ trait ReaderDerivation extends ReaderBuilderCommons {
             }
             it.nextToken()
 
-            $possiblyNotInitializedExpr.foreach { case (name, tpeName, defaultValue) =>
-              readFields.getOrElseUpdate(name, MutableMap(tpeName -> defaultValue))
+            $possiblyNotInitializedExpr.foreach {
+              case (name, tpeName, defaultValue) =>
+                readFields.getOrElseUpdate(
+                  name,
+                  MutableMap(tpeName -> defaultValue)
+                )
             }
 
             val fieldsNotReadFirstInJson: Set[String] =
-              Set.from(${ Varargs(fieldsToReadFirstFromJson.map(Expr(_))) }) -- readFields.keySet
+              Set.from(
+                ${ Varargs(fieldsToReadFirstFromJson.map(Expr(_))) }
+              ) -- readFields.keySet
             if (fieldsNotReadFirstInJson.nonEmpty)
-              ReaderError.wrongJson("Can not extract fields from json: " + fieldsNotReadFirstInJson.mkString(", "))
+              ReaderError.wrongJson(
+                "Can not extract fields from json: " + fieldsNotReadFirstInJson
+                  .mkString(", ")
+              )
 
             ${
               val readFieldsTerm = 'readFields.asTerm
@@ -188,7 +241,8 @@ trait ReaderDerivation extends ReaderBuilderCommons {
                       .selectFirstMethod("asInstanceOf")
                       .appliedToType(arg.field.tpe)
                   )
-                  val extractedFieldTerm = body.selectFirstMethod("apply").appliedToArgs(extractedArgs)
+                  val extractedFieldTerm =
+                    body.selectFirstMethod("apply").appliedToArgs(extractedArgs)
                   val addToReadFieldsExpr = readFieldsTerm
                     .selectFirstMethod("apply")
                     .appliedTo(nameTerm)
@@ -215,15 +269,21 @@ trait ReaderDerivation extends ReaderBuilderCommons {
                   val jsonNameExpr = Expr(jsonName)
                   val tpeNameExpr = Expr(tpe.getDealiasFullName)
                   val extractedReaderExpr =
-                    body.selectFirstMethod("apply").appliedToArgs(extractedArgs).asExprOf[JsonReader[?]]
+                    body
+                      .selectFirstMethod("apply")
+                      .appliedToArgs(extractedArgs)
+                      .asExprOf[JsonReader[?]]
                   '{
                     notComputedFields
                       .get($jsonNameExpr)
                       .foreach { it =>
-                        val value: Any = $extractedReaderExpr.read(it)(fieldName.appendFieldName($jsonNameExpr))
+                        val value: Any = $extractedReaderExpr.read(it)(
+                          fieldName.appendFieldName($jsonNameExpr)
+                        )
                         readFields.updateWith($nameExpr) {
-                          case None         => Some(MutableMap($tpeNameExpr -> value))
-                          case Some(values) => Some(values.addOne($tpeNameExpr, value))
+                          case None => Some(MutableMap($tpeNameExpr -> value))
+                          case Some(values) =>
+                            Some(values.addOne($tpeNameExpr, value))
                         }
                         resultFields.update($nameExpr, value)
                       }
@@ -237,21 +297,26 @@ trait ReaderDerivation extends ReaderBuilderCommons {
             }
 
             val notReadAfterExtractingFields: Set[String] =
-              Set.from(${ Varargs(classFields.map(field => Expr(field.name))) }) -- resultFields.keySet
+              Set.from(
+                ${ Varargs(classFields.map(field => Expr(field.name))) }
+              ) -- resultFields.keySet
             if (notReadAfterExtractingFields.nonEmpty)
               ReaderError.wrongJson(
-                "Can not extract fields: " + notReadAfterExtractingFields.mkString(", ")
+                "Can not extract fields: " + notReadAfterExtractingFields
+                  .mkString(", ")
               )
 
             ${
-              val paramsInfo = classFields.map(param => (param.name, tpr.memberType(param)))
+              val paramsInfo =
+                classFields.map(param => (param.name, tpr.memberType(param)))
 
-              val fields: List[Term] = paramsInfo.map { case (paramName, paramType) =>
-                'resultFields.asTerm
-                  .selectFirstMethod("apply")
-                  .appliedTo(Expr(paramName).asTerm)
-                  .selectFirstMethod("asInstanceOf")
-                  .appliedToType(paramType)
+              val fields: List[Term] = paramsInfo.map {
+                case (paramName, paramType) =>
+                  'resultFields.asTerm
+                    .selectFirstMethod("apply")
+                    .appliedTo(Expr(paramName).asTerm)
+                    .selectFirstMethod("asInstanceOf")
+                    .appliedToType(paramType)
               }
 
               New(tpt)
@@ -294,30 +359,40 @@ trait ReaderDerivation extends ReaderBuilderCommons {
     }
 
     val startQueue = fieldsToReadFirstFromJson
-    val notInQueue = readerFields.filterNot(field => startQueue.contains(field.name))
+    val notInQueue =
+      readerFields.filterNot(field => startQueue.contains(field.name))
     val fieldsQueueToProcessing = go(notInQueue, startQueue)
 
-    fieldsQueueToProcessing.flatMap(fieldName => readerFields.find(_.name == fieldName))
+    fieldsQueueToProcessing.flatMap(fieldName =>
+      readerFields.find(_.name == fieldName)
+    )
   }
 
-  private def applyFieldStyle(fieldStyle: Option[FieldStyle]): List[SimpleField] => List[SimpleField] = readerFields =>
+  private def applyFieldStyle(
+      fieldStyle: Option[FieldStyle]
+  ): List[SimpleField] => List[SimpleField] = readerFields =>
     fieldStyle.fold(readerFields)(style =>
-      readerFields.map(field => field.copy(jsonName = style.applyStyle(field.jsonName)))
+      readerFields.map(field =>
+        field.copy(jsonName = style.applyStyle(field.jsonName))
+      )
     )
 
   private def allocateDefaultValuesForNotInitialized(
-    readerFields: List[ReaderField]
+      readerFields: List[ReaderField]
   ): Expr[List[(String, String, Any)]] = {
     val fieldInfos = readerFields.flatMap {
-      case f: SimpleField         => List(f.name -> f.tpe)
-      case f: ExtractedField      => f.args.map(arg => arg.field.name -> arg.field.tpe)
-      case f: FromExtractedReader => f.args.map(arg => arg.field.name -> arg.field.tpe)
+      case f: SimpleField => List(f.name -> f.tpe)
+      case f: ExtractedField =>
+        f.args.map(arg => arg.field.name -> arg.field.tpe)
+      case f: FromExtractedReader =>
+        f.args.map(arg => arg.field.name -> arg.field.tpe)
     }
 
     val res = fieldInfos.flatMap { case (name, tpe) =>
       tpe.asType match {
         case '[jrdvTpe] =>
-          tpe.searchJsonReaderDefaultValue.asExprOf[JsonReaderDefaultValue[jrdvTpe]] match {
+          tpe.searchJsonReaderDefaultValue
+            .asExprOf[JsonReaderDefaultValue[jrdvTpe]] match {
             case '{ JsonReaderDefaultValue.noDefaultValue[jrdvTpe] } => None
             case jrdv =>
               Some(
@@ -337,16 +412,32 @@ trait ReaderDerivation extends ReaderBuilderCommons {
   }
 
   private def allocateReadersExpr(
-    readerFields: List[ReaderField],
-    readers: List[(TypeRepr, Term)]
-  ): (Expr[Map[String, List[(String, String, JsonReader[?])]]], Expr[Set[String]]) = {
-    case class FieldDef(name: String, jsonName: String, tpeFullName: String, reader: Term)
+      readerFields: List[ReaderField],
+      readers: List[(TypeRepr, Term)]
+  ): (
+      Expr[Map[String, List[(String, String, JsonReader[?])]]],
+      Expr[Set[String]]
+  ) = {
+    case class FieldDef(
+        name: String,
+        jsonName: String,
+        tpeFullName: String,
+        reader: Term
+    )
 
-    def findReader(tpe: TypeRepr): Term = readers.find(_._1 =:= tpe.widen).get._2
+    def findReader(tpe: TypeRepr): Term =
+      readers.find(_._1 =:= tpe.widen).get._2
 
     val fieldDefs: List[FieldDef] = readerFields.flatMap {
       case f: SimpleField =>
-        List(FieldDef(f.name, f.jsonName, f.tpe.getDealiasFullName, findReader(f.tpe)))
+        List(
+          FieldDef(
+            f.name,
+            f.jsonName,
+            f.tpe.getDealiasFullName,
+            findReader(f.tpe)
+          )
+        )
       case f: ExtractedField =>
         f.args.collect { case FunctionArgument(Field.RawField(jsonName, tpe)) =>
           FieldDef(jsonName, jsonName, tpe.getDealiasFullName, findReader(tpe))
@@ -364,20 +455,30 @@ trait ReaderDerivation extends ReaderBuilderCommons {
     val groupedDefs = fieldDefs.distinct.groupBy(_.jsonName).toList
 
     val res = groupedDefs.map { case (jsonName, defs) =>
-      val readersInfoExpr: Expr[List[(String, String, JsonReader[?])]] = Expr.ofList(
-        defs.map { fieldDef =>
-          Expr.ofTuple((Expr(fieldDef.name), Expr(fieldDef.tpeFullName), fieldDef.reader.asExprOf[JsonReader[?]]))
-        }
-      )
+      val readersInfoExpr: Expr[List[(String, String, JsonReader[?])]] =
+        Expr.ofList(
+          defs.map { fieldDef =>
+            Expr.ofTuple(
+              (
+                Expr(fieldDef.name),
+                Expr(fieldDef.tpeFullName),
+                fieldDef.reader.asExprOf[JsonReader[?]]
+              )
+            )
+          }
+        )
       Expr.ofTuple(Expr(jsonName) -> readersInfoExpr)
     }
 
     val readersExpr = '{ Map(${ Varargs(res) }: _*) }
-    val fieldsWithoutReadersExpr = '{ Set(${ Varargs(fieldsWithoutReaders) }: _*) }
+    val fieldsWithoutReadersExpr = '{
+      Set(${ Varargs(fieldsWithoutReaders) }: _*)
+    }
     (readersExpr, fieldsWithoutReadersExpr)
   }
 
-  private def allocateDefaultValuesFromDefinition[T: Type]: Expr[Map[String, Any]] = {
+  private def allocateDefaultValuesFromDefinition[T: Type]
+      : Expr[Map[String, Any]] = {
     val tpe = TypeRepr.of[T]
 
     val res = tpe.typeSymbol.caseFields.flatMap {
@@ -388,7 +489,9 @@ trait ReaderDerivation extends ReaderBuilderCommons {
 
         val defaultValueMethodSym =
           comp
-            .declaredMethod(s"$$lessinit$$greater$$default$$$indexOfDefaultValueMethod") // $<init$>$default$1
+            .declaredMethod(
+              s"$$lessinit$$greater$$default$$$indexOfDefaultValueMethod"
+            ) // $<init$>$default$1
             .headOption
             .getOrElse(
               report.errorAndAbort(
@@ -404,7 +507,9 @@ trait ReaderDerivation extends ReaderBuilderCommons {
     '{ Map(${ Varargs(res) }: _*) }
   }
 
-  private def allocateTypeReadersInfos(readerFields: List[ReaderField]): List[(TypeRepr, Term)] = {
+  private def allocateTypeReadersInfos(
+      readerFields: List[ReaderField]
+  ): List[(TypeRepr, Term)] = {
     val jsonTypes = readerFields.flatMap {
       case f: SimpleField         => List(f.tpe)
       case f: ExtractedField      => f.args.map(_.field.tpe)
@@ -419,22 +524,28 @@ trait ReaderDerivation extends ReaderBuilderCommons {
   }
 
   private def applyDescriptionOperations(
-    operations: Seq[ReaderMacroOperation]
+      operations: Seq[ReaderMacroOperation]
   ): List[ReaderField] => List[ReaderField] = readerFields => {
-    def mapField(fields: List[ReaderField], name: String)(f: SimpleField => ReaderField): List[ReaderField] = {
+    def mapField(fields: List[ReaderField], name: String)(
+        f: SimpleField => ReaderField
+    ): List[ReaderField] = {
       fields.map {
         case field: SimpleField if field.name == name => f(field)
         case field                                    => field
       }
     }
 
-    def buildArgument(field: Field, readerFields: List[ReaderField]): FunctionArgument = {
+    def buildArgument(
+        field: Field,
+        readerFields: List[ReaderField]
+    ): FunctionArgument = {
       field match {
         case Field.ClassField(name, _) =>
           readerFields.collectFirst {
-            case f: SimpleField if f.name == name         => FunctionArgument(field)
-            case f: ExtractedField if f.name == name      => FunctionArgument(field)
-            case f: FromExtractedReader if f.name == name => FunctionArgument(field)
+            case f: SimpleField if f.name == name    => FunctionArgument(field)
+            case f: ExtractedField if f.name == name => FunctionArgument(field)
+            case f: FromExtractedReader if f.name == name =>
+              FunctionArgument(field)
           }.head
         case Field.RawField(name, tpe) =>
           val possibleArg = readerFields.flatMap {
@@ -442,18 +553,22 @@ trait ReaderDerivation extends ReaderBuilderCommons {
               List(FunctionArgument(field))
             case f: ExtractedField =>
               f.args.collectFirst {
-                case arg @ FunctionArgument(rf: Field.RawField) if rf.name == name && rf.tpe =:= tpe =>
+                case arg @ FunctionArgument(rf: Field.RawField)
+                    if rf.name == name && rf.tpe =:= tpe =>
                   arg
               }
             case f: FromExtractedReader =>
               f.args.collectFirst {
-                case arg @ FunctionArgument(rf: Field.RawField) if rf.name == name && rf.tpe =:= tpe =>
+                case arg @ FunctionArgument(rf: Field.RawField)
+                    if rf.name == name && rf.tpe =:= tpe =>
                   arg
               }
             case _ => List.empty[FunctionArgument]
           }
 
-          possibleArg.headOption.getOrElse(FunctionArgument(field = Field.RawField(name, tpe)))
+          possibleArg.headOption.getOrElse(
+            FunctionArgument(field = Field.RawField(name, tpe))
+          )
       }
     }
 
@@ -464,7 +579,8 @@ trait ReaderDerivation extends ReaderBuilderCommons {
             ExtractedField(
               name = field,
               tpe = tpe,
-              args = List(FunctionArgument(field = Field.RawField(f.jsonName, as))),
+              args =
+                List(FunctionArgument(field = Field.RawField(f.jsonName, as))),
               body = fun
             )
           )
@@ -495,10 +611,15 @@ trait ReaderDerivation extends ReaderBuilderCommons {
     val name: String
     val jsonName: String
   }
-  private case class SimpleField(name: String, tpe: TypeRepr, jsonName: String) extends ReaderField
+  private case class SimpleField(name: String, tpe: TypeRepr, jsonName: String)
+      extends ReaderField
 
-  private case class ExtractedField(name: String, tpe: TypeRepr, args: List[FunctionArgument], body: Term)
-      extends ReaderField {
+  private case class ExtractedField(
+      name: String,
+      tpe: TypeRepr,
+      args: List[FunctionArgument],
+      body: Term
+  ) extends ReaderField {
     val jsonName: String = name
   }
 

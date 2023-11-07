@@ -15,6 +15,7 @@ package object derivation {
   }
 
   extension (underlying: JsonObjectWriter.type) {
-    inline def derived[T](using Mirror.Of[T]): JsonObjectWriter[T] = jsonWriter[T]
+    inline def derived[T](using Mirror.Of[T]): JsonObjectWriter[T] =
+      jsonWriter[T]
   }
 }

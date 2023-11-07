@@ -8,6 +8,8 @@ class ReaderDescriptionMacro(val quotes: Quotes) extends ReaderBuilderCommons {
   implicit val context: Quotes = quotes
   import context.reflect.*
 
-  def simpleDescription[T <: Product : Type](builder: Expr[ReaderBuilder[T]]): Expr[ReaderDescription[T]] =
+  def simpleDescription[T <: Product: Type](
+      builder: Expr[ReaderBuilder[T]]
+  ): Expr[ReaderDescription[T]] =
     convertReaderBuilder[T](builder)
 }

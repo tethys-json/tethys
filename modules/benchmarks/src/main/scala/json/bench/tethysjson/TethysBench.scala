@@ -6,8 +6,7 @@ import tethys.jackson._
 import tethys.derivation.semiauto._
 import json.bench.{DataReader, DataWriter}
 
-/**
-  * Created by eld0727 on 21.04.17.
+/** Created by eld0727 on 21.04.17.
   */
 object TethysBench {
 
@@ -18,6 +17,7 @@ object TethysBench {
 
     override def write(seq: Seq[Data]): String = seq.asJson
 
-    override def read(json: String): Seq[Data] = json.jsonAs[Seq[Data]].toOption.get
+    override def read(json: String): Seq[Data] =
+      json.jsonAs[Seq[Data]].toOption.get
   }
 }

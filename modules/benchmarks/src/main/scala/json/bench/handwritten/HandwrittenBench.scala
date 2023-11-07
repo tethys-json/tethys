@@ -14,10 +14,10 @@ object HandwrittenBench {
       val builder = new StringBuilder("[")
 
       val dataIterator = seq.iterator
-      if(dataIterator.hasNext) {
+      if (dataIterator.hasNext) {
         writeData(dataIterator.next(), builder)
       }
-      while(dataIterator.hasNext) {
+      while (dataIterator.hasNext) {
         writeData(dataIterator.next(), builder.append(","))
       }
 
@@ -45,10 +45,10 @@ object HandwrittenBench {
         .append('[')
 
       val intIter = data.seqInt.iterator
-      if(intIter.hasNext) {
+      if (intIter.hasNext) {
         builder.append(intIter.next())
       }
-      while(intIter.hasNext) {
+      while (intIter.hasNext) {
         builder.append(",").append(intIter.next())
       }
 
@@ -58,11 +58,11 @@ object HandwrittenBench {
         .append('{')
 
       val mapStringIntIter = data.mapStringInt.iterator
-      if(mapStringIntIter.hasNext) {
+      if (mapStringIntIter.hasNext) {
         val (key, value) = mapStringIntIter.next()
         builder.appendName(key).append(value)
       }
-      while(mapStringIntIter.hasNext) {
+      while (mapStringIntIter.hasNext) {
         val (key, value) = mapStringIntIter.next()
         builder.appendName(key).append(value)
       }
@@ -73,7 +73,8 @@ object HandwrittenBench {
 
   }
 
-  private implicit class ScalaBuilderOps(val builder: StringBuilder) extends AnyVal {
+  private implicit class ScalaBuilderOps(val builder: StringBuilder)
+      extends AnyVal {
     def appendName(name: String): StringBuilder = {
       builder.append('"')
       appendString(builder, name)
@@ -89,32 +90,33 @@ object HandwrittenBench {
 
   private def appendString(builder: StringBuilder, s: String): Unit = {
     var i = 0
-    while(i < s.length) {
+    while (i < s.length) {
       appendChar(builder, s.charAt(i))
       i = i + 1
     }
   }
 
-  private def appendChar(builder: StringBuilder, char: Char): Unit = char match {
-    case '\n' => builder.append("\\n")
-    case '\r' => builder.append("\\r")
-    case '\t' => builder.append("\\t")
-    case '\b' => builder.append("\\b")
-    case '\f' => builder.append("\\f")
-    case '\\' => builder.append("\\\\")
-    case '"' => builder.append("\\\"")
-    case _ => builder.append(char)
-  }
+  private def appendChar(builder: StringBuilder, char: Char): Unit =
+    char match {
+      case '\n' => builder.append("\\n")
+      case '\r' => builder.append("\\r")
+      case '\t' => builder.append("\\t")
+      case '\b' => builder.append("\\b")
+      case '\f' => builder.append("\\f")
+      case '\\' => builder.append("\\\\")
+      case '"'  => builder.append("\\\"")
+      case _    => builder.append(char)
+    }
 
   object HandwrittenJavaDataWriter extends DataWriter {
     override def write(seq: Seq[Data]): String = {
       val builder = new java.lang.StringBuilder("[")
 
       val dataIterator = seq.iterator
-      if(dataIterator.hasNext) {
+      if (dataIterator.hasNext) {
         writeData(dataIterator.next(), builder)
       }
-      while(dataIterator.hasNext) {
+      while (dataIterator.hasNext) {
         writeData(dataIterator.next(), builder.append(","))
       }
 
@@ -123,7 +125,10 @@ object HandwrittenBench {
         .toString()
     }
 
-    private def writeData(data: Data, builder: java.lang.StringBuilder): Unit = {
+    private def writeData(
+        data: Data,
+        builder: java.lang.StringBuilder
+    ): Unit = {
       builder
         .append("{")
         .appendName("string")
@@ -142,10 +147,10 @@ object HandwrittenBench {
         .append('[')
 
       val intIter = data.seqInt.iterator
-      if(intIter.hasNext) {
+      if (intIter.hasNext) {
         builder.append(intIter.next())
       }
-      while(intIter.hasNext) {
+      while (intIter.hasNext) {
         builder.append(",").append(intIter.next())
       }
 
@@ -155,11 +160,11 @@ object HandwrittenBench {
         .append('{')
 
       val mapStringIntIter = data.mapStringInt.iterator
-      if(mapStringIntIter.hasNext) {
+      if (mapStringIntIter.hasNext) {
         val (key, value) = mapStringIntIter.next()
         builder.appendName(key).append(value)
       }
-      while(mapStringIntIter.hasNext) {
+      while (mapStringIntIter.hasNext) {
         val (key, value) = mapStringIntIter.next()
         builder.appendName(key).append(value)
       }
@@ -169,7 +174,8 @@ object HandwrittenBench {
     }
   }
 
-  private implicit class JavaBuilderOps(val builder: java.lang.StringBuilder) extends AnyVal {
+  private implicit class JavaBuilderOps(val builder: java.lang.StringBuilder)
+      extends AnyVal {
     def appendName(name: String): java.lang.StringBuilder = {
       builder.append('"')
       appendString(builder, name)
@@ -183,24 +189,28 @@ object HandwrittenBench {
     }
   }
 
-  private def appendString(builder: java.lang.StringBuilder, s: String): Unit = {
+  private def appendString(
+      builder: java.lang.StringBuilder,
+      s: String
+  ): Unit = {
     var i = 0
-    while(i < s.length) {
+    while (i < s.length) {
       appendChar(builder, s.charAt(i))
       i = i + 1
     }
   }
 
-  private def appendChar(builder: java.lang.StringBuilder, char: Char): Unit = char match {
-    case '\n' => builder.append("\\n")
-    case '\r' => builder.append("\\r")
-    case '\t' => builder.append("\\t")
-    case '\b' => builder.append("\\b")
-    case '\f' => builder.append("\\f")
-    case '\\' => builder.append("\\\\")
-    case '"' => builder.append("\\\"")
-    case _ => builder.append(char)
-  }
+  private def appendChar(builder: java.lang.StringBuilder, char: Char): Unit =
+    char match {
+      case '\n' => builder.append("\\n")
+      case '\r' => builder.append("\\r")
+      case '\t' => builder.append("\\t")
+      case '\b' => builder.append("\\b")
+      case '\f' => builder.append("\\f")
+      case '\\' => builder.append("\\\\")
+      case '"'  => builder.append("\\\"")
+      case _    => builder.append(char)
+    }
 
   object HandwrittenJacksonDataProcessor extends DataWriter with DataReader {
     private val jsonFactory = {
@@ -227,7 +237,7 @@ object HandwrittenBench {
       generator.writeStartArray()
 
       val dataIterator = seq.iterator
-      while(dataIterator.hasNext) {
+      while (dataIterator.hasNext) {
         writeData(dataIterator.next(), generator)
       }
 
@@ -251,11 +261,10 @@ object HandwrittenBench {
       generator.writeFieldName("bigDecimal")
       generator.writeNumber(data.bigDecimal.bigDecimal)
 
-
       generator.writeFieldName("seqInt")
       generator.writeStartArray()
       val intIter = data.seqInt.iterator
-      while(intIter.hasNext) {
+      while (intIter.hasNext) {
         generator.writeNumber(intIter.next)
       }
       generator.writeEndArray()
@@ -264,7 +273,7 @@ object HandwrittenBench {
       generator.writeStartObject()
 
       val mapStringIntIter = data.mapStringInt.iterator
-      while(mapStringIntIter.hasNext) {
+      while (mapStringIntIter.hasNext) {
         val (key, value) = mapStringIntIter.next()
         generator.writeFieldName(key)
         generator.writeNumber(value)
@@ -278,7 +287,7 @@ object HandwrittenBench {
       val parser = jsonParser(json)
       val builder = Seq.newBuilder[Data]
       require(parser.nextToken() == JsonToken.START_ARRAY)
-      while(parser.nextToken() != JsonToken.END_ARRAY) {
+      while (parser.nextToken() != JsonToken.END_ARRAY) {
         builder += readDataObject(parser)
       }
       builder.result()
@@ -303,24 +312,24 @@ object HandwrittenBench {
       var mapStringIntField: Map[String, Int] = null
       var mapStringIntFieldInitialized: Boolean = false
 
-      while(parser.nextToken() != JsonToken.END_OBJECT) {
+      while (parser.nextToken() != JsonToken.END_OBJECT) {
         val field = parser.getCurrentName
 
-        if(field == "string") {
+        if (field == "string") {
           stringField = parser.nextTextValue()
           stringFieldInitialized = true
-        } else if(field == "int") {
+        } else if (field == "int") {
           parser.nextToken()
           intField = parser.getIntValue
           intFieldInitialized = true
-        } else if(field == "boolean") {
+        } else if (field == "boolean") {
           booleanField = parser.nextBooleanValue()
           booleanFieldInitialized = true
-        } else if(field == "bigDecimal") {
+        } else if (field == "bigDecimal") {
           parser.nextToken()
           bigDecimalField = BigDecimal(parser.getNumberValue.doubleValue())
           bigDecimalFieldInitialized = true
-        } else if(field == "seqInt") {
+        } else if (field == "seqInt") {
           seqIntField = readSeqOfInt(parser)
           seqIntFieldInitialized = true
         } else {
@@ -329,7 +338,9 @@ object HandwrittenBench {
         }
       }
 
-      require(stringFieldInitialized && intFieldInitialized && booleanFieldInitialized && bigDecimalFieldInitialized && mapStringIntFieldInitialized)
+      require(
+        stringFieldInitialized && intFieldInitialized && booleanFieldInitialized && bigDecimalFieldInitialized && mapStringIntFieldInitialized
+      )
 
       Data(
         string = stringField,
