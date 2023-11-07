@@ -30,12 +30,11 @@ object CollectionBuilder {
 
   implicit def iterableFactoryCollectionBuilder[A, C[
       X
-  ] <: IterableFactoryDefaults[X, C]]
-      : IterableFactoryCollectionBuilder[A, C] = macro
-    CollectionBuilderMacroImpl.fromIterableFactory[A, C]
+  ] <: IterableFactoryDefaults[X, C]]: IterableFactoryCollectionBuilder[A, C] =
+    macro CollectionBuilderMacroImpl.fromIterableFactory[A, C]
   implicit def mapFactoryCollectionBuilder[K, V, M[X, Y] <: Map[X, Y]]
-      : MapFactoryCollectionBuilder[K, V, M] = macro
-    CollectionBuilderMacroImpl.fromMapFactory[K, V, M]
+      : MapFactoryCollectionBuilder[K, V, M] =
+    macro CollectionBuilderMacroImpl.fromMapFactory[K, V, M]
 
   private class CollectionBuilderMacroImpl(val c: blackbox.Context) {
     import c.universe._
