@@ -6,9 +6,13 @@ import tethys.writers.tokens.TokenWriter
 
 object JsonStreaming {
 
-  def streamValue(from: TokenIterator, to: TokenWriter)(implicit fieldName: FieldName): Unit = writeCurrentValue(from, to)
+  def streamValue(from: TokenIterator, to: TokenWriter)(implicit
+      fieldName: FieldName
+  ): Unit = writeCurrentValue(from, to)
 
-  private def writeCurrentValue(it: TokenIterator, writer: TokenWriter)(implicit fieldName: FieldName): Unit = {
+  private def writeCurrentValue(it: TokenIterator, writer: TokenWriter)(implicit
+      fieldName: FieldName
+  ): Unit = {
     val token = it.currentToken()
     if (token.isArrayStart) writeArray(it, writer)
     else if (token.isObjectStart) writeObject(it, writer)
@@ -20,7 +24,9 @@ object JsonStreaming {
     it.next()
   }
 
-  private def writeArray(it: TokenIterator, writer: TokenWriter)(implicit fieldName: FieldName): Unit = {
+  private def writeArray(it: TokenIterator, writer: TokenWriter)(implicit
+      fieldName: FieldName
+  ): Unit = {
     it.next()
     writer.writeArrayStart()
     var index: Int = 0
@@ -31,12 +37,14 @@ object JsonStreaming {
     writer.writeArrayEnd()
   }
 
-  private def writeObject(it: TokenIterator, writer: TokenWriter)(implicit fieldName: FieldName): Unit = {
+  private def writeObject(it: TokenIterator, writer: TokenWriter)(implicit
+      fieldName: FieldName
+  ): Unit = {
     it.next()
     writer.writeObjectStart()
     while (!it.currentToken().isObjectEnd) {
       val token = it.currentToken()
-      if(token.isFieldName) {
+      if (token.isFieldName) {
         val name = it.fieldName()
         writer.writeFieldName(name)
         writeCurrentValue(it.next(), writer)(fieldName.appendFieldName(name))
