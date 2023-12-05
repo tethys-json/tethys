@@ -25,7 +25,7 @@ libraryDependencies ++= Seq(
 or just
 
 ```scala
-libraryDependecies ++= Seq(
+libraryDependencies ++= Seq(
   "com.tethys-json" %% "tethys" % "latest version in badge"
 )
 ```
