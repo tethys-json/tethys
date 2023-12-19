@@ -266,7 +266,7 @@ trait ReaderDerivation
     allTypes.foldLeft((List[(Type, TermName)](), List[Tree]())) {
       case ((types, trees), tpe) if !types.exists(_._1 =:= tpe) =>
         val term = TermName(c.freshName())
-        val default = q"private[this] var $term: $tpe = _"
+        val default = q"private[this] val $term: $tpe = null.asInstanceOf[$tpe]"
 
         (tpe -> term :: types, default :: trees)
 
