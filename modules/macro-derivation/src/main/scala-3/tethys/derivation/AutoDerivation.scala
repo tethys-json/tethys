@@ -5,6 +5,7 @@ import scala.quoted.*
 import tethys.{JsonObjectWriter, JsonReader}
 import tethys.commons.LowPriorityInstance
 import tethys.derivation.impl.derivation.AutoDerivationMacro
+import scala.annotation.experimental
 
 trait AutoDerivation {
   implicit inline def jsonWriterMaterializer[T]: LowPriorityInstance[JsonObjectWriter[T]] =
@@ -15,9 +16,11 @@ trait AutoDerivation {
 }
 
 private[this] object AutoDerivation {
+  @experimental
   def jsonWriterMaterializer[T: Type](using Quotes): Expr[LowPriorityInstance[JsonObjectWriter[T]]] =
     new AutoDerivationMacro(quotes).simpleJsonWriter[T]
 
+  @experimental
   def jsonReaderMaterializer[T: Type](using Quotes): Expr[LowPriorityInstance[JsonReader[T]]] =
     new AutoDerivationMacro(quotes).simpleJsonReader[T]
 }

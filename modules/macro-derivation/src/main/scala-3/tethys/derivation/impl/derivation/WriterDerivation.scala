@@ -10,11 +10,13 @@ import tethys.derivation.impl.builder.{WriterBuilderCommons, WriterBuilderUtils}
 import tethys.derivation.impl.FieldStyle
 import tethys.writers.tokens.{SimpleTokenWriter, TokenWriter}
 import tethys.{JsonObjectWriter, JsonWriter}
+import scala.annotation.experimental
 
 trait WriterDerivation extends WriterBuilderCommons {
   import context.reflect.*
 
   // ---------------------------------- CASE CLASS ----------------------------------
+  @experimental
   def deriveCaseClassWriter[T: Type](
     description: MacroWriteDescription
   ): Expr[JsonObjectWriter[T]] = {
@@ -58,6 +60,7 @@ trait WriterDerivation extends WriterBuilderCommons {
       }
     }
 
+  @experimental
   private def createDerivedWriterExpr[T: Type](
     clsSym: Symbol,
     clsParents: List[Tree],
@@ -124,6 +127,7 @@ trait WriterDerivation extends WriterBuilderCommons {
       case (rest, _) => rest
     }
 
+  @experimental
   private def createCaseClassWriterTerms(tpes: List[TypeRepr]): List[(TypeRepr, Term)] =
     tpes.map {
       _.asType match {
@@ -305,6 +309,7 @@ trait WriterDerivation extends WriterBuilderCommons {
   }
 
   // -------------------- SEALED (TRAIT | ABSTRACT CLASS) OR ENUM -------------------
+  @experimental
   def deriveSealedClassWriter[T: Type](
     cfg: Expr[WriterDerivationConfig]
   ): Expr[JsonObjectWriter[T]] = {
@@ -477,6 +482,7 @@ trait WriterDerivation extends WriterBuilderCommons {
   }
 
   // ------------------------------------ COMMON ------------------------------------
+  @experimental
   private def createClsSym(tpe: TypeRepr, declsFn: Symbol => List[Symbol]): Symbol =
     Symbol.newClass(
       parent = Symbol.spliceOwner,

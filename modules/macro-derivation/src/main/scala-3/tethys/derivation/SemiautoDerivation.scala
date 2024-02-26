@@ -15,6 +15,7 @@ import tethys.derivation.impl.builder.{ReaderDescriptionMacro, WriterDescription
 import tethys.derivation.impl.derivation.SemiautoDerivationMacro
 import scala.quoted.*
 import scala.annotation.compileTimeOnly
+import scala.annotation.experimental
 
 trait SemiautoDerivation {
   inline def jsonWriter[T]: JsonObjectWriter[T] =
@@ -59,25 +60,31 @@ trait SemiautoDerivation {
 }
 
 private[this] object SemiautoDerivation {
+  @experimental
   def jsonWriter[T: Type](using Quotes): Expr[JsonObjectWriter[T]] =
     new SemiautoDerivationMacro(quotes).simpleJsonWriter[T]
 
+  @experimental
   def jsonWriterWithConfig[T: Type](config: Expr[WriterDerivationConfig])(using Quotes): Expr[JsonObjectWriter[T]] =
     new SemiautoDerivationMacro(quotes).jsonWriterWithConfig[T](config)
 
+  @experimental
   def jsonWriterWithDescription[T: Type](description: Expr[WriterDescription[T]])(using
       Quotes
   ): Expr[JsonObjectWriter[T]] =
     new SemiautoDerivationMacro(quotes).jsonWriterWithWriterDescription[T](description)
 
+  @experimental
   def jsonWriterWithBuilder[T <: Product: Type](builder: Expr[WriterBuilder[T]])(using
       Quotes
   ): Expr[JsonObjectWriter[T]] =
     new SemiautoDerivationMacro(quotes).jsonWriterWithBuilder[T](builder)
 
+  @experimental
   def describeWriter[T <: Product: Type](builder: Expr[WriterBuilder[T]])(using Quotes): Expr[WriterDescription[T]] =
     new WriterDescriptionMacro(quotes).simpleDescription[T](builder)
 
+  @experimental
   def jsonReader[T: Type](using Quotes): Expr[JsonReader[T]] =
     new SemiautoDerivationMacro(quotes).simpleJsonReader[T]
 
