@@ -5,6 +5,7 @@ import scala.quoted.*
 import tethys.{JsonObjectWriter, JsonReader, JsonWriter}
 import tethys.commons.LowPriorityInstance
 import tethys.writers.tokens.TokenWriter
+import scala.annotation.experimental
 
 class AutoDerivationMacro(val quotes: Quotes)
     extends WriterDerivation
@@ -13,6 +14,7 @@ class AutoDerivationMacro(val quotes: Quotes)
   import context.reflect.*
 
   // TODO: recursive A => B => A derivation check
+  @experimental
   def simpleJsonWriter[T: Type]: Expr[LowPriorityInstance[JsonObjectWriter[T]]] = {
     val tpe: TypeRepr = TypeRepr.of[T]
     val tpeSym: Symbol = tpe.typeSymbol
@@ -35,6 +37,7 @@ class AutoDerivationMacro(val quotes: Quotes)
     '{ LowPriorityInstance[JsonObjectWriter[T]]($jsonObjectWriterExpr) }
   }
 
+  @experimental
   def simpleJsonReader[T: Type]: Expr[LowPriorityInstance[JsonReader[T]]] = {
     val tpe: TypeRepr = TypeRepr.of[T]
     val tpeSym: Symbol = tpe.typeSymbol

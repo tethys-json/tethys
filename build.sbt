@@ -3,12 +3,12 @@ lazy val scala213 = "2.13.12"
 Return to use a stable version when 'scala.quoted.Quotes.reflectModuleSymbol.newClass'
 and 'scala.quoted.Quotes.reflectModule.ClassDef.apply' are no longer experimental methods
  */
-lazy val scala3 = "3.3.1-RC1-bin-20230318-7226ba6-NIGHTLY"
+lazy val scala3 = "3.3.0"
 
 ThisBuild / scalaVersion := scala3
 
 lazy val commonSettings = Seq(
-  version := "0.28.1",
+  version := "0.28.2",
   organization := "com.tethys-json",
   licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0")),
   homepage := Some(url("https://github.com/tethys-json/tethys")),

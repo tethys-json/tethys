@@ -8,14 +8,17 @@ import tethys.readers.{FieldName, ReaderError}
 import tethys.readers.tokens.TokenIterator
 import tethys.{JsonObjectWriter, JsonReader, JsonWriter}
 import tethys.writers.tokens.TokenWriter
+import scala.annotation.experimental
 
 class SemiautoDerivationMacro(val quotes: Quotes) extends WriterDerivation with ReaderDerivation {
   implicit val context: Quotes = quotes
   import context.reflect.*
 
+  @experimental
   def simpleJsonWriter[T: Type]: Expr[JsonObjectWriter[T]] =
     jsonWriterWithMacroWriteDescription[T](MacroWriteDescription.empty[T])
 
+  @experimental
   def jsonWriterWithConfig[T: Type](config: Expr[WriterDerivationConfig]): Expr[JsonObjectWriter[T]] = {
     val tpe = TypeRepr.of[T]
 
@@ -28,6 +31,7 @@ class SemiautoDerivationMacro(val quotes: Quotes) extends WriterDerivation with 
     jsonWriterWithMacroWriteDescription[T](description)
   }
 
+  @experimental
   def jsonWriterWithMacroWriteDescription[T: Type](description: MacroWriteDescription): Expr[JsonObjectWriter[T]] = {
     val tpe = TypeRepr.of[T]
 
@@ -46,11 +50,13 @@ class SemiautoDerivationMacro(val quotes: Quotes) extends WriterDerivation with 
     else deriveTermWriter[T]
   }
 
+  @experimental
   def jsonWriterWithBuilder[T <: Product: Type](builder: Expr[WriterBuilder[T]]): Expr[JsonObjectWriter[T]] = {
     val description = convertWriterBuilder[T](builder)
     jsonWriterWithWriterDescription[T](description)
   }
 
+  @experimental
   def jsonWriterWithWriterDescription[T: Type](description: Expr[WriterDescription[T]]): Expr[JsonObjectWriter[T]] = {
     val tpe = TypeRepr.of[T]
     val tpeSym = tpe.typeSymbol
@@ -59,6 +65,7 @@ class SemiautoDerivationMacro(val quotes: Quotes) extends WriterDerivation with 
     else report.errorAndAbort(s"Can't derive json writer! ${tpe.show} isn't a Case Class")
   }
 
+  @experimental
   def simpleJsonReader[T: Type]: Expr[JsonReader[T]] = {
     val description = MacroReaderDescription(
       config = emptyReaderConfig,

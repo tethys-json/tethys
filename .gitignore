@@ -24,3 +24,6 @@ gpg.sbt
 
 modules/**/target
 */jmh-result.json
+
+.metals
+.bloop
