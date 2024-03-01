@@ -72,7 +72,9 @@ class JacksonTokenWriterTest extends AnyFlatSpec with Matchers {
   }
 
   it should "write raw json" in {
-    iterate(_.writeRawJson("""{"some" : "raw json"}""")) shouldBe """{"some" : "raw json"}"""
+    iterate(
+      _.writeRawJson("""{"some" : "raw json"}""")
+    ) shouldBe """{"some" : "raw json"}"""
   }
 
   it should "write complex object structure" in {

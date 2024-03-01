@@ -4,10 +4,8 @@ import tethys.derivation.builder.WriterBuilder.*
 
 import scala.annotation.compileTimeOnly
 
-
-/**
- * Created by eld0727 on 22.04.17.
- */
+/** Created by eld0727 on 22.04.17.
+  */
 
 sealed trait WriterBuilder[A] {
   def remove[B](field: A => B): WriterBuilder[A]
@@ -16,7 +14,9 @@ sealed trait WriterBuilder[A] {
 
   def update[B](field: A => B): FunApply[A, B] with WithRename[FunApply[A, B]]
 
-  def updatePartial[B](field: A => B): PartialFunApply[A, B] with WithRename[PartialFunApply[A, B]]
+  def updatePartial[B](
+      field: A => B
+  ): PartialFunApply[A, B] with WithRename[PartialFunApply[A, B]]
 
   def add(name: String): FunApply[A, A]
 
@@ -25,7 +25,9 @@ sealed trait WriterBuilder[A] {
 
 object WriterBuilder {
 
-  @compileTimeOnly("WriterBuilder should be defined in describe, jsonWriter of jsonReader macro")
+  @compileTimeOnly(
+    "WriterBuilder should be defined in describe, jsonWriter of jsonReader macro"
+  )
   def apply[A <: Product]: WriterBuilder[A] = throw new NotDescribedException
 
   sealed trait WithRename[Res] {
@@ -42,6 +44,3 @@ object WriterBuilder {
     def fromRoot[C](partial: PartialFunction[A, C]): WriterBuilder[A]
   }
 }
-
-
-

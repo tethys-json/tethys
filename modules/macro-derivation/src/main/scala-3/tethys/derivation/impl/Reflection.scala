@@ -16,25 +16,28 @@ trait Reflection {
 
     def searchInlineJsonWriter: Term = searchInline[JsonWriter]
 
-    def getWrite2Method: Term = underlying.searchInlineJsonWriter.selectWrite2Method
+    def getWrite2Method: Term =
+      underlying.searchInlineJsonWriter.selectWrite2Method
 
-    def getWrite3Method: Term = underlying.searchInlineJsonWriter.selectWrite3Method
+    def getWrite3Method: Term =
+      underlying.searchInlineJsonWriter.selectWrite3Method
 
     def searchInlineJsonObjectWriter: Term = searchInline[JsonObjectWriter]
 
-    def searchJsonReaderDefaultValue: Term = searchUnsafe[JsonReaderDefaultValue]
+    def searchJsonReaderDefaultValue: Term =
+      searchUnsafe[JsonReaderDefaultValue]
 
     def getDealiasFullName: String = underlying.dealias.typeSymbol.fullName
 
-    def wrappedTo[F[_] : Type]: TypeRepr =
+    def wrappedTo[F[_]: Type]: TypeRepr =
       underlying.asType match {
         case '[t] => TypeRepr.of[F[t]]
       }
-      
+
     def createWriterTerm(f: TypeRepr => Term): Term =
       if (underlying =:= TypeRepr.of[Nothing])
         '{ EmptyWriters.emptyWriter[Nothing] }.asTerm
-      else 
+      else
         f(underlying)
 
     private def searchInline[F[_]: Type]: Term = underlying.asType match {
@@ -46,9 +49,13 @@ trait Reflection {
     }
 
     private def searchUnsafe[F[_]: Type]: Term = underlying.asType match {
-      case '[t] => Expr.summon[F[t]]
-        .getOrElse(report.errorAndAbort(s"Can't find implicit for ${Type.show[F[t]]}"))
-        .asTerm
+      case '[t] =>
+        Expr
+          .summon[F[t]]
+          .getOrElse(
+            report.errorAndAbort(s"Can't find implicit for ${Type.show[F[t]]}")
+          )
+          .asTerm
     }
   }
 
@@ -70,7 +77,8 @@ trait Reflection {
             f(underlying.select(getMethod)),
             ifEmpty
           )
-        case _ => report.errorAndAbort(s"Field ${underlying.show} is not Option[_]")
+        case _ =>
+          report.errorAndAbort(s"Field ${underlying.show} is not Option[_]")
       }
     }
     def selectWriteValuesMethod: Term =
@@ -99,9 +107,15 @@ trait Reflection {
       underlying
         .methodMember(methodName)
         .headOption
-        .getOrElse(report.errorAndAbort(s"Can't find method $methodName in ${underlying.name}"))
+        .getOrElse(
+          report.errorAndAbort(
+            s"Can't find method $methodName in ${underlying.name}"
+          )
+        )
 
-    def findMethod(methodName: String)(pattern: Symbol => Boolean): Option[Symbol] =
+    def findMethod(methodName: String)(
+        pattern: Symbol => Boolean
+    ): Option[Symbol] =
       underlying.methodMember(methodName).find(pattern)
   }
 
@@ -113,7 +127,8 @@ trait Reflection {
 
     def unapply(term: Term): Option[BuilderField] =
       term match {
-        case Lambda(List(ValDef(name, _, _)), body @ SelectChain(b)) if b.chain.size == 2 && name == b.chain.head =>
+        case Lambda(List(ValDef(name, _, _)), body @ SelectChain(b))
+            if b.chain.size == 2 && name == b.chain.head =>
           Some(BuilderField(b.chain(1), body.tpe.widen))
         case _ => None
       }
@@ -139,7 +154,11 @@ trait Reflection {
   def collectDistinctSubtypes(baseTpe: TypeRepr): List[TypeRepr] = {
     def collectSubclasses(parent: Symbol): List[Symbol] = {
       parent.children.flatMap { child =>
-        if (child.flags.is(Flags.Sealed) && (child.flags.is(Flags.Trait) || child.flags.is(Flags.Abstract)))
+        if (
+          child.flags.is(Flags.Sealed) && (child.flags.is(
+            Flags.Trait
+          ) || child.flags.is(Flags.Abstract))
+        )
           collectSubclasses(child)
         else
           List(child)
@@ -158,7 +177,9 @@ trait Reflection {
         val index = subst.indexWhere(_ =:= paramTpe)
         if (index != -1) baseArgs(index)
         else
-          report.errorAndAbort(s"$childSym contains additional type parameter that can't be derived in compile time")
+          report.errorAndAbort(
+            s"$childSym contains additional type parameter that can't be derived in compile time"
+          )
       }
 
       childTpe.appliedTo(args)
