@@ -12,7 +12,8 @@ object SprayBench {
   object SprayDataProcessor extends DataWriter with DataReader {
     override def write(seq: Seq[Data]): String = seq.toJson.compactPrint
 
-    override def read(json: String): Seq[Data] = json.parseJson.convertTo[Seq[Data]]
+    override def read(json: String): Seq[Data] =
+      json.parseJson.convertTo[Seq[Data]]
   }
 
 }

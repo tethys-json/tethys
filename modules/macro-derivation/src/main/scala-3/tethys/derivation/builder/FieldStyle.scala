@@ -19,22 +19,14 @@ enum FieldStyle {
   case CapitalizedSnakeCase
   case UncapitalizedSnakeCase
 
-  @deprecated("use FieldStyle.LowerCase")
-  case lowercase
-  @deprecated("use FieldStyle.UpperCase")
-  case uppercase
-  
-  @deprecated("use FieldStyle.SnakeCase")
-  case snakecase
-  @deprecated("use FieldStyle.LowerSnakeCase")
-  case lowerSnakecase
-  @deprecated("use FieldStyle.UpperSnakeCase")
-  case upperSnakecase
+  @deprecated("use FieldStyle.LowerCase") case lowercase
+  @deprecated("use FieldStyle.UpperCase") case uppercase
 
-  @deprecated("use FieldStyle.KebabCase")
-  case kebabcase
-  @deprecated("use FieldStyle.LowerKebabCase")
-  case lowerKebabcase
-  @deprecated("use FieldStyle.UpperKebabCase")
-  case upperKebabcase
+  @deprecated("use FieldStyle.SnakeCase") case snakecase
+  @deprecated("use FieldStyle.LowerSnakeCase") case lowerSnakecase
+  @deprecated("use FieldStyle.UpperSnakeCase") case upperSnakecase
+
+  @deprecated("use FieldStyle.KebabCase") case kebabcase
+  @deprecated("use FieldStyle.LowerKebabCase") case lowerKebabcase
+  @deprecated("use FieldStyle.UpperKebabCase") case upperKebabcase
 }

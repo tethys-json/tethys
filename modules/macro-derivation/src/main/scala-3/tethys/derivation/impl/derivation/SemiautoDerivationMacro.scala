@@ -10,7 +10,9 @@ import tethys.{JsonObjectWriter, JsonReader, JsonWriter}
 import tethys.writers.tokens.TokenWriter
 import scala.annotation.experimental
 
-class SemiautoDerivationMacro(val quotes: Quotes) extends WriterDerivation with ReaderDerivation {
+class SemiautoDerivationMacro(val quotes: Quotes)
+    extends WriterDerivation
+    with ReaderDerivation {
   implicit val context: Quotes = quotes
   import context.reflect.*
 
@@ -19,7 +21,9 @@ class SemiautoDerivationMacro(val quotes: Quotes) extends WriterDerivation with 
     jsonWriterWithMacroWriteDescription[T](MacroWriteDescription.empty[T])
 
   @experimental
-  def jsonWriterWithConfig[T: Type](config: Expr[WriterDerivationConfig]): Expr[JsonObjectWriter[T]] = {
+  def jsonWriterWithConfig[T: Type](
+      config: Expr[WriterDerivationConfig]
+  ): Expr[JsonObjectWriter[T]] = {
     val tpe = TypeRepr.of[T]
 
     val description = MacroWriteDescription(
@@ -32,7 +36,9 @@ class SemiautoDerivationMacro(val quotes: Quotes) extends WriterDerivation with 
   }
 
   @experimental
-  def jsonWriterWithMacroWriteDescription[T: Type](description: MacroWriteDescription): Expr[JsonObjectWriter[T]] = {
+  def jsonWriterWithMacroWriteDescription[T: Type](
+      description: MacroWriteDescription
+  ): Expr[JsonObjectWriter[T]] = {
     val tpe = TypeRepr.of[T]
 
     if (tpe.termSymbol.isNoSymbol) {
@@ -40,29 +46,39 @@ class SemiautoDerivationMacro(val quotes: Quotes) extends WriterDerivation with 
 
       if (tpeSym.isClassDef && tpeSym.flags.is(Flags.Case))
         deriveCaseClassWriter[T](description)
-      else if (tpeSym.flags.is(Flags.Enum) || (tpeSym.flags.is(Flags.Sealed) && (tpeSym.flags.is(Flags.Trait) || tpeSym.flags.is(Flags.Abstract))))
+      else if (
+        tpeSym.flags.is(Flags.Enum) || (tpeSym.flags.is(
+          Flags.Sealed
+        ) && (tpeSym.flags.is(Flags.Trait) || tpeSym.flags.is(Flags.Abstract)))
+      )
         deriveSealedClassWriter[T](description.config)
       else
         report.errorAndAbort(
           s"Can't auto derive json writer! ${tpe.show} isn't a Case Class, Sealed Trait, Sealed Abstract Class or Enum"
         )
-    }
-    else deriveTermWriter[T]
+    } else deriveTermWriter[T]
   }
 
   @experimental
-  def jsonWriterWithBuilder[T <: Product: Type](builder: Expr[WriterBuilder[T]]): Expr[JsonObjectWriter[T]] = {
+  def jsonWriterWithBuilder[T <: Product: Type](
+      builder: Expr[WriterBuilder[T]]
+  ): Expr[JsonObjectWriter[T]] = {
     val description = convertWriterBuilder[T](builder)
     jsonWriterWithWriterDescription[T](description)
   }
 
   @experimental
-  def jsonWriterWithWriterDescription[T: Type](description: Expr[WriterDescription[T]]): Expr[JsonObjectWriter[T]] = {
+  def jsonWriterWithWriterDescription[T: Type](
+      description: Expr[WriterDescription[T]]
+  ): Expr[JsonObjectWriter[T]] = {
     val tpe = TypeRepr.of[T]
     val tpeSym = tpe.typeSymbol
     if (tpeSym.isClassDef && tpeSym.flags.is(Flags.Case))
       deriveCaseClassWriter[T](MacroWriteDescription.unlift(description))
-    else report.errorAndAbort(s"Can't derive json writer! ${tpe.show} isn't a Case Class")
+    else
+      report.errorAndAbort(
+        s"Can't derive json writer! ${tpe.show} isn't a Case Class"
+      )
   }
 
   @experimental
@@ -74,7 +90,9 @@ class SemiautoDerivationMacro(val quotes: Quotes) extends WriterDerivation with 
     jsonReaderWithMacroReaderDescription[T](description)
   }
 
-  def jsonReaderWithConfig[T: Type](config: Expr[ReaderDerivationConfig]): Expr[JsonReader[T]] = {
+  def jsonReaderWithConfig[T: Type](
+      config: Expr[ReaderDerivationConfig]
+  ): Expr[JsonReader[T]] = {
     val description = MacroReaderDescription(
       config = config,
       operations = Seq()
@@ -83,7 +101,9 @@ class SemiautoDerivationMacro(val quotes: Quotes) extends WriterDerivation with 
     jsonReaderWithMacroReaderDescription[T](description)
   }
 
-  def jsonReaderWithMacroReaderDescription[T: Type](description: MacroReaderDescription): Expr[JsonReader[T]] = {
+  def jsonReaderWithMacroReaderDescription[T: Type](
+      description: MacroReaderDescription
+  ): Expr[JsonReader[T]] = {
     val tpe = TypeRepr.of[T]
     val tpeSym = tpe.typeSymbol
 
@@ -93,22 +113,29 @@ class SemiautoDerivationMacro(val quotes: Quotes) extends WriterDerivation with 
       else if (tpeSym.flags.is(Flags.Enum | Flags.Abstract))
         deriveEnumReader[T]
       else
-        report.errorAndAbort(s"Can't derive json reader! '${tpe.show}' isn't a Case Class")
-    }
-    else deriveTermReader[T]
+        report.errorAndAbort(
+          s"Can't derive json reader! '${tpe.show}' isn't a Case Class"
+        )
+    } else deriveTermReader[T]
   }
 
-  def jsonReaderWithBuilder[T <: Product: Type](builder: Expr[ReaderBuilder[T]]): Expr[JsonReader[T]] = {
+  def jsonReaderWithBuilder[T <: Product: Type](
+      builder: Expr[ReaderBuilder[T]]
+  ): Expr[JsonReader[T]] = {
     val description = convertReaderBuilder[T](builder)
     jsonReaderWithReaderDescription[T](description)
   }
 
-  def jsonReaderWithReaderDescription[T: Type](description: Expr[ReaderDescription[T]]): Expr[JsonReader[T]] = {
+  def jsonReaderWithReaderDescription[T: Type](
+      description: Expr[ReaderDescription[T]]
+  ): Expr[JsonReader[T]] = {
     val tpe = TypeRepr.of[T]
     val tpeSym = tpe.typeSymbol
     if (tpeSym.isClassDef && tpeSym.flags.is(Flags.Case))
       deriveCaseClassReader[T](MacroReaderDescription.unlift(description))
     else
-      report.errorAndAbort(s"Can't derive json reader! '${tpe.show}' isn't a Case Class")
+      report.errorAndAbort(
+        s"Can't derive json reader! '${tpe.show}' isn't a Case Class"
+      )
   }
 }
