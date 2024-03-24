@@ -1,3 +1,4 @@
+lazy val scala212 = "2.12.19"
 lazy val scala213 = "2.13.12"
 /* FIXME
 Return to use a stable version when 'scala.quoted.Quotes.reflectModuleSymbol.newClass'
@@ -66,7 +67,7 @@ def crossScalaSettings = {
     }
 
   Seq(
-    crossScalaVersions := Seq(scala213, scala3),
+    crossScalaVersions := Seq(scala212, scala213, scala3),
     Compile / unmanagedSourceDirectories ++= addDirsByScalaVersion("src/main").value,
     Test / unmanagedSourceDirectories ++= addDirsByScalaVersion("src/test").value
   )
@@ -89,12 +90,10 @@ lazy val tethys = project.in(file("."))
 
 lazy val modules = file("modules")
 
-def addScalaCompiler(scalaVersion: String): Seq[ModuleID] =
+def addScalaReflect(scalaVersion: String): Seq[ModuleID] =
   CrossVersion.partialVersion(scalaVersion) match {
-    case Some((2, y)) if y >= 13 =>
-      Seq("org.scala-lang" % "scala-compiler" % scalaVersion % Provided)
-    case Some((3, _)) =>
-      Seq("org.scala-lang" %% "scala3-compiler" % scalaVersion % Provided)
+    case Some((2, y)) =>
+      Seq("org.scala-lang" % "scala-reflect" % scalaVersion)
     case _ => Seq.empty
   }
 
@@ -104,7 +103,7 @@ lazy val core = project.in(modules / "core")
   .settings(testSettings)
   .settings(
     name := "tethys-core",
-    libraryDependencies ++= addScalaCompiler(scalaVersion.value)
+    libraryDependencies ++= addScalaReflect(scalaVersion.value)
   )
 
 lazy val `macro-derivation` = project.in(modules / "macro-derivation")
@@ -113,7 +112,7 @@ lazy val `macro-derivation` = project.in(modules / "macro-derivation")
   .settings(testSettings)
   .settings(
     name := "tethys-derivation",
-    libraryDependencies ++= addScalaCompiler(scalaVersion.value)
+    libraryDependencies ++= addScalaReflect(scalaVersion.value)
   )
   .dependsOn(core)
 
@@ -190,13 +189,12 @@ lazy val enumeratum = project.in(modules / "enumeratum")
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(testSettings)
-  .settings(crossScalaVersions := Seq(scala213))
   .settings(
     name := "tethys-enumeratum",
     libraryDependencies ++= {
       CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, y)) if y >= 13 =>
-          Seq("com.beachape" %% "enumeratum" % "1.7.2")
+        case Some((2, y)) =>
+          Seq("com.beachape" %% "enumeratum" % "1.7.3")
         case _ => Seq.empty
       }
     }
