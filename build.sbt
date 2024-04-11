@@ -9,7 +9,7 @@ lazy val scala3 = "3.3.0"
 ThisBuild / scalaVersion := scala3
 
 lazy val commonSettings = Seq(
-  version := "0.28.2",
+  version := "0.28.3",
   organization := "com.tethys-json",
   licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0")),
   homepage := Some(url("https://github.com/tethys-json/tethys")),
@@ -86,7 +86,7 @@ lazy val tethys = project.in(file("."))
     crossScalaVersions := Seq.empty,
     commonSettings
   )
-  .aggregate(core, `macro-derivation`, `jackson-211`, `jackson-212`, `jackson-213`, json4s, circe, refined, enumeratum)
+  .aggregate(core, `macro-derivation`, `jackson-211`, `jackson-212`, `jackson-213`, json4s, circe, refined, enumeratum, integrationCats)
 
 lazy val modules = file("modules")
 
@@ -105,6 +105,18 @@ lazy val core = project.in(modules / "core")
     name := "tethys-core",
     libraryDependencies ++= addScalaReflect(scalaVersion.value)
   )
+
+lazy val integrationCats = project.in(modules / "integrations/cats")
+  .settings(crossScalaSettings)
+  .settings(commonSettings)
+  .settings(testSettings)
+  .settings(
+    name := "tethys-int-cats",
+    libraryDependencies ++= Seq(
+      "org.typelevel" %% "cats-core" % "2.10.0",
+    )
+  )
+  .dependsOn(core)
 
 lazy val `macro-derivation` = project.in(modules / "macro-derivation")
   .settings(crossScalaSettings)
