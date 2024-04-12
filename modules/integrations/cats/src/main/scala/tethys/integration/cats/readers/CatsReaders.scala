@@ -6,8 +6,6 @@ import tethys.readers.{FieldName, ReaderError}
 import tethys.JsonReader
 import tethys.JsonReader.iterableReader
 
-import scala.collection.immutable.SortedSet
-
 trait CatsReaders {
 
   implicit def readerForNel[T: JsonReader]: JsonReader[NonEmptyList[T]] =
@@ -38,23 +36,8 @@ trait CatsReaders {
         }
     }
 
-  implicit def readerForNes[T: JsonReader: Ordering]
-      : JsonReader[NonEmptySet[T]] =
-    new JsonReader[NonEmptySet[T]] {
-      override def read(
-          it: TokenIterator
-      )(implicit fieldName: FieldName): NonEmptySet[T] =
-        NonEmptySet.fromSet(SortedSet.from(JsonReader[Set[T]].read(it))) match {
-          case Some(value) => value
-          case None =>
-            ReaderError.wrongJson(
-              s"Set is empty and can't be converted to NonEmptySet"
-            )
-        }
-    }
-
   implicit def readerForChain[T: JsonReader]: JsonReader[Chain[T]] =
-    JsonReader[Seq[T]].map(Chain.fromSeq)
+    JsonReader[Seq[T]].map(Chain.fromIterableOnce)
 
   implicit def readerForNec[T: JsonReader]: JsonReader[NonEmptyChain[T]] =
     new JsonReader[NonEmptyChain[T]] {
