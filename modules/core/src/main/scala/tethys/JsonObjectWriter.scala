@@ -29,7 +29,7 @@ trait JsonObjectWriter[A] extends JsonWriter[A] {
   }
 }
 
-object JsonObjectWriter extends LowPriorityJsonObjectWriters {
+object JsonObjectWriter extends LowPriorityJsonObjectWriters with derivation.JsonWriterDerivation {
   def apply[A](implicit jsonObjectWriter: JsonObjectWriter[A]): JsonObjectWriter[A] = jsonObjectWriter
 }
 

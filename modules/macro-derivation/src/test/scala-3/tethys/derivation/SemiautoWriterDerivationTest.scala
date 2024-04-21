@@ -3,7 +3,7 @@ package tethys.derivation
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 import tethys.commons.TokenNode
-import tethys.{JsonObjectWriter, JsonWriter}
+import tethys.{JsonObjectWriter, JsonWriter, StringEnumWriter}
 import tethys.derivation.builder.{FieldStyle, WriterBuilder, WriterDerivationConfig}
 import tethys.writers.tokens.SimpleTokenWriter.*
 import tethys.commons.TokenNode.{value as token, *}
@@ -164,6 +164,7 @@ class SemiautoWriterDerivationTest extends AnyFlatSpec with Matchers {
     implicit val justObjectWriter: JsonObjectWriter[JustObject.type] = JsonWriter.obj.addField("type")(_ => "JustObject")
     implicit val subChildWriter: JsonObjectWriter[SubChild] = jsonWriter[SubChild]
 
+    implicit val sealedSubWriter: JsonObjectWriter[SimpleSealedTypeSub] = jsonWriter[SimpleSealedTypeSub]
     implicit val sealedWriter: JsonWriter[SimpleSealedType] = jsonWriter[SimpleSealedType]
 
     def write(simpleSealedType: SimpleSealedType): List[TokenNode] = simpleSealedType.asTokenList
@@ -193,40 +194,28 @@ class SemiautoWriterDerivationTest extends AnyFlatSpec with Matchers {
   }
 
   it should "derive writer for simple enum" in {
-    implicit val oneWriter: JsonObjectWriter[SimpleEnum.ONE.type] = jsonWriter[SimpleEnum.ONE.type]
-    implicit val twoWriter: JsonObjectWriter[SimpleEnum.TWO.type] = jsonWriter[SimpleEnum.TWO.type]
-    implicit val simpleEnumWriter: JsonWriter[SimpleEnum] = jsonWriter[SimpleEnum]
+    implicit val simpleEnumWriter: JsonWriter[SimpleEnum] = StringEnumWriter.derived
     
     SimpleEnum.ONE.asTokenList shouldBe token("ONE")
     SimpleEnum.TWO.asTokenList shouldBe token("TWO")
   }
 
   it should "derive writer for parametrized enum" in {
-    implicit val oneWriter: JsonObjectWriter[ParametrizedEnum.ONE.type] = jsonWriter[ParametrizedEnum.ONE.type]
-    implicit val twoWriter: JsonObjectWriter[ParametrizedEnum.TWO.type] = jsonWriter[ParametrizedEnum.TWO.type]
-    implicit val parametrizedEnumWriter: JsonWriter[ParametrizedEnum] = jsonWriter[ParametrizedEnum]
+    implicit val parametrizedEnumWriter: JsonWriter[ParametrizedEnum] = StringEnumWriter.derived
 
     ParametrizedEnum.ONE.asTokenList shouldBe token("ONE")
     ParametrizedEnum.TWO.asTokenList shouldBe token("TWO")
   }
 
   it should "derive writer with discriminator for simple enum" in {
-    implicit val oneWriter: JsonObjectWriter[SimpleEnum.ONE.type] = jsonWriter[SimpleEnum.ONE.type]
-    implicit val twoWriter: JsonObjectWriter[SimpleEnum.TWO.type] = jsonWriter[SimpleEnum.TWO.type]
-    implicit val simpleEnumWriter: JsonWriter[SimpleEnum] = jsonWriter[SimpleEnum](
-      WriterDerivationConfig.empty.withDiscriminator("__type")
-    )
+    implicit val simpleEnumWriter: JsonWriter[SimpleEnum] = StringEnumWriter.withLabel("__type")
 
     SimpleEnum.ONE.asTokenList shouldBe obj("__type" -> "ONE")
     SimpleEnum.TWO.asTokenList shouldBe obj("__type" -> "TWO")
   }
 
   it should "derive writer with discriminator for parametrized enum" in {
-    implicit val oneWriter: JsonObjectWriter[ParametrizedEnum.ONE.type] = jsonWriter[ParametrizedEnum.ONE.type]
-    implicit val twoWriter: JsonObjectWriter[ParametrizedEnum.TWO.type] = jsonWriter[ParametrizedEnum.TWO.type]
-    implicit val simpleEnumWriter: JsonWriter[ParametrizedEnum] = jsonWriter[ParametrizedEnum](
-      WriterDerivationConfig.empty.withDiscriminator("__type")
-    )
+    implicit val simpleEnumWriter: JsonWriter[ParametrizedEnum] = StringEnumWriter.withLabel("__type")
 
     ParametrizedEnum.ONE.asTokenList shouldBe obj ("__type" -> "ONE")
     ParametrizedEnum.TWO.asTokenList shouldBe obj ("__type" -> "TWO")

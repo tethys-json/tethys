@@ -2,15 +2,13 @@ package tethys.derivation
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
-import tethys.JsonReader
-import tethys.commons.TokenNode.{value => token, *}
+import tethys.{JsonReader, StringEnumReader, TokenIteratorOps}
+import tethys.commons.TokenNode.{value as token, *}
 import tethys.commons.{Token, TokenNode}
 import tethys.derivation.builder.{FieldStyle, ReaderBuilder, ReaderDerivationConfig}
 import tethys.derivation.semiauto.*
 import tethys.readers.ReaderError
 import tethys.readers.tokens.QueueIterator
-
-import tethys.TokenIteratorOps
 
 class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
 
@@ -44,7 +42,7 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
   }
 
   it should "derive reader for recursive type" in {
-    implicit val recursiveReader: JsonReader[RecursiveType] = jsonReader[RecursiveType]
+    implicit lazy val recursiveReader: JsonReader[RecursiveType] = jsonReader[RecursiveType]
 
     read[RecursiveType](obj(
       "a" -> 1,
@@ -326,9 +324,7 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
 
 
   it should "derive reader for simple enum" in {
-    implicit val oneReader: JsonReader[SimpleEnum.ONE.type] = jsonReader[SimpleEnum.ONE.type]
-    implicit val twoReader: JsonReader[SimpleEnum.TWO.type] = jsonReader[SimpleEnum.TWO.type]
-    implicit val simpleEnumReader: JsonReader[SimpleEnum] = jsonReader[SimpleEnum]
+    implicit val simpleEnumReader: JsonReader[SimpleEnum] = StringEnumReader.derived
 
     read[SimpleEnum](
       token(SimpleEnum.ONE.toString)
@@ -340,9 +336,7 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
   }
 
   it should "derive reader for parametrized enum" in {
-    implicit val oneReader: JsonReader[ParametrizedEnum.ONE.type] = jsonReader[ParametrizedEnum.ONE.type]
-    implicit val twoReader: JsonReader[ParametrizedEnum.TWO.type] = jsonReader[ParametrizedEnum.TWO.type]
-    implicit val parametrizedEnumReader: JsonReader[ParametrizedEnum] = jsonReader[ParametrizedEnum]
+    implicit val parametrizedEnumReader: JsonReader[ParametrizedEnum] = StringEnumReader.derived
 
     read[ParametrizedEnum](
       token(ParametrizedEnum.ONE.toString)

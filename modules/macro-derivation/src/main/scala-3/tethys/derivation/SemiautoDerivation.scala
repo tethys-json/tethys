@@ -18,8 +18,9 @@ import scala.annotation.compileTimeOnly
 import scala.annotation.experimental
 
 trait SemiautoDerivation {
+  @deprecated("Use JsonObjectWriter.derived or JsonWriter.derived instead")
   inline def jsonWriter[T]: JsonObjectWriter[T] =
-    ${ SemiautoDerivation.jsonWriter[T] }
+    JsonWriter.derived[T](using scala.compiletime.summonInline[scala.deriving.Mirror.Of[T]])
 
   inline def jsonWriter[T](inline description: WriterDescription[T]): JsonObjectWriter[T] =
     ${ SemiautoDerivation.jsonWriterWithDescription[T]('description) }
@@ -33,8 +34,9 @@ trait SemiautoDerivation {
   inline def describe[T <: Product](inline builder: => WriterBuilder[T]): WriterDescription[T] =
     ${ SemiautoDerivation.describeWriter[T]('builder) }
 
+  @deprecated("Use JsonReader.derived instead")
   inline def jsonReader[T]: JsonReader[T] =
-    ${ SemiautoDerivation.jsonReader[T] }
+    JsonReader.derived[T](using scala.compiletime.summonInline[scala.deriving.Mirror.ProductOf[T]])
 
   inline def jsonReader[T](inline description: ReaderDescription[T]): JsonReader[T] =
     ${ SemiautoDerivation.jsonReaderWithDescription[T]('description) }

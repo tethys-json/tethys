@@ -40,6 +40,24 @@ class SemiautoDerivationMacro(val quotes: Quotes) extends WriterDerivation with 
 
       if (tpeSym.isClassDef && tpeSym.flags.is(Flags.Case))
         deriveCaseClassWriter[T](description)
+      else if tpeSym.flags.is(Flags.Enum) then
+        report.errorAndAbort(
+          s"""
+             |Old Enum derivation is not supported anymore
+             |
+             |Use JsonWriter.derived for complex enums like this:
+             |  enum ComplexEnum:
+             |    case A(x: B)
+             |    case B
+             |    
+             |Use StringEnumWriter.derived or OrdinalEnumWriter.derived for basic enums like this:
+             |  enum BasicEnum:
+             |    case A, B
+             |    
+             |Use StringEnumWriter.withLabel("__type") or OrdinalEnumWriter.withLabel("__type") if you want write an object for BasicEnum like
+             |  { "__type": A }
+             |""".stripMargin
+        )
       else if (tpeSym.flags.is(Flags.Enum) || (tpeSym.flags.is(Flags.Sealed) && (tpeSym.flags.is(Flags.Trait) || tpeSym.flags.is(Flags.Abstract))))
         deriveSealedClassWriter[T](description.config)
       else
@@ -90,7 +108,17 @@ class SemiautoDerivationMacro(val quotes: Quotes) extends WriterDerivation with 
     if (tpe.termSymbol.isNoSymbol) {
       if (tpeSym.isClassDef && tpeSym.flags.is(Flags.Case))
         deriveCaseClassReader[T](description)
-      else if (tpeSym.flags.is(Flags.Enum | Flags.Abstract))
+      else if (tpeSym.flags.is(Flags.Enum))
+        report.errorAndAbort(
+          s"""
+             |Old Enum derivation is not supported anymore
+             |    
+             |Use StringEnumReader.derived or OrdinalEnumReader.derived for basic enums like this:
+             |  enum BasicEnum:
+             |    case A, B
+             |""".stripMargin
+        )
+      else if (tpeSym.flags.is(Flags.Abstract))
         deriveEnumReader[T]
       else
         report.errorAndAbort(s"Can't derive json reader! '${tpe.show}' isn't a Case Class")
