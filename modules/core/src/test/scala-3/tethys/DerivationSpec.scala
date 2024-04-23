@@ -9,9 +9,6 @@ import tethys.writers.tokens.SimpleTokenWriter.SimpleTokenWriterOps
 import tethys.derivation.Defaults
 
 class DerivationSpec extends AnyFlatSpec with Matchers {
-
-
-
   def read[A: JsonReader](nodes: List[TokenNode]): A = {
     val it = QueueIterator(nodes)
     val res = it.readJson[A].fold(throw _, identity)
