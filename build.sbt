@@ -9,7 +9,7 @@ lazy val scala3 = "3.3.0"
 ThisBuild / scalaVersion := scala3
 
 lazy val commonSettings = Seq(
-  version := "0.28.3",
+  version := "0.28.4",
   organization := "com.tethys-json",
   licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0")),
   homepage := Some(url("https://github.com/tethys-json/tethys")),
