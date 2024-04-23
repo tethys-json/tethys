@@ -1,8 +1,19 @@
 package tethys.cats.readers
 
+import cats.{Hash, Order}
+import cats.collections.{
+  AvlSet,
+  BitSet,
+  Dequeue,
+  HashMap,
+  HashSet,
+  Heap,
+  PairingHeap,
+  TreeList
+}
 import cats.data._
 import tethys.readers.tokens.TokenIterator
-import tethys.readers.{FieldName, ReaderError}
+import tethys.readers.{FieldName, KeyReader, ReaderError}
 import tethys.JsonReader
 import tethys.JsonReader.iterableReader
 
@@ -52,5 +63,32 @@ trait CatsReaders {
             )
         }
     }
+
+  implicit val readerForBitSet: JsonReader[BitSet] =
+    JsonReader[Seq[Int]].map(seq => BitSet(seq: _*))
+
+  implicit def readerForCatsDequeue[T: JsonReader]: JsonReader[Dequeue[T]] =
+    JsonReader[Seq[T]].map(seq => Dequeue(seq: _*))
+
+  implicit def readerForCatsHashMap[K: KeyReader: Hash, V: JsonReader]
+      : JsonReader[HashMap[K, V]] =
+    JsonReader[Map[K, V]].map(m => HashMap(m.toSeq: _*))
+
+  implicit def readerForCatsHashSet[T: JsonReader: Hash]
+      : JsonReader[HashSet[T]] =
+    JsonReader[Seq[T]].map(HashSet.fromSeq(_))
+
+  implicit def readerForCatsHeap[T: JsonReader: Order]: JsonReader[Heap[T]] =
+    JsonReader[Seq[T]].map(Heap.fromIterable(_))
+
+  implicit def readerForPairingHeap[T: JsonReader: Order]
+      : JsonReader[PairingHeap[T]] =
+    JsonReader[Seq[T]].map(PairingHeap.fromIterable(_))
+
+  implicit def readerForTreeList[T: JsonReader]: JsonReader[TreeList[T]] =
+    JsonReader[List[T]].map(TreeList.fromList)
+
+  implicit def readerForAvlSet[T: JsonReader: Order]: JsonReader[AvlSet[T]] =
+    JsonReader[List[T]].map(AvlSet.fromList(_))
 
 }

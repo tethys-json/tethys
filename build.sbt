@@ -103,6 +103,7 @@ lazy val cats = project.in(modules / "cats")
     name := "tethys-cats",
     libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-core" % "2.10.0",
+      "org.typelevel" %% "cats-collections-core" % "0.9.8",
     )
   )
   .dependsOn(core)
