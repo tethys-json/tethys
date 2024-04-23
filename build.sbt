@@ -86,7 +86,7 @@ lazy val tethys = project.in(file("."))
     crossScalaVersions := Seq.empty,
     commonSettings
   )
-  .aggregate(core, `macro-derivation`, `jackson-211`, `jackson-212`, `jackson-213`, json4s, circe, refined, enumeratum, integrationCats)
+  .aggregate(core, `macro-derivation`, `jackson-211`, `jackson-212`, `jackson-213`, json4s, circe, refined, enumeratum, cats)
 
 lazy val modules = file("modules")
 
@@ -106,12 +106,12 @@ lazy val core = project.in(modules / "core")
     libraryDependencies ++= addScalaReflect(scalaVersion.value)
   )
 
-lazy val integrationCats = project.in(modules / "integrations/cats")
+lazy val cats = project.in(modules / "cats")
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(testSettings)
   .settings(
-    name := "tethys-int-cats",
+    name := "tethys-cats",
     libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-core" % "2.10.0",
     )

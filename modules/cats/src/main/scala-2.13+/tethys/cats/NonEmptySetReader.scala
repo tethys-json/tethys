@@ -1,4 +1,4 @@
-package tethys.integration.cats
+package tethys.cats
 
 import cats.data.NonEmptySet
 import tethys.JsonReader

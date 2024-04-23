@@ -1,4 +1,4 @@
-package tethys.integration.cats.readers
+package tethys.cats.readers
 
 import cats.data._
 import tethys.readers.tokens.TokenIterator
