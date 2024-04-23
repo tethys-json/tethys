@@ -6,8 +6,12 @@ import tethys.commons.TokenNode.obj
 import tethys.commons.{Token, TokenNode}
 import tethys.readers.tokens.QueueIterator
 import tethys.writers.tokens.SimpleTokenWriter.SimpleTokenWriterOps
+import tethys.derivation.Defaults
 
 class DerivationSpec extends AnyFlatSpec with Matchers {
+
+
+
   def read[A: JsonReader](nodes: List[TokenNode]): A = {
     val it = QueueIterator(nodes)
     val res = it.readJson[A].fold(throw _, identity)
@@ -113,5 +117,18 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     }
   }
 
+  it should "correctly read case classes with default parameters" in {
+    object Mod {
+      case class WithOpt(x: Int, y: Option[String] = Some("default")) derives JsonReader
+    }
 
+    read[Mod.WithOpt](obj("x" -> 5)) shouldBe Mod.WithOpt(5)
+  }
+
+  it should "correctly read case classes with default parameters and type arguments" in {
+    case class WithArg[A](x: Int, y: Option[A] = None) derives JsonReader
+
+    read[WithArg[Int]](obj("x" -> 5)) shouldBe WithArg[Int](5)
+    read[WithArg[String]](obj("x" -> 5, "y" -> "lool")) shouldBe WithArg[String](5, Some("lool"))
+  }
 }
