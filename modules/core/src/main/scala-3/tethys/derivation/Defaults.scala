@@ -10,22 +10,36 @@ private[derivation]
 object DefaultsMacro:
   import scala.quoted.*
 
-  def collect[T: Type](using quotes: Quotes): Expr[Map[Int, Any]] =
-    import quotes.reflect.*
-    val typeSymbol = TypeRepr.of[T].typeSymbol
+  def collect[T: Type](using
 
-    val res = typeSymbol.caseFields.zipWithIndex.flatMap {
-      case (sym, idx) if sym.flags.is(Flags.HasDefault) =>
-        val defaultValueMethodSym =
-          typeSymbol.companionClass
-            .declaredMethod(s"$$lessinit$$greater$$default$$${idx + 1}")
-            .headOption
-            .getOrElse(report.errorAndAbort(s"Error while extracting default value for field '${sym.name}'"))
+      Quotes
+  ): Expr[Map[Int, Any]] =
+    import quotes.reflect._
 
-        Some(Expr.ofTuple(Expr(idx) -> Ref(typeSymbol.companionModule).select(defaultValueMethodSym).asExprOf[Any]))
-      case _ =>
-        None
-    }
+    val tpe = TypeRepr.of[T].typeSymbol
+    val terms = tpe.primaryConstructor.paramSymss.flatten
+      .filter(_.isValDef)
+      .zipWithIndex
+      .flatMap { case (field, idx) =>
+        val defaultMethodName = s"$$lessinit$$greater$$default$$${idx + 1}"
+        tpe.companionClass
+          .declaredMethod(defaultMethodName)
+          .headOption
+          .map { defaultMethod =>
+            val callDefault = {
+            val base = Ident(tpe.companionModule.termRef).select(defaultMethod)
+            val tParams = defaultMethod.paramSymss.headOption.filter(_.forall(_.isType))
+              tParams match
+                case Some(tParams) => TypeApply(base, tParams.map(TypeTree.ref))
+                case _             => base
+            }
 
-    '{ Map(${ Varargs(res) }: _*) }
+            defaultMethod.tree match {
+              case tree: DefDef => tree.rhs.getOrElse(callDefault)
+              case _            => callDefault
+            }
+          }
+          .map(x => Expr.ofTuple(Expr(idx) -> x.asExprOf[Any]))
+      }
 
+    '{ Map(${ Varargs(terms) }: _*) }
