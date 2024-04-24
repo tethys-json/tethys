@@ -3,7 +3,7 @@ package tethys.derivation
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 import tethys.commons.TokenNode
-import tethys.{JsonObjectWriter, JsonWriter, StringEnumWriter}
+import tethys.{JsonObjectWriter, JsonWriter, StringEnumJsonWriter, derivation}
 import tethys.derivation.builder.{FieldStyle, WriterBuilder, WriterDerivationConfig}
 import tethys.writers.tokens.SimpleTokenWriter.*
 import tethys.commons.TokenNode.{value as token, *}
@@ -194,28 +194,28 @@ class SemiautoWriterDerivationTest extends AnyFlatSpec with Matchers {
   }
 
   it should "derive writer for simple enum" in {
-    implicit val simpleEnumWriter: JsonWriter[SimpleEnum] = StringEnumWriter.derived
+    implicit val simpleEnumWriter: JsonWriter[SimpleEnum] = StringEnumJsonWriter.derived
     
     SimpleEnum.ONE.asTokenList shouldBe token("ONE")
     SimpleEnum.TWO.asTokenList shouldBe token("TWO")
   }
 
   it should "derive writer for parametrized enum" in {
-    implicit val parametrizedEnumWriter: JsonWriter[ParametrizedEnum] = StringEnumWriter.derived
+    implicit val parametrizedEnumWriter: JsonWriter[ParametrizedEnum] = StringEnumJsonWriter.derived
 
     ParametrizedEnum.ONE.asTokenList shouldBe token("ONE")
     ParametrizedEnum.TWO.asTokenList shouldBe token("TWO")
   }
 
   it should "derive writer with discriminator for simple enum" in {
-    implicit val simpleEnumWriter: JsonWriter[SimpleEnum] = StringEnumWriter.withLabel("__type")
+    implicit val simpleEnumWriter: JsonWriter[SimpleEnum] = StringEnumJsonWriter.withLabel("__type")
 
     SimpleEnum.ONE.asTokenList shouldBe obj("__type" -> "ONE")
     SimpleEnum.TWO.asTokenList shouldBe obj("__type" -> "TWO")
   }
 
   it should "derive writer with discriminator for parametrized enum" in {
-    implicit val simpleEnumWriter: JsonWriter[ParametrizedEnum] = StringEnumWriter.withLabel("__type")
+    implicit val simpleEnumWriter: JsonWriter[ParametrizedEnum] = StringEnumJsonWriter.withLabel("__type")
 
     ParametrizedEnum.ONE.asTokenList shouldBe obj ("__type" -> "ONE")
     ParametrizedEnum.TWO.asTokenList shouldBe obj ("__type" -> "TWO")

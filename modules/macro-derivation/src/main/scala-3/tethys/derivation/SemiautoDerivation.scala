@@ -18,38 +18,47 @@ import scala.annotation.compileTimeOnly
 import scala.annotation.experimental
 
 trait SemiautoDerivation {
-  @deprecated("Use JsonObjectWriter.derived or JsonWriter.derived instead")
+  @deprecated("Use JsonObjectWriter.derived instead")
   inline def jsonWriter[T]: JsonObjectWriter[T] =
-    JsonWriter.derived[T](using scala.compiletime.summonInline[scala.deriving.Mirror.Of[T]])
+    ${ SemiautoDerivation.jsonWriter[T] }
 
+  @deprecated("Use JsonObjectWriter.derived with JsonWriter.configure instead")
   inline def jsonWriter[T](inline description: WriterDescription[T]): JsonObjectWriter[T] =
     ${ SemiautoDerivation.jsonWriterWithDescription[T]('description) }
 
+  @deprecated("Use JsonObjectWriter.derived with JsonWriter.configure instead")
   inline def jsonWriter[T <: Product](inline builder: => WriterBuilder[T]): JsonObjectWriter[T] =
     ${ SemiautoDerivation.jsonWriterWithBuilder[T]('builder) }
 
+  @deprecated("Use JsonObjectWriter.derived with JsonWriter.configure instead")
   inline def jsonWriter[T](inline config: WriterDerivationConfig): JsonObjectWriter[T] =
     ${ SemiautoDerivation.jsonWriterWithConfig[T]('config) }
 
+  @deprecated("Use JsonObjectWriter.derived with JsonWriter.configure instead")
   inline def describe[T <: Product](inline builder: => WriterBuilder[T]): WriterDescription[T] =
     ${ SemiautoDerivation.describeWriter[T]('builder) }
 
   @deprecated("Use JsonReader.derived instead")
   inline def jsonReader[T]: JsonReader[T] =
-    JsonReader.derived[T](using scala.compiletime.summonInline[scala.deriving.Mirror.ProductOf[T]])
+    ${ SemiautoDerivation.jsonReader[T] }
 
+  @deprecated("Use JsonReader.derived and JsonReader.configure instead")
   inline def jsonReader[T](inline description: ReaderDescription[T]): JsonReader[T] =
     ${ SemiautoDerivation.jsonReaderWithDescription[T]('description) }
 
+  @deprecated("Use JsonReader.derived and JsonReader.configure instead")
   inline def jsonReader[T](inline config: ReaderDerivationConfig): JsonReader[T] =
     ${ SemiautoDerivation.jsonReaderWithConfig[T]('config) }
 
+  @deprecated("Use JsonReader.derived and JsonReader.configure instead")
   inline def jsonReader[T <: Product](inline builder: => ReaderBuilder[T]): JsonReader[T] =
     ${ SemiautoDerivation.jsonReaderWithBuilder[T]('builder) }
 
+  @deprecated("Use JsonReader.derived and JsonReader.configure instead")
   inline def describe[T <: Product](inline builder: => ReaderBuilder[T]): ReaderDescription[T] =
     ${ SemiautoDerivation.describeReader[T]('builder) }
 
+  @deprecated
   implicit class ReaderFieldStringOps(val s: String) {
     @compileTimeOnly("ReaderFieldOps.as should be defined in describe block")
     def as[A]: ReaderField[A] = throw new NotDescribedException

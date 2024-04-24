@@ -2,7 +2,7 @@ package tethys.derivation
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
-import tethys.{JsonReader, StringEnumReader, TokenIteratorOps}
+import tethys.{JsonReader, StringEnumJsonReader, TokenIteratorOps}
 import tethys.commons.TokenNode.{value as token, *}
 import tethys.commons.{Token, TokenNode}
 import tethys.derivation.builder.{FieldStyle, ReaderBuilder, ReaderDerivationConfig}
@@ -324,7 +324,7 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
 
 
   it should "derive reader for simple enum" in {
-    implicit val simpleEnumReader: JsonReader[SimpleEnum] = StringEnumReader.derived
+    implicit val simpleEnumReader: JsonReader[SimpleEnum] = StringEnumJsonReader.derived
 
     read[SimpleEnum](
       token(SimpleEnum.ONE.toString)
@@ -336,7 +336,7 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
   }
 
   it should "derive reader for parametrized enum" in {
-    implicit val parametrizedEnumReader: JsonReader[ParametrizedEnum] = StringEnumReader.derived
+    implicit val parametrizedEnumReader: JsonReader[ParametrizedEnum] = StringEnumJsonReader.derived
 
     read[ParametrizedEnum](
       token(ParametrizedEnum.ONE.toString)

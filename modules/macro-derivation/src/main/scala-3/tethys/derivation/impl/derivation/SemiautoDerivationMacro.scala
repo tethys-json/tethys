@@ -45,7 +45,7 @@ class SemiautoDerivationMacro(val quotes: Quotes) extends WriterDerivation with 
           s"""
              |Old Enum derivation is not supported anymore
              |
-             |Use JsonWriter.derived for complex enums like this:
+             |Use JsonObjectWriter.derived for complex enums like this:
              |  enum ComplexEnum:
              |    case A(x: B)
              |    case B
