@@ -23,6 +23,7 @@ class DefaultWritersTest extends AnyFlatSpec {
 
   private val cases: List[(TestDefinition[_], List[TokenNode])] = List[(TestDefinition[_], List[TokenNode])](
     test("1") -> value("1"),
+    test('1') -> value("1"),
     test(1) -> value(1),
     test(1: Short) -> value(1: Short),
     test(1L) -> value(1L),

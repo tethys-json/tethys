@@ -29,6 +29,12 @@ trait AllJsonReaders extends OptionReaders {
     }
   }
 
+  implicit lazy val charReader: JsonReader[Char] = stringReader.mapWithField{ implicit fieldName => {
+      case s if s.length == 1 => s.head
+      case s => ReaderError.wrongJson(s"Expected char value but found: $s")
+    }
+  }
+
   implicit lazy val numberReader: JsonReader[Number] = new JsonReader[Number] {
     override def read(it: TokenIterator)(implicit fieldName: FieldName): Number = {
       if(it.currentToken().isNumberValue) {
