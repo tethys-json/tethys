@@ -11,6 +11,13 @@ import scala.language.higherKinds
 
 private[tethys] trait IterableReaders extends LowPriorityIterableReaders {
 
+  implicit def byteIterableReader[C[X] <: Iterable[X]](implicit
+                                                        cb: CollectionBuilder[Byte, C[Byte]]): JsonReader[C[Byte]] = new TraversableReader[Byte, C] {
+    override protected def appendBuilder(it: TokenIterator, builder: mutable.Builder[Byte, C[Byte]])(implicit fieldName: FieldName): Unit = {
+      builder += PrimitiveReaders.ByteJsonReader.read(it)
+    }
+  }
+
   implicit def shortIterableReader[C[X] <: Iterable[X]](implicit
                                                            cb: CollectionBuilder[Short, C[Short]]): JsonReader[C[Short]] = new TraversableReader[Short, C] {
     override protected def appendBuilder(it: TokenIterator, builder: mutable.Builder[Short, C[Short]])(implicit fieldName: FieldName): Unit = {

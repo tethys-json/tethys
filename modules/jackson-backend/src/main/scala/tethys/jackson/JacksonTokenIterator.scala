@@ -26,6 +26,8 @@ final class JacksonTokenIterator(jsonParser: JsonParser) extends BaseTokenIterat
 
   override def number(): Number = jsonParser.getNumberValue
 
+  override def byte(): Byte = jsonParser.getByteValue
+
   override def short(): Short = jsonParser.getShortValue
 
   override def int(): Int = jsonParser.getIntValue

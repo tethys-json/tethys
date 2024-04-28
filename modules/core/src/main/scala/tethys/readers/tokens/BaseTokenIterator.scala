@@ -62,6 +62,7 @@ trait BaseTokenIterator extends TokenIterator {
     else if(token.isFieldName) FieldNameNode(fieldName()) -> 0
     else if(token.isStringValue) StringValueNode(string()) -> 0
     else if(token.isNumberValue) number() match {
+      case v: java.lang.Byte => ByteValueNode(v) -> 0
       case v: java.lang.Short => ShortValueNode(v) -> 0
       case v: java.lang.Integer => IntValueNode(v) -> 0
       case v: java.lang.Long => LongValueNode(v) -> 0

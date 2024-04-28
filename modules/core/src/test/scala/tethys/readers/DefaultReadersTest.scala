@@ -25,6 +25,7 @@ class DefaultReadersTest extends AnyFlatSpec {
   private val cases: List[(TestDefinition[_], List[TokenNode])] = List[(TestDefinition[_], List[TokenNode])](
     test("1") -> value("1"),
     test(1) -> value(1),
+    test(1: Byte) -> value(1: Byte),
     test(1: Short) -> value(1: Short),
     test(1L) -> value(1L),
     test(1f) -> value(1f),
@@ -41,6 +42,7 @@ class DefaultReadersTest extends AnyFlatSpec {
     test(Option(1), "Option.nonEmpty") -> value(1),
     test(Option.empty[Int], "Option.empty") -> List(NullValueNode) ,
     test(1: java.lang.Integer) -> value(1),
+    test(java.lang.Byte.valueOf(1: Byte)) -> value(1: Byte),
     test(java.lang.Short.valueOf(1: Short)) -> value(1: Short),
     test(1L: java.lang.Long) -> value(1L),
     test(1f: java.lang.Float) -> value(1f),

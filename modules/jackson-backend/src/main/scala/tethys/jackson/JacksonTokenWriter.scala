@@ -34,6 +34,11 @@ class JacksonTokenWriter(jsonGenerator: JsonGenerator) extends TokenWriter {
     this
   }
 
+  override def writeNumber(v: Byte): JacksonTokenWriter.this.type = {
+    jsonGenerator.writeNumber(v)
+    this
+  }
+
   override def writeNumber(v: Short): JacksonTokenWriter.this.type = {
     jsonGenerator.writeNumber(v)
     this

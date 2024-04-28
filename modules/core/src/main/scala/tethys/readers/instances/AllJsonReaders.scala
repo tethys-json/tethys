@@ -41,6 +41,18 @@ trait AllJsonReaders extends OptionReaders {
     }
   }
 
+  implicit lazy val byteReader: JsonReader[Byte] = new JsonReader[Byte] {
+    override def read(it: TokenIterator)(implicit fieldName: FieldName): Byte = {
+      if(it.currentToken().isNumberValue) {
+        val res = it.byte()
+        it.next()
+        res
+      } else {
+        ReaderError.wrongJson(s"Expected byte value but found: ${it.currentToken()}")
+      }
+    }
+  }
+
   implicit lazy val shortReader: JsonReader[Short] = new JsonReader[Short] {
     override def read(it: TokenIterator)(implicit fieldName: FieldName): Short = {
       if(it.currentToken().isNumberValue) {
@@ -106,6 +118,7 @@ trait AllJsonReaders extends OptionReaders {
     case bi: BigInt => BigDecimal(bi)
     case jbd: java.math.BigDecimal => BigDecimal(jbd)
     case jint: java.lang.Integer => BigDecimal(jint)
+    case jbyte: java.lang.Byte => BigDecimal(jbyte.longValue())
     case jshort: java.lang.Short => BigDecimal(jshort.longValue())
     case jlong: java.lang.Long => BigDecimal(jlong)
     case jbi: java.math.BigInteger => BigDecimal(jbi)
@@ -120,6 +133,7 @@ trait AllJsonReaders extends OptionReaders {
     case bd: BigDecimal => bd.toBigInt
     case jbd: java.math.BigDecimal => jbd.toBigInteger
     case jint: java.lang.Integer => BigInt(jint)
+    case jbyte: java.lang.Byte => BigInt(jbyte.longValue())
     case jshort: java.lang.Short => BigInt(jshort.longValue())
     case jlong: java.lang.Long => BigInt(jlong)
     case num => BigInt(num.longValue())
@@ -127,6 +141,7 @@ trait AllJsonReaders extends OptionReaders {
 
 
   implicit lazy val javaBooleanReader: JsonReader[java.lang.Boolean] = booleanReader.map(a => a)
+  implicit lazy val javaByteReader: JsonReader[java.lang.Byte] = byteReader.map(a => a)
   implicit lazy val javaShortReader: JsonReader[java.lang.Short] = shortReader.map(a => a)
   implicit lazy val javaIntReader: JsonReader[java.lang.Integer] = intReader.map(a => a)
   implicit lazy val javaLongReader: JsonReader[java.lang.Long] = longReader.map(a => a)
