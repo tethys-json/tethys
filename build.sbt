@@ -10,7 +10,9 @@ ThisBuild / scalaVersion := scala3
 
 lazy val commonSettings = Seq(
   organization := "com.tethys-json",
-  licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0")),
+  licenses := Seq(
+    "Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0")
+  ),
   homepage := Some(url("https://github.com/tethys-json/tethys")),
   scmInfo := Some(
     ScmInfo(
@@ -44,7 +46,8 @@ lazy val commonSettings = Seq(
 def crossScalaSettings = {
   def addDirsByScalaVersion(path: String): Def.Initialize[Seq[sbt.File]] =
     scalaVersion.zip(baseDirectory) { case (v, base) =>
-      def extraDirs(versionSpecificFolder: String): Seq[sbt.File] = Seq(base / path / versionSpecificFolder)
+      def extraDirs(versionSpecificFolder: String): Seq[sbt.File] =
+        Seq(base / path / versionSpecificFolder)
 
       CrossVersion.partialVersion(v) match {
         case Some((2, y)) if y >= 13 =>
@@ -57,8 +60,12 @@ def crossScalaSettings = {
 
   Seq(
     crossScalaVersions := Seq(scala212, scala213, scala3),
-    Compile / unmanagedSourceDirectories ++= addDirsByScalaVersion("src/main").value,
-    Test / unmanagedSourceDirectories ++= addDirsByScalaVersion("src/test").value
+    Compile / unmanagedSourceDirectories ++= addDirsByScalaVersion(
+      "src/main"
+    ).value,
+    Test / unmanagedSourceDirectories ++= addDirsByScalaVersion(
+      "src/test"
+    ).value
   )
 }
 
@@ -69,13 +76,25 @@ lazy val testSettings = Seq(
   )
 )
 
-lazy val tethys = project.in(file("."))
+lazy val tethys = project
+  .in(file("."))
   .settings(
     publishTo := None,
     crossScalaVersions := Seq.empty,
     commonSettings
   )
-  .aggregate(core, `macro-derivation`, `jackson-211`, `jackson-212`, `jackson-213`, json4s, circe, refined, enumeratum, cats)
+  .aggregate(
+    core,
+    `macro-derivation`,
+    `jackson-211`,
+    `jackson-212`,
+    `jackson-213`,
+    json4s,
+    circe,
+    refined,
+    enumeratum,
+    cats
+  )
 
 lazy val modules = file("modules")
 
@@ -86,7 +105,8 @@ def addScalaReflect(scalaVersion: String): Seq[ModuleID] =
     case _ => Seq.empty
   }
 
-lazy val core = project.in(modules / "core")
+lazy val core = project
+  .in(modules / "core")
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(testSettings)
@@ -95,19 +115,21 @@ lazy val core = project.in(modules / "core")
     libraryDependencies ++= addScalaReflect(scalaVersion.value)
   )
 
-lazy val cats = project.in(modules / "cats")
+lazy val cats = project
+  .in(modules / "cats")
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(testSettings)
   .settings(
     name := "tethys-cats",
     libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-core" % "2.10.0",
+      "org.typelevel" %% "cats-core" % "2.10.0"
     )
   )
   .dependsOn(core)
 
-lazy val `macro-derivation` = project.in(modules / "macro-derivation")
+lazy val `macro-derivation` = project
+  .in(modules / "macro-derivation")
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(testSettings)
@@ -123,7 +145,8 @@ lazy val jacksonSettings = Seq(
   Test / unmanagedResourceDirectories += modules / "jackson-backend" / "src" / "test" / "resources"
 )
 
-lazy val `jackson-211` = project.in(modules / "jackson-211")
+lazy val `jackson-211` = project
+  .in(modules / "jackson-211")
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(jacksonSettings)
@@ -136,7 +159,8 @@ lazy val `jackson-211` = project.in(modules / "jackson-211")
   )
   .dependsOn(core)
 
-lazy val `jackson-212` = project.in(modules / "jackson-212")
+lazy val `jackson-212` = project
+  .in(modules / "jackson-212")
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(jacksonSettings)
@@ -149,7 +173,8 @@ lazy val `jackson-212` = project.in(modules / "jackson-212")
   )
   .dependsOn(core)
 
-lazy val `jackson-213` = project.in(modules / "jackson-213")
+lazy val `jackson-213` = project
+  .in(modules / "jackson-213")
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(jacksonSettings)
@@ -157,12 +182,13 @@ lazy val `jackson-213` = project.in(modules / "jackson-213")
   .settings(
     name := "tethys-jackson213",
     libraryDependencies ++= Seq(
-      "com.fasterxml.jackson.core" % "jackson-core" % "2.13.5"
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.17.1"
     )
   )
   .dependsOn(core)
 
-lazy val circe = project.in(modules / "circe")
+lazy val circe = project
+  .in(modules / "circe")
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(testSettings)
@@ -174,7 +200,8 @@ lazy val circe = project.in(modules / "circe")
   )
   .dependsOn(core, `jackson-212` % Test)
 
-lazy val json4s = project.in(modules / "json4s")
+lazy val json4s = project
+  .in(modules / "json4s")
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(testSettings)
@@ -186,7 +213,8 @@ lazy val json4s = project.in(modules / "json4s")
   )
   .dependsOn(core)
 
-lazy val enumeratum = project.in(modules / "enumeratum")
+lazy val enumeratum = project
+  .in(modules / "enumeratum")
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(testSettings)
@@ -202,7 +230,8 @@ lazy val enumeratum = project.in(modules / "enumeratum")
   )
   .dependsOn(core)
 
-lazy val refined = project.in(modules / "refined")
+lazy val refined = project
+  .in(modules / "refined")
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(testSettings)
@@ -214,7 +243,8 @@ lazy val refined = project.in(modules / "refined")
   )
   .dependsOn(core)
 
-lazy val benchmarks = project.in(modules / "benchmarks")
+lazy val benchmarks = project
+  .in(modules / "benchmarks")
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(
@@ -228,12 +258,12 @@ lazy val benchmarks = project.in(modules / "benchmarks")
       "io.circe" %% "circe-jawn" % "0.14.3",
       "io.circe" %% "circe-jackson210" % "0.14.0",
       "com.typesafe.play" %% "play-json" % "2.10.0-RC7",
-      "org.knowm.xchart" % "xchart" % "3.8.2" exclude("de.erichseifert.vectorgraphics2d", "VectorGraphics2D") withSources()
+      "org.knowm.xchart" % "xchart" % "3.8.2" exclude ("de.erichseifert.vectorgraphics2d", "VectorGraphics2D") withSources ()
     ),
     scalacOptions ++= {
       CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, 13)) => Seq("-Ymacro-annotations")
-        case _ => Seq.empty
+        case _             => Seq.empty
       }
     }
   )
