@@ -13,6 +13,11 @@ import scala.reflect.ClassTag
 
 class DefaultReadersTest extends AnyFlatSpec {
   private val randomUUID = java.util.UUID.randomUUID()
+  private val instantNow = java.time.Instant.now()
+  private val localDateNow = java.time.LocalDate.now()
+  private val localDateTimeNow = java.time.LocalDateTime.now()
+  private val offsetDateTimeNow = java.time.OffsetDateTime.now()
+  private val zonedDateTimeNow = java.time.ZonedDateTime.now()
 
   private def test[A](result: A)(implicit jsonReader: JsonReader[A], ct: ClassTag[A]): TestDefinition[A] = {
     TestDefinition(result, jsonReader, ct.toString())
@@ -36,6 +41,15 @@ class DefaultReadersTest extends AnyFlatSpec {
     test(List[Int](), "Seq.empty") -> arr(),
     test(Map("a" -> 1, "b" -> 2)) -> obj("a" -> 1, "b" -> 2),
     test(Map(randomUUID -> 1),"Map with UUID keys") -> obj(randomUUID.toString -> 1),
+    test(Map(instantNow -> 1), "Map with Instant keys") -> obj(instantNow.toString -> 1),
+    test(Map(localDateNow -> 1), "Map with LocalDate keys") ->
+      obj(localDateNow.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE) -> 1),
+    test(Map(localDateTimeNow -> 1), "Map with LocalDateTime keys") ->
+      obj(localDateTimeNow.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME) -> 1),
+    test(Map(offsetDateTimeNow -> 1), "Map with OffsetDateTime keys") ->
+      obj(offsetDateTimeNow.format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME) -> 1),
+    test(Map(zonedDateTimeNow -> 1), "Map with ZonedDateTime keys") ->
+      obj(zonedDateTimeNow.format(java.time.format.DateTimeFormatter.ISO_ZONED_DATE_TIME) -> 1),
     test(Map(1L -> 1), "Map with Long keys") -> obj("1" -> 1),
     test(Map(1 -> 1), "Map with Int keys") -> obj("1" -> 1),
     test(Option(1), "Option.nonEmpty") -> value(1),
@@ -47,7 +61,12 @@ class DefaultReadersTest extends AnyFlatSpec {
     test(1d: java.lang.Double) -> value(1d),
     test(java.math.BigDecimal.valueOf(1)) -> value(1: BigDecimal),
     test(java.math.BigInteger.valueOf(1)) -> value(1: BigInt),
-    test(randomUUID) -> value(randomUUID.toString)
+    test(randomUUID) -> value(randomUUID.toString),
+    test(instantNow) -> value(instantNow.toString),
+    test(localDateNow) -> value(localDateNow.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)),
+    test(localDateTimeNow) -> value(localDateTimeNow.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME)),
+    test(offsetDateTimeNow) -> value(offsetDateTimeNow.format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME)),
+    test(zonedDateTimeNow) -> value(zonedDateTimeNow.format(java.time.format.DateTimeFormatter.ISO_ZONED_DATE_TIME))
   )
 
   behavior of "Default readers"
