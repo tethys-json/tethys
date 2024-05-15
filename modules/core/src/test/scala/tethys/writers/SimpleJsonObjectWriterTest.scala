@@ -4,7 +4,7 @@ import org.scalatest.matchers.should.Matchers.{value => _, _}
 import org.scalatest.flatspec.AnyFlatSpec
 import tethys.{JsonObjectWriter, JsonWriter}
 import tethys.commons.TokenNode._
-import tethys.writers.SimpleJsonObjectWriterTest.TestData
+import tethys.writers.SimpleJsonObjectWriterTest.{CharData, TestData}
 import tethys.writers.instances.SimpleJsonObjectWriter
 import tethys.writers.tokens.SimpleTokenWriter._
 
@@ -39,10 +39,22 @@ class SimpleJsonObjectWriterTest extends AnyFlatSpec {
       "c" -> false
     )
   }
+
+  it should "write correct object with char field" in {
+    implicit val charWriter: SimpleJsonObjectWriter[CharData] = {
+      JsonWriter.obj[CharData]
+        .addField("c")(_.c)
+    }
+
+    CharData('c').asTokenList shouldBe obj(
+      "c" -> "c"
+    )
+  }
 }
 
 object SimpleJsonObjectWriterTest {
 
   case class TestData(a: Int, b: String)
+  case class CharData(c: Char)
 
 }
