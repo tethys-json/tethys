@@ -8,7 +8,7 @@ import scala.Specializable.Group
 
 package object tethys {
 
-  final val specializations = new Group((Short, Int, Long, Float, Double, Boolean))
+  final val specializations = new Group((Byte, Short, Int, Long, Float, Double, Boolean))
 
   // given
 

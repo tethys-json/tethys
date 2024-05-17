@@ -40,6 +40,9 @@ object TokenNode {
     override val token: Token = NumberValueToken
   }
 
+  case class ByteValueNode(value: Byte) extends TokenNode {
+    override def token: Token = NumberValueToken
+  }
   case class ShortValueNode(value: Short) extends TokenNode {
     override val token: Token = NumberValueToken
   }
@@ -71,6 +74,7 @@ object TokenNode {
 
   def value(v: String): List[TokenNode] = StringValueNode(v) :: Nil
   def value(v: Boolean): List[TokenNode] = BooleanValueNode(v) :: Nil
+  def value(v: Byte): List[TokenNode] = ByteValueNode(v) :: Nil
   def value(v: Short): List[TokenNode] = ShortValueNode(v) :: Nil
   def value(v: Int): List[TokenNode] = IntValueNode(v) :: Nil
   def value(v: Long): List[TokenNode] = LongValueNode(v) :: Nil
@@ -85,6 +89,7 @@ object TokenNode {
     case v: TokenNode => v :: Nil
     case nodes: List[_] => nodes.flatMap(anyToTokens)
     case v: String => value(v)
+    case v: Byte => value(v)
     case v: Short => value(v)
     case v: Int => value(v)
     case v: Long => value(v)
@@ -115,6 +120,7 @@ object TokenNode {
           else if (token.isFieldName) FieldNameNode(iterator.fieldName())
           else if (token.isStringValue) StringValueNode(iterator.string())
           else if (token.isNumberValue) iterator.number() match {
+            case v: java.lang.Byte => ByteValueNode(v)
             case v: java.lang.Short => ShortValueNode(v)
             case v: java.lang.Integer => IntValueNode(v)
             case v: java.lang.Long => LongValueNode(v)

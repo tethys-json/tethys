@@ -13,6 +13,8 @@ trait TokenWriter {
 
   def writeString(v: String): this.type
 
+  def writeNumber(v: Byte): this.type
+
   def writeNumber(v: Short): this.type
 
   def writeNumber(v: Int): this.type
@@ -30,6 +32,7 @@ trait TokenWriter {
   def writeRawNumber(n: Number): this.type = n match {
     case jbd: java.math.BigDecimal => writeNumber(BigDecimal(jbd))
     case jint: java.lang.Integer => writeNumber(jint.intValue())
+    case jbyte: java.lang.Byte => writeNumber(jbyte.longValue())
     case jshort: java.lang.Short => writeNumber(jshort.longValue())
     case jlong: java.lang.Long => writeNumber(jlong.longValue())
     case jbi: java.math.BigInteger => writeNumber(BigInt(jbi))
