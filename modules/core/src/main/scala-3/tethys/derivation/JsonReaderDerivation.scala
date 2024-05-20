@@ -40,6 +40,7 @@ trait JsonReaderDerivation extends JsonReaderConfiguration:
 
   private inline def deriveJsonReaderForProduct[A](inline config: JsonReader.ProductConfig[A])(using mirror: Mirror.ProductOf[A]): JsonReader[A] =
     new JsonReader[A]:
+      given JsonReader[A] = this
       lazy val configuration: JsonReaderProductConfigParsed = Derivation.parseJsonReaderProductConfig[A](config)
 
       def read(it: TokenIterator)(implicit fieldName: FieldName) =
