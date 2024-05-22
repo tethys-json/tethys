@@ -17,7 +17,7 @@ Add dependencies to your `build.sbt`
 val tethysVersion = "latest version in badge"
 libraryDependencies ++= Seq(
   "com.tethys-json" %% "tethys-core" % tethysVersion,
-  "com.tethys-json" %% "tethys-jackson" % tethysVersion,
+  "com.tethys-json" %% "tethys-jackson213" % tethysVersion,
   "com.tethys-json" %% "tethys-derivation" % tethysVersion
 )
 ```
