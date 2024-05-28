@@ -157,4 +157,14 @@ trait AllJsonReaders extends OptionReaders {
   implicit lazy val javaBigIntegerReader: JsonReader[java.math.BigInteger] = bigIntReader.map(_.bigInteger)
   implicit lazy val javaUUIDReader: JsonReader[java.util.UUID] = stringReader.map(java.util.UUID.fromString(_))
 
+  implicit lazy val javaInstantReader: JsonReader[java.time.Instant] = stringReader.map(java.time.Instant.parse)
+  implicit lazy val javaLocalDateReader: JsonReader[java.time.LocalDate] =
+    stringReader.map(java.time.LocalDate.parse(_, java.time.format.DateTimeFormatter.ISO_LOCAL_DATE))
+  implicit lazy val javaLocalDateTimeReader: JsonReader[java.time.LocalDateTime] =
+    stringReader.map(java.time.LocalDateTime.parse(_, java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+  implicit lazy val javaOffsetDateTimeReader: JsonReader[java.time.OffsetDateTime] =
+    stringReader.map(java.time.OffsetDateTime.parse(_, java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+  implicit lazy val javaZonedDateTimeReader: JsonReader[java.time.ZonedDateTime] =
+    stringReader.map(java.time.ZonedDateTime.parse(_, java.time.format.DateTimeFormatter.ISO_ZONED_DATE_TIME))
+
 }
