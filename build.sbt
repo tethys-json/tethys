@@ -4,7 +4,7 @@ lazy val scala213 = "2.13.12"
 Return to use a stable version when 'scala.quoted.Quotes.reflectModuleSymbol.newClass'
 and 'scala.quoted.Quotes.reflectModule.ClassDef.apply' are no longer experimental methods
  */
-lazy val scala3 = "3.3.0"
+lazy val scala3 = "3.3.3"
 
 ThisBuild / scalaVersion := scala3
 
