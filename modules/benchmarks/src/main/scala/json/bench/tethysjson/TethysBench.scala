@@ -11,8 +11,8 @@ import json.bench.{DataReader, DataWriter}
   */
 object TethysBench {
 
-  implicit val dataWriter: JsonWriter[Data] = jsonWriter[Data]
-  implicit val dataReader: JsonReader[Data] = jsonReader[Data]
+  implicit val dataWriter: JsonWriter[Data] = JsonWriter.derived[Data]
+  implicit val dataReader: JsonReader[Data] = JsonReader.derived[Data]
 
   object TethysJacksonDataProcessor extends DataWriter with DataReader {
 
