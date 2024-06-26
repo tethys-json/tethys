@@ -41,7 +41,8 @@ trait ReaderDerivation
                                  tpe: Type,
                                  jsonName: String,
                                  value: TermName,
-                                 isInitialized: TermName) extends ReaderField
+                                 isInitialized: TermName,
+                                 defaultValue: Option[Tree]) extends ReaderField
 
   private case class ExtractedField(name: String,
                                     tpe: Type,
@@ -80,7 +81,8 @@ trait ReaderDerivation
           tpe = field.tpe,
           jsonName = field.name,
           value = TermName(c.freshName(field.name + "Value")),
-          isInitialized = TermName(c.freshName(field.name + "Init"))
+          isInitialized = TermName(c.freshName(field.name + "Init")),
+          defaultValue = field.defaultValue
         )
       })
 
@@ -275,17 +277,20 @@ trait ReaderDerivation
   }
 
   private def allocateVariables(readerFields: List[ReaderField], typeDefaultValues: List[(Type, TermName)]): List[Tree] = {
-    val possibleValues: List[(TermName, Type)] = readerFields.flatMap {
+    val possibleValues: List[(TermName, Type, Option[Tree])] = readerFields.flatMap {
       case f: SimpleField =>
-        List(f.value -> f.tpe)
+        List((f.value, f.tpe, f.defaultValue))
       case f: ExtractedField =>
-        (f.value, f.tpe) :: f.args.map(arg => arg.value -> arg.field.tpe)
+        (f.value, f.tpe, None) :: f.args.map(arg => (arg.value, arg.field.tpe, None))
       case f: FromExtractedReader =>
-        (f.value, f.tpe) :: f.args.map(arg => arg.value -> arg.field.tpe)
+        ((f.value, f.tpe, None)) :: f.args.map(arg => (arg.value, arg.field.tpe, None))
     }
 
     val (_, values) = possibleValues.foldLeft(List[TermName](), List[Tree]()) {
-      case ((allocated, trees), (value, tpe)) if !allocated.contains(value) =>
+      case ((allocated, trees), (value, tpe, Some(defaultTree))) =>
+        val tree = q"var $value: $tpe = $defaultTree"
+        (value :: allocated, tree :: trees)
+      case ((allocated, trees), (value, tpe, defaultTreeOpt)) if !allocated.contains(value) =>
         val tree = q"var $value: $tpe = ${typeDefaultValues.find(_._1 =:= tpe).get._2}"
         (value :: allocated, tree :: trees)
 
@@ -295,14 +300,14 @@ trait ReaderDerivation
     val inits = readerFields
       .flatMap {
         case f: SimpleField =>
-          List(f.isInitialized)
+          List((f.isInitialized, f.defaultValue.isDefined))
         case f: ExtractedField =>
-          f.isInitialized :: f.args.map(_.isInitialized)
+          (f.isInitialized, false) :: f.args.map(a => (a.isInitialized, false))
         case f: FromExtractedReader =>
-          f.isInitialized :: f.args.map(_.isInitialized)
+          (f.isInitialized, false) :: f.args.map(a => (a.isInitialized, false))
       }
       .distinct
-      .map(term => q"var $term: Boolean = false")
+      .map{ case (term, initialized) => q"var $term: Boolean = $initialized"}
 
     val tempIterators = readerFields.collect {
       case f: FromExtractedReader =>
