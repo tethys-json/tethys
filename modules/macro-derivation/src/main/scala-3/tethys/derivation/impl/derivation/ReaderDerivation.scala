@@ -147,6 +147,10 @@ trait ReaderDerivation extends ReaderBuilderCommons {
             }
             it.nextToken()
 
+            $defaultValuesExpr.foreach { case (name, tpeName, defaultValue) =>
+              readFields.getOrElseUpdate(name, MutableMap(tpeName -> defaultValue))
+            }
+
             $possiblyNotInitializedExpr.foreach { case (name, tpeName, defaultValue) =>
               readFields.getOrElseUpdate(name, MutableMap(tpeName -> defaultValue))
             }
@@ -232,9 +236,6 @@ trait ReaderDerivation extends ReaderBuilderCommons {
               Expr.block(res, '{ () })
             }
 
-            $defaultValuesExpr.foreach { case (name, defaultValue) =>
-              resultFields.getOrElseUpdate(name, defaultValue)
-            }
 
             val notReadAfterExtractingFields: Set[String] =
               Set.from(${ Varargs(classFields.map(field => Expr(field.name))) }) -- resultFields.keySet
@@ -377,10 +378,10 @@ trait ReaderDerivation extends ReaderBuilderCommons {
     (readersExpr, fieldsWithoutReadersExpr)
   }
 
-  private def allocateDefaultValuesFromDefinition[T: Type]: Expr[Map[String, Any]] = {
+  private def allocateDefaultValuesFromDefinition[T: Type]: Expr[List[(String, String, Any)]] = {
     val tpe = TypeRepr.of[T]
 
-    val res = tpe.typeSymbol.caseFields.flatMap {
+    val res = tpe.typeSymbol.caseFields.collect {
       case sym if sym.flags.is(Flags.HasDefault) =>
         val comp = sym.owner.companionClass
         val mod = Ref(sym.owner.companionModule)
@@ -397,11 +398,14 @@ trait ReaderDerivation extends ReaderBuilderCommons {
             )
 
         val defaultValueTerm = mod.select(defaultValueMethodSym)
-        Some(Expr.ofTuple(Expr(sym.name) -> defaultValueTerm.asExprOf[Any]))
-      case _ => None
+        val appliedTypes = if tpe.typeArgs.nonEmpty then defaultValueTerm.appliedToTypes(tpe.typeArgs) else defaultValueTerm
+        Expr.ofTuple(
+          Expr(sym.name),
+          Expr(tpe.memberType(sym).getDealiasFullName),
+          appliedTypes.asExprOf[Any]
+        )
     }
-
-    '{ Map(${ Varargs(res) }: _*) }
+    Expr.ofList(res)
   }
 
   private def allocateTypeReadersInfos(readerFields: List[ReaderField]): List[(TypeRepr, Term)] = {

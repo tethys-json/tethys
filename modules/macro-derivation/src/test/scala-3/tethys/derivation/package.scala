@@ -33,4 +33,6 @@ package object derivation {
     case ONE extends ParametrizedEnum(1)
     case TWO extends ParametrizedEnum(2)
   }
+
+  case class DefaultField[T](value: T, default: Boolean = true)
 }

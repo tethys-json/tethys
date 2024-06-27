@@ -352,4 +352,23 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
       token(ParametrizedEnum.TWO.toString)
     ) shouldBe ParametrizedEnum.TWO
   }
+
+  it should "derive reader for class with default params" in {
+    implicit val reader: JsonReader[DefaultField[Int]] = jsonReader[DefaultField[Int]]
+
+    read[DefaultField[Int]](obj(
+      "value" -> 1,
+      "default" -> false
+    )) shouldBe DefaultField[Int](
+      value = 1,
+      default = false
+    )
+
+    read[DefaultField[Int]](obj(
+      "value" -> 1
+    )) shouldBe DefaultField[Int](
+      value = 1,
+      default = true
+    )
+  }
 }
