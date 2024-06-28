@@ -16,7 +16,11 @@ trait JsonWriter[@specialized(specializations) A] {
   def write(value: A, tokenWriter: TokenWriter): Unit
 
   def contramap[B](fun: B => A): JsonWriter[B] = new JsonWriter[B] {
-    override def write(name: String, value: B, tokenWriter: TokenWriter): Unit = {
+    override def write(
+        name: String,
+        value: B,
+        tokenWriter: TokenWriter
+    ): Unit = {
       self.write(name, fun(value), tokenWriter)
     }
 
