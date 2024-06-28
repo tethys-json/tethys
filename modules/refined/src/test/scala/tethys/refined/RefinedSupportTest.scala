@@ -133,10 +133,15 @@ class RefinedSupportTest extends AnyFlatSpec with Matchers {
   it should "work with refined strings" in {
     type Limits = Map[String Refined IPv4, Int]
 
-    val limits: Limits = Map(refineV[IPv4].unsafeFrom("192.168.0.1") -> 1, refineV[IPv4].unsafeFrom("192.168.1.1") -> 2)
+    val limits: Limits = Map(
+      refineV[IPv4].unsafeFrom("192.168.0.1") -> 1,
+      refineV[IPv4].unsafeFrom("192.168.1.1") -> 2
+    )
 
     obj("192.168.0.1" -> 1, "192.168.1.1" -> 2).tokensAs[Limits] shouldBe limits
 
-    assertThrows[ReaderError](obj("192.168.0.1" -> 1, "192.168.256.1" -> 2).tokensAs[Limits])
+    assertThrows[ReaderError](
+      obj("192.168.0.1" -> 1, "192.168.256.1" -> 2).tokensAs[Limits]
+    )
   }
 }
