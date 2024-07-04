@@ -3,8 +3,7 @@ package tethys.derivation
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 import tethys.commons.TokenNode
-import tethys.{JsonObjectWriter, JsonWriter, StringEnumJsonWriter, derivation}
-import tethys.derivation.builder.{FieldStyle, WriterBuilder, WriterDerivationConfig}
+import tethys.*
 import tethys.writers.tokens.SimpleTokenWriter.*
 import tethys.commons.TokenNode.{value as token, *}
 import tethys.derivation.ADTWithType.{ADTWithTypeA, ADTWithTypeB}
@@ -17,7 +16,7 @@ class SemiautoWriterDerivationTest extends AnyFlatSpec with Matchers {
   behavior of "semiauto derivation"
   it should "generate proper writer from WriterDescription" in {
     def freeVariable: String = "e"
-    implicit val dWriter: JsonWriter[D] = jsonWriter[D](WriterDerivationConfig.withFieldStyle(FieldStyle.UpperCase))
+    implicit val dWriter: JsonWriter[D] = jsonWriter[D](WriterBuilder[D].fieldStyle(FieldStyle.UpperCase))
 
     implicit val testWriter: JsonWriter[JsonTreeTestData] = jsonWriter {
       WriterBuilder[JsonTreeTestData]
@@ -39,15 +38,13 @@ class SemiautoWriterDerivationTest extends AnyFlatSpec with Matchers {
 
   it should "derive writer for update partial" in {
     implicit val partialWriter: JsonWriter[D] = jsonWriter {
-      describe {
-        WriterBuilder[D]
-          .updatePartial(_.a) {
-            case 1 => "uno!"
-            case 2 => 1
-            case v if v > 0 => v * 2
-            case _ => throw new IllegalArgumentException("Wrong value!")
-          }
-      }
+      WriterBuilder[D]
+        .updatePartial(_.a) {
+          case 1 => "uno!"
+          case 2 => 1
+          case v if v > 0 => v * 2
+          case _ => throw new IllegalArgumentException("Wrong value!")
+        }
     }
 
     D(1).asTokenList shouldBe obj("a" -> "uno!")
@@ -61,15 +58,13 @@ class SemiautoWriterDerivationTest extends AnyFlatSpec with Matchers {
 
   it should "derive writer for update partial from root" in {
     implicit val partialWriter: JsonWriter[D] = jsonWriter {
-      describe {
-        WriterBuilder[D]
-          .updatePartial(_.a).fromRoot {
-            case d if d.a == 1 => "uno!"
-            case d if d.a == 2 => 1
-            case d if d.a > 0 => d.a * 2
-            case _ => throw new IllegalArgumentException("Wrong value!")
-          }
-      }
+      WriterBuilder[D]
+        .updatePartial(_.a).fromRoot {
+          case d if d.a == 1 => "uno!"
+          case d if d.a == 2 => 1
+          case d if d.a > 0 => d.a * 2
+          case _ => throw new IllegalArgumentException("Wrong value!")
+        }
     }
 
     D(1).asTokenList shouldBe obj("a" -> "uno!")
@@ -181,16 +176,19 @@ class SemiautoWriterDerivationTest extends AnyFlatSpec with Matchers {
     implicit val justObjectWriter: JsonObjectWriter[JustObject.type] = JsonWriter.obj
     implicit val subChildWriter: JsonObjectWriter[SubChild] = jsonWriter[SubChild]
 
-    implicit val sealedWriter: JsonWriter[SimpleSealedType] = jsonWriter[SimpleSealedType](
-      WriterDerivationConfig.empty.withDiscriminator("__type")
-    )
+    implicit val sealedWriter: JsonWriter[SimpleSealedType] = {
+      inline given JsonConfig[SimpleSealedType] =
+        JsonConfig[SimpleSealedType].discriminateBy(_.__type)
+
+      jsonWriter[SimpleSealedType]
+    }
 
     def write(simpleSealedType: SimpleSealedType): List[TokenNode] = simpleSealedType.asTokenList
 
-    write(CaseClass(1)) shouldBe obj("a" -> 1, "__type" -> "CaseClass")
-    write(new SimpleClass(2)) shouldBe obj("b" -> 2, "__type" -> "SimpleClass")
+    write(CaseClass(1)) shouldBe obj("__type" -> "CaseClass", "a" -> 1)
+    write(new SimpleClass(2)) shouldBe obj("__type" -> "SimpleClass", "b" -> 2)
     write(JustObject) shouldBe obj("__type" -> "JustObject")
-    write(SubChild(3)) shouldBe obj("c" -> 3, "__type" -> "SubChild")
+    write(SubChild(3)) shouldBe obj("__type" -> "SubChild", "c" -> 3)
   }
 
   it should "derive writer for simple enum" in {

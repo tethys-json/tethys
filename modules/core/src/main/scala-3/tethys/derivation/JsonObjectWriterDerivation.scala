@@ -1,16 +1,16 @@
 package tethys.derivation
 
-import tethys.{JsonConfig, JsonObjectWriter, JsonWriter}
+import tethys.{JsonConfig, JsonObjectWriter, JsonWriter, WriterBuilder}
 import tethys.writers.tokens.TokenWriter
 
 import scala.deriving.Mirror
 import scala.compiletime.{constValueTuple, erasedValue, summonFrom, summonInline}
 
-private[tethys] trait JsonObjectWriterDerivation extends JsonWriterConfiguration:
+private[tethys] trait JsonObjectWriterDerivation:
 
-  inline def derived[A](inline config: JsonWriter.ProductConfig[A])(using mirror: Mirror.ProductOf[A]) =
+  inline def derived[A](inline config: WriterBuilder[A])(using mirror: Mirror.ProductOf[A]) =
     new JsonObjectWriter[A]:
-      lazy val configuration: JsonWriterProductConfigParsed[A] = Derivation.parseJsonWriterProductConfig[A](config)
+      lazy val configuration: WriterBuilderParsed[A] = Derivation.parseWriterBuilder[A](config)
 
       override def writeValues(value: A, tokenWriter: TokenWriter): Unit =
         configuration.fields.foreach { field =>
@@ -19,7 +19,7 @@ private[tethys] trait JsonObjectWriterDerivation extends JsonWriterConfiguration
 
   inline def derived[A](inline config: JsonConfig[A])(using m: Mirror.SumOf[A]) =
     new JsonObjectWriter[A]:
-      lazy val writers = summonJsonWritersForSumArray[A, m.MirroredElemTypes]
+      lazy val writers = summonJsonWritersForSum[A, m.MirroredElemTypes].toArray
 
       override def writeValues(value: A, tokenWriter: TokenWriter): Unit =
         Derivation.writeDiscriminator[A](config)(value, tokenWriter)
@@ -30,10 +30,10 @@ private[tethys] trait JsonObjectWriterDerivation extends JsonWriterConfiguration
     inline mirror match
       case given Mirror.ProductOf[A] =>
         derived(
-          summonFrom[JsonWriter.ProductConfig[A]] {
-            case config: JsonWriter.ProductConfig[A] =>
+          summonFrom[WriterBuilder[A]] {
+            case config: WriterBuilder[A] =>
               config
-            case _ => JsonWriter.configure[A]
+            case _ => WriterBuilder[A]
           }
         )
 
@@ -43,12 +43,9 @@ private[tethys] trait JsonObjectWriterDerivation extends JsonWriterConfiguration
             case config: JsonConfig[A] =>
               config
             case _ => 
-              JsonConfig.configure[A]
+              JsonConfig[A]
           }
         )
-
-  private inline def summonJsonWritersForSumArray[T, Elems <: Tuple]: Array[JsonObjectWriter[?]] =
-    summonJsonWritersForSum[T, Elems].toArray
 
   private inline def summonJsonWritersForSum[T, Elems <: Tuple]: List[JsonObjectWriter[?]] =
     inline erasedValue[Elems] match

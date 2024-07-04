@@ -1,7 +1,9 @@
 package tethys.derivation.builder
 
+import tethys.FieldStyle
 import tethys.derivation.builder.WriterDescription.BuilderOperation
 
+@deprecated("Use WriterBuilder[A] instead")
 case class WriterDerivationConfig(fieldStyle: Option[FieldStyle], discriminator: Option[String] = None) {
   def withFieldStyle(fieldStyle: FieldStyle): WriterDerivationConfig = this.copy(fieldStyle = Some(fieldStyle))
   def withDiscriminator(discriminator: String): WriterDerivationConfig = this.copy(discriminator = Some(discriminator))
@@ -13,6 +15,7 @@ object WriterDerivationConfig {
   def withDiscriminator(discriminator: String): WriterDerivationConfig = empty.copy(discriminator = Some(discriminator))
 }
 
+@deprecated("Use WriterBuilder[A] instead")
 case class WriterDescription[A](config: WriterDerivationConfig, operations: Seq[BuilderOperation[A]])
 
 object WriterDescription {

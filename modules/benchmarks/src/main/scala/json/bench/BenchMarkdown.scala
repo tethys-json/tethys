@@ -49,7 +49,6 @@ object BenchMarkdown {
       else Left(JsonReader.stringReader.read(it))
     }
   }
-
   implicit val primaryMetricsReader: JsonReader[PrimaryMetrics] = jsonReader[PrimaryMetrics]
   implicit val benchmarkReader: JsonReader[Benchmark] = jsonReader[Benchmark]
 

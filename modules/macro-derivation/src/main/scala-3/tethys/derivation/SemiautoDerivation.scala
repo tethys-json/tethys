@@ -1,113 +1,83 @@
 package tethys.derivation
 
-import tethys.{JsonObjectWriter, JsonReader, JsonWriter}
-import tethys.derivation.builder.{
-  NotDescribedException,
-  ReaderBuilder,
-  ReaderDerivationConfig,
-  ReaderDescription,
-  ReaderField,
-  WriterBuilder,
-  WriterDerivationConfig,
-  WriterDescription
-}
-import tethys.derivation.impl.builder.{ReaderDescriptionMacro, WriterDescriptionMacro}
-import tethys.derivation.impl.derivation.SemiautoDerivationMacro
-import scala.quoted.*
-import scala.annotation.compileTimeOnly
-import scala.annotation.experimental
+import tethys.{JsonObjectWriter, JsonReader, ReaderBuilder, WriterBuilder}
+import tethys.derivation.builder.{ReaderDerivationConfig, ReaderDescription, WriterDerivationConfig, WriterDescription}
+
+import scala.deriving.Mirror
 
 trait SemiautoDerivation {
+
+  private inline def failWriterDerivationForEnum[T]: Unit =
+    inline if EnumCompanion.isEnum[T] then
+      scala.compiletime.error(
+        """
+           Old Enum derivation is not supported anymore
+
+           Use JsonObjectWriter.derived for complex enums like this:
+             enum ComplexEnum:
+               case A(x: B)
+               case B
+
+           Use StringEnumWriter.derived or OrdinalEnumWriter.derived for basic enums like this:
+             enum BasicEnum:
+               case A, B
+
+           Use StringEnumWriter.withLabel("__type") or OrdinalEnumWriter.withLabel("__type") if you want write an object for BasicEnum like
+             { "__type": A }
+           """
+      )
+
+  private inline def failReaderDerivationForEnum[T]: Unit =
+    inline if EnumCompanion.isEnum[T] then
+      scala.compiletime.error(
+        """
+           Old Enum derivation is not supported anymore
+
+           Use StringEnumReader.derived or OrdinalEnumReader.derived for basic enums like this:
+             enum BasicEnum:
+               case A, B
+           """
+      )
+
+
+
   @deprecated("Use JsonObjectWriter.derived instead")
-  inline def jsonWriter[T]: JsonObjectWriter[T] =
-    ${ SemiautoDerivation.jsonWriter[T] }
+  inline def jsonWriter[T](using mirror: Mirror.Of[T]): JsonObjectWriter[T] =
+    failWriterDerivationForEnum[T]
+    JsonObjectWriter.derived[T]
 
-  @deprecated("Use JsonObjectWriter.derived with JsonWriter.configure instead")
   inline def jsonWriter[T](inline description: WriterDescription[T]): JsonObjectWriter[T] =
-    ${ SemiautoDerivation.jsonWriterWithDescription[T]('description) }
+    scala.compiletime.error("Use WriterBuilder[T] directly")
 
-  @deprecated("Use JsonObjectWriter.derived with JsonWriter.configure instead")
-  inline def jsonWriter[T <: Product](inline builder: => WriterBuilder[T]): JsonObjectWriter[T] =
-    ${ SemiautoDerivation.jsonWriterWithBuilder[T]('builder) }
+  @deprecated("Use JsonObjectWriter.derived or derives instead")
+  inline def jsonWriter[T](inline builder: WriterBuilder[T])(using mirror: Mirror.ProductOf[T]): JsonObjectWriter[T] =
+    failWriterDerivationForEnum[T]
+    JsonObjectWriter.derived[T](builder)
 
-  @deprecated("Use JsonObjectWriter.derived with JsonWriter.configure instead")
   inline def jsonWriter[T](inline config: WriterDerivationConfig): JsonObjectWriter[T] =
-    ${ SemiautoDerivation.jsonWriterWithConfig[T]('config) }
+    scala.compiletime.error("Use WriterBuilder[T] instead")
 
-  @deprecated("Use JsonObjectWriter.derived with JsonWriter.configure instead")
-  inline def describe[T <: Product](inline builder: => WriterBuilder[T]): WriterDescription[T] =
-    ${ SemiautoDerivation.describeWriter[T]('builder) }
+  @deprecated("Use WriterBuilder[T] directly")
+  inline def describe[T <: Product](inline builder: WriterBuilder[T]): WriterBuilder[T] =
+    scala.compiletime.error("Use WriterBuilder[T] directly")
 
   @deprecated("Use JsonReader.derived instead")
-  inline def jsonReader[T]: JsonReader[T] =
-    ${ SemiautoDerivation.jsonReader[T] }
+  inline def jsonReader[T](using mirror: Mirror.Of[T]): JsonReader[T] =
+    failReaderDerivationForEnum[T]
+    JsonReader.derived[T]
 
-  @deprecated("Use JsonReader.derived and JsonReader.configure instead")
   inline def jsonReader[T](inline description: ReaderDescription[T]): JsonReader[T] =
-    ${ SemiautoDerivation.jsonReaderWithDescription[T]('description) }
+    scala.compiletime.error("Use ReaderBuilder[T] instead")
 
-  @deprecated("Use JsonReader.derived and JsonReader.configure instead")
   inline def jsonReader[T](inline config: ReaderDerivationConfig): JsonReader[T] =
-    ${ SemiautoDerivation.jsonReaderWithConfig[T]('config) }
+    scala.compiletime.error("Use ReaderBuilder[T] instead")
 
-  @deprecated("Use JsonReader.derived and JsonReader.configure instead")
-  inline def jsonReader[T <: Product](inline builder: => ReaderBuilder[T]): JsonReader[T] =
-    ${ SemiautoDerivation.jsonReaderWithBuilder[T]('builder) }
+  @deprecated("Use JsonReader.derived and derives instead")
+  inline def jsonReader[T](inline builder: ReaderBuilder[T])(using mirror: Mirror.ProductOf[T]): JsonReader[T] =
+    failReaderDerivationForEnum[T]
+    JsonReader.derived(builder)
 
-  @deprecated("Use JsonReader.derived and JsonReader.configure instead")
-  inline def describe[T <: Product](inline builder: => ReaderBuilder[T]): ReaderDescription[T] =
-    ${ SemiautoDerivation.describeReader[T]('builder) }
-
-  @deprecated
-  implicit class ReaderFieldStringOps(val s: String) {
-    @compileTimeOnly("ReaderFieldOps.as should be defined in describe block")
-    def as[A]: ReaderField[A] = throw new NotDescribedException
-  }
-
-  implicit class ReaderFieldSymbolOps(val s: Symbol) {
-    @compileTimeOnly("ReaderFieldOps.as should be defined in describe block")
-    def as[A]: ReaderField[A] = throw new NotDescribedException
-  }
-}
-
-private[this] object SemiautoDerivation {
-  @experimental
-  def jsonWriter[T: Type](using Quotes): Expr[JsonObjectWriter[T]] =
-    new SemiautoDerivationMacro(quotes).simpleJsonWriter[T]
-
-  @experimental
-  def jsonWriterWithConfig[T: Type](config: Expr[WriterDerivationConfig])(using Quotes): Expr[JsonObjectWriter[T]] =
-    new SemiautoDerivationMacro(quotes).jsonWriterWithConfig[T](config)
-
-  @experimental
-  def jsonWriterWithDescription[T: Type](description: Expr[WriterDescription[T]])(using
-      Quotes
-  ): Expr[JsonObjectWriter[T]] =
-    new SemiautoDerivationMacro(quotes).jsonWriterWithWriterDescription[T](description)
-
-  @experimental
-  def jsonWriterWithBuilder[T <: Product: Type](builder: Expr[WriterBuilder[T]])(using
-      Quotes
-  ): Expr[JsonObjectWriter[T]] =
-    new SemiautoDerivationMacro(quotes).jsonWriterWithBuilder[T](builder)
-
-  @experimental
-  def describeWriter[T <: Product: Type](builder: Expr[WriterBuilder[T]])(using Quotes): Expr[WriterDescription[T]] =
-    new WriterDescriptionMacro(quotes).simpleDescription[T](builder)
-
-  @experimental
-  def jsonReader[T: Type](using Quotes): Expr[JsonReader[T]] =
-    new SemiautoDerivationMacro(quotes).simpleJsonReader[T]
-
-  def jsonReaderWithConfig[T: Type](config: Expr[ReaderDerivationConfig])(using Quotes): Expr[JsonReader[T]] =
-    new SemiautoDerivationMacro(quotes).jsonReaderWithConfig[T](config)
-
-  def jsonReaderWithDescription[T: Type](description: Expr[ReaderDescription[T]])(using Quotes): Expr[JsonReader[T]] =
-    new SemiautoDerivationMacro(quotes).jsonReaderWithReaderDescription[T](description)
-
-  def jsonReaderWithBuilder[T <: Product: Type](builder: Expr[ReaderBuilder[T]])(using Quotes): Expr[JsonReader[T]] =
-    new SemiautoDerivationMacro(quotes).jsonReaderWithBuilder[T](builder)
-
-  def describeReader[T <: Product: Type](builder: Expr[ReaderBuilder[T]])(using Quotes): Expr[ReaderDescription[T]] =
-    new ReaderDescriptionMacro(quotes).simpleDescription[T](builder)
+  @deprecated("Use ReaderBuilder[T] directly")
+  inline def describe[T <: Product](inline builder: ReaderBuilder[T]): ReaderBuilder[T] =
+    builder
 }

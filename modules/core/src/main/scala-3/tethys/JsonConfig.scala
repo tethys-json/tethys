@@ -6,5 +6,5 @@ sealed trait JsonConfig[A]:
 
 object JsonConfig:
   @scala.annotation.compileTimeOnly("Config must be an inlined given or provided directly to 'derived'")
-  def configure[A]: JsonConfig[A] =
+  def apply[A]: JsonConfig[A] =
     throw IllegalStateException("Config must be an inlined given or provided directly to 'derived'")

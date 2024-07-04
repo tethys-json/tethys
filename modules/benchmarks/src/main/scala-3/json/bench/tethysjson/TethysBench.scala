@@ -1,10 +1,9 @@
 package json.bench.tethysjson
 
 import json.bench.model.Data
-import tethys._
-import tethys.jackson._
-import tethys.derivation.semiauto._
 import json.bench.{DataReader, DataWriter}
+import tethys.*
+import tethys.jackson.*
 
 /**
   * Created by eld0727 on 21.04.17.

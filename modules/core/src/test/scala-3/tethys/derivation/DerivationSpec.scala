@@ -25,8 +25,6 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
 
     case class Wrapper(person: Person) derives JsonObjectWriter, JsonReader
 
-    Derivation.show(JsonWriter.derived[Wrapper])
-
     Person(2, "Peter", None).asTokenList shouldBe obj(
       "id" -> 2,
       "name" -> "Peter",
@@ -142,7 +140,7 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     sealed trait Choose(val discriminator: Disc) derives JsonObjectWriter, JsonReader
 
     object Choose:
-      inline given JsonConfig[Choose] = JsonConfig.configure[Choose].discriminateBy(_.discriminator)
+      inline given JsonConfig[Choose] = JsonConfig[Choose].discriminateBy(_.discriminator)
 
       case class AA() extends Choose(Disc.A)
       case class BB() extends Choose(Disc.B)
@@ -160,7 +158,7 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
       case BB() extends Choose(1)
 
     object Choose:
-      inline given JsonConfig[Choose] = JsonConfig.configure[Choose].discriminateBy(_.discriminator)
+      inline given JsonConfig[Choose] = JsonConfig[Choose].discriminateBy(_.discriminator)
 
 
     (Choose.AA(): Choose).asTokenList shouldBe obj("discriminator" -> 0)
@@ -180,7 +178,7 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     sealed trait Choose[A](val discriminator: A) derives JsonWriter, JsonReader
 
     object Choose:
-      inline given [A]: JsonConfig[Choose[A]] = JsonConfig.configure[Choose[A]].discriminateBy(_.discriminator)
+      inline given [A]: JsonConfig[Choose[A]] = JsonConfig[Choose[A]].discriminateBy(_.discriminator)
 
     case class ChooseA() extends Choose[Disc1](Disc1.A)
     case class ChooseB() extends Choose[Disc2](Disc2.BB)
@@ -266,7 +264,7 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
 
   it should "derive reader for extract as description" in {
     given JsonReader[SimpleType] = JsonReader.derived[SimpleType] {
-      JsonReader.configure[SimpleType]
+      ReaderBuilder[SimpleType]
         .extract(_.i).as[Option[Int]](_.getOrElse(2))
     }
 
@@ -287,7 +285,7 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
 
   it should "derive reader for extract from description" in {
     given JsonReader[SimpleType] = JsonReader.derived {
-      JsonReader.configure[SimpleType]
+      ReaderBuilder[SimpleType]
         .extract(_.i).from(_.s).and(_.d).apply((_, _) => 2)
     }
 
@@ -306,7 +304,7 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
 
   it should "derive reader for extract from description with synthetic field" in {
     given JsonReader[SimpleType] = JsonReader.derived[SimpleType] {
-      JsonReader.configure[SimpleType]
+      ReaderBuilder[SimpleType]
         .extract(_.i).from(_.d).and[Double]("e")((d, e) => (d + e).toInt)
     }
 
@@ -328,7 +326,7 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     case class Person(name: String, age: Int)
     case class Wrapper(person: Person) derives JsonReader
 
-    inline given JsonReader.ProductConfig[Wrapper] = JsonReader.configure[Wrapper]
+    inline given ReaderBuilder[Wrapper] = ReaderBuilder[Wrapper]
       .extract(_.person).from[String]("name").and[Int]("age").product
 
 
@@ -341,7 +339,7 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
 
   it should "derive reader for extract reader from description" in {
     given JsonReader[SimpleTypeWithAny] = JsonReader.derived[SimpleTypeWithAny] {
-      JsonReader.configure[SimpleTypeWithAny]
+      ReaderBuilder[SimpleTypeWithAny]
         .extractReader(_.any).from(_.d) {
           case 1.0 => JsonReader[String]
           case 2.0 => JsonReader[Int]
@@ -365,7 +363,7 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
 
   it should "derive reader for complex extraction case" in {
     given JsonReader[SimpleTypeWithAny] = JsonReader.derived[SimpleTypeWithAny] {
-      JsonReader.configure[SimpleTypeWithAny]
+      ReaderBuilder[SimpleTypeWithAny]
         .extractReader(_.any).from(_.i) {
           case 1 => JsonReader[String]
           case 2 => JsonReader[Int]
@@ -408,8 +406,8 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
 
   it should "derive reader for fieldStyle from description" in {
     given JsonReader[CamelCaseNames] = JsonReader.derived[CamelCaseNames] {
-      JsonReader.configure[CamelCaseNames]
-        .fieldStyle(JsonFieldStyle.LowerSnakeCase)
+      ReaderBuilder[CamelCaseNames]
+        .fieldStyle(FieldStyle.LowerSnakeCase)
     }
 
     read[CamelCaseNames](obj(
@@ -425,8 +423,8 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
 
   it should "derive reader for fieldStyle from function in description" in {
     given JsonReader[CamelCaseNames] = JsonReader.derived[CamelCaseNames] {
-      JsonReader.configure[CamelCaseNames]
-        .fieldStyle(JsonFieldStyle.Capitalize)
+      ReaderBuilder[CamelCaseNames]
+        .fieldStyle(FieldStyle.Capitalize)
     }
 
     read[CamelCaseNames](obj(
@@ -443,8 +441,8 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
 
   it should "derive reader for reader config" in {
     given JsonReader[CamelCaseNames] = JsonReader.derived[CamelCaseNames](
-      JsonReader.configure[CamelCaseNames]
-        .fieldStyle(JsonFieldStyle.LowerSnakeCase)
+      ReaderBuilder[CamelCaseNames]
+        .fieldStyle(FieldStyle.LowerSnakeCase)
         .strict
     )
 
@@ -470,9 +468,9 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
 
   it should "derive reader for reader config from builder" in {
     implicit val reader: JsonReader[CamelCaseNames] = JsonReader.derived[CamelCaseNames](
-      JsonReader.configure[CamelCaseNames]
+      ReaderBuilder[CamelCaseNames]
         .strict
-        .fieldStyle(JsonFieldStyle.LowerSnakeCase)
+        .fieldStyle(FieldStyle.LowerSnakeCase)
     )
 
     read[CamelCaseNames](obj(
@@ -500,11 +498,11 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     def freeVariable: String = "e"
 
     implicit val dWriter: JsonWriter[D] = JsonWriter.derived[D](
-      JsonWriter.configure[D].fieldStyle(JsonFieldStyle.UpperCase)
+      WriterBuilder[D].fieldStyle(FieldStyle.UpperCase)
     )
 
     implicit val testWriter: JsonWriter[JsonTreeTestData] = JsonWriter.derived {
-      JsonWriter.configure[JsonTreeTestData]
+      WriterBuilder[JsonTreeTestData]
         .remove(_.b)
         .update(_.a).fromRoot(d => d.a.toDouble + d.c.d.a)
         .update(_.c)(_.d)
@@ -523,7 +521,7 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
 
 
   it should "derive writer for update partial" in {
-    inline given JsonWriter.ProductConfig[D] = JsonWriter.configure[D]
+    inline given WriterBuilder[D] = WriterBuilder[D]
       .update(_.a) {
         case 1 => "uno!"
         case 2 => 1
@@ -544,7 +542,7 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
 
   it should "derive writer for update partial from root" in {
     implicit val partialWriter: JsonWriter[D] = JsonWriter.derived[D] {
-      JsonWriter.configure[D]
+      WriterBuilder[D]
         .update(_.a).fromRoot {
           case d if d.a == 1 => "uno!"
           case d if d.a == 2 => 1
@@ -664,7 +662,7 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     implicit val justObjectWriter: JsonObjectWriter[JustObject.type] = JsonWriter.obj
     implicit val subChildWriter: JsonObjectWriter[SubChild] = JsonWriter.derived[SubChild]
 
-    inline given JsonConfig[SimpleSealedType] = JsonConfig.configure[SimpleSealedType]
+    inline given JsonConfig[SimpleSealedType] = JsonConfig[SimpleSealedType]
       .discriminateBy(_.`__type`)
 
     implicit val sealedWriter: JsonWriter[SimpleSealedType] = JsonWriter.derived[SimpleSealedType]

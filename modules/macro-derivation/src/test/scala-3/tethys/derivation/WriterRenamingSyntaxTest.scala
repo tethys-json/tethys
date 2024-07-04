@@ -5,16 +5,13 @@ import org.scalatest.flatspec.AnyFlatSpec
 import tethys.*
 import tethys.writers.tokens.SimpleTokenWriter.*
 import tethys.commons.TokenNode.*
-import tethys.derivation.builder.WriterBuilder
 import tethys.derivation.semiauto.*
 
 class WriterRenamingSyntaxTest extends AnyFlatSpec with Matchers {
   behavior of "renaming syntax"
   it should "rename field on 'rename'" in {
     implicit val writer: JsonWriter[D] = jsonWriter[D] {
-      describe {
-        WriterBuilder[D].rename(_.a)("b")
-      }
+      WriterBuilder[D].rename(_.a)("b")
     }
 
     D(1).asTokenList shouldBe obj(
@@ -24,9 +21,7 @@ class WriterRenamingSyntaxTest extends AnyFlatSpec with Matchers {
 
   it should "rename field on update" in {
     implicit val writer: JsonWriter[D] = jsonWriter[D] {
-      describe {
-        WriterBuilder[D].update(_.a).withRename("b")(_.toString)
-      }
+      WriterBuilder[D].update(_.a).withRename("b")(_.toString)
     }
 
     D(1).asTokenList shouldBe obj(
@@ -36,9 +31,7 @@ class WriterRenamingSyntaxTest extends AnyFlatSpec with Matchers {
 
   it should "rename field on update with free variable" in {
     def freeVariableRenaming(name: String): JsonWriter[D] = jsonWriter[D] {
-      describe {
-        WriterBuilder[D].update(_.a).withRename(name)(_.toString)
-      }
+      WriterBuilder[D].update(_.a).withRename(name)(_.toString)
     }
 
     D(a = 1).asTokenList(freeVariableRenaming("b")) shouldBe obj(
@@ -52,9 +45,8 @@ class WriterRenamingSyntaxTest extends AnyFlatSpec with Matchers {
 
   it should "rename field on update from root" in {
     implicit val writer: JsonWriter[D] = jsonWriter[D] {
-      describe {
-        WriterBuilder[D].update(_.a).withRename("b").fromRoot(_.a * 2)
-      }
+      WriterBuilder[D].update(_.a).withRename("b").fromRoot(_.a * 2)
+      
     }
 
     D(1).asTokenList shouldBe obj(
@@ -64,11 +56,9 @@ class WriterRenamingSyntaxTest extends AnyFlatSpec with Matchers {
 
   it should "rename field on updatePartial" in {
     implicit val writer: JsonWriter[D] = jsonWriter[D] {
-      describe {
-        WriterBuilder[D].updatePartial(_.a).withRename("b") {
-          case 1 => "uno"
-          case i => i
-        }
+      WriterBuilder[D].updatePartial(_.a).withRename("b") {
+        case 1 => "uno"
+        case i => i
       }
     }
 
@@ -83,11 +73,9 @@ class WriterRenamingSyntaxTest extends AnyFlatSpec with Matchers {
 
   it should "rename field on updatePartial from root" in {
     implicit val writer: JsonWriter[D] = jsonWriter[D] {
-      describe {
-        WriterBuilder[D].updatePartial(_.a).withRename("b").fromRoot {
-          case D(1) => "uno"
-          case D(i) => i * 2
-        }
+      WriterBuilder[D].updatePartial(_.a).withRename("b").fromRoot {
+        case D(1) => "uno"
+        case D(i) => i * 2
       }
     }
 

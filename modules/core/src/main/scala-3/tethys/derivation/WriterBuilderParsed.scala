@@ -3,11 +3,11 @@ package tethys.derivation
 import tethys.JsonWriter
 
 private[derivation]
-case class JsonWriterProductConfigParsed[T](
-    fields: List[JsonWriterProductConfigParsed.Field[T, ?]]
+case class WriterBuilderParsed[T](
+    fields: List[WriterBuilderParsed.Field[T, ?]]
 )
 
 
 private[derivation]
-object JsonWriterProductConfigParsed:
+object WriterBuilderParsed:
   case class Field[T, F](label: String, function: T => F, writer: JsonWriter[F])

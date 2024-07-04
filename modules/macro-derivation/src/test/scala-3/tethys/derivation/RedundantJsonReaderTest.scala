@@ -2,11 +2,10 @@ package tethys.derivation
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
-import tethys.JsonReader
+import tethys.*
 import tethys.commons.*
 import tethys.commons.TokenNode.*
 import tethys.derivation.RedundantJsonReaderTest.*
-import tethys.derivation.builder.ReaderBuilder
 import tethys.derivation.semiauto.*
 import tethys.readers.tokens.QueueIterator
 
@@ -31,7 +30,7 @@ class RedundantJsonReaderTest extends AnyFlatSpec with Matchers {
     implicit val reader: JsonReader[BaseClass] = jsonReader[BaseClass] {
       describe {
         ReaderBuilder[BaseClass]
-          .extract(_.r).from("intField".as[Int])(RedundantClass.apply)
+          .extract(_.r).from[Int]("intField")(RedundantClass.apply)
       }
     }
 

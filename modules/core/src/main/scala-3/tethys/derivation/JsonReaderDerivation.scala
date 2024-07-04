@@ -4,6 +4,7 @@ import tethys.commons.TokenNode
 import tethys.readers.tokens.{QueueIterator, TokenIterator}
 import tethys.readers.{FieldName, ReaderError}
 import tethys.{JsonReader, JsonConfig}
+import tethys.ReaderBuilder
 
 import scala.collection.mutable
 import scala.deriving.Mirror
@@ -11,9 +12,9 @@ import scala.compiletime.{constValue, constValueTuple, erasedValue, summonFrom, 
 
 
 private [tethys]
-trait JsonReaderDerivation extends JsonReaderConfiguration:
+trait JsonReaderDerivation:
 
-  inline def derived[A](inline config: JsonReader.ProductConfig[A])(using mirror: Mirror.ProductOf[A]): JsonReader[A] =
+  inline def derived[A](inline config: ReaderBuilder[A])(using mirror: Mirror.ProductOf[A]): JsonReader[A] =
     deriveJsonReaderForProduct(config)
   
   inline def derived[A](inline config: JsonConfig[A])(using mirror: Mirror.SumOf[A]): JsonReader[A] =
@@ -24,24 +25,24 @@ trait JsonReaderDerivation extends JsonReaderConfiguration:
     inline mirror match
       case given Mirror.ProductOf[A] =>
         derived(
-          summonFrom[JsonReader.ProductConfig[A]] {
-            case config: JsonReader.ProductConfig[A] => config
-            case _ => JsonReader.configure[A]
+          summonFrom[ReaderBuilder[A]] {
+            case config: ReaderBuilder[A] => config
+            case _ => ReaderBuilder[A]
           }
         )
       case given Mirror.SumOf[A] =>
         derived(
           summonFrom[JsonConfig[A]] {
             case config: JsonConfig[A] => config
-            case _ => JsonConfig.configure[A]
+            case _ => JsonConfig[A]
           }
         )
 
 
-  private inline def deriveJsonReaderForProduct[A](inline config: JsonReader.ProductConfig[A])(using mirror: Mirror.ProductOf[A]): JsonReader[A] =
+  private inline def deriveJsonReaderForProduct[A](inline config: ReaderBuilder[A])(using mirror: Mirror.ProductOf[A]): JsonReader[A] =
     new JsonReader[A]:
       given JsonReader[A] = this
-      lazy val configuration: JsonReaderProductConfigParsed = Derivation.parseJsonReaderProductConfig[A](config)
+      lazy val configuration: ReaderBuilderParsed = Derivation.parseReaderBuilder[A](config)
 
       def read(it: TokenIterator)(implicit fieldName: FieldName) =
         if !it.currentToken().isObjectStart then
@@ -80,7 +81,7 @@ trait JsonReaderDerivation extends JsonReaderConfiguration:
           if (missingFields.nonEmpty)
             ReaderError.wrongJson("Can not extract fields from json: " + missingFields.mkString(", "))
 
-          for JsonReaderProductConfigParsed.Field(name, idx, function, dependencies, extractReader) <- configuration.fields do
+          for ReaderBuilderParsed.Field(name, idx, function, dependencies, extractReader) <- configuration.fields do
             dependencies match
               case Nil =>
                 resultFields += idx -> function.fold(collectedValues(name))(_.apply(collectedValues(name)))
@@ -148,8 +149,8 @@ object JsonReaderDerivation:
     summonFrom[Mirror.Of[Field]] {
       case mirror: Mirror.Of[Field] =>
         summonFrom[JsonReader[Field]] {
-          case writer: JsonReader[Field] =>
-            writer
+          case reader: JsonReader[Field] =>
+            reader
           case _ =>
             deriveRec[T, Field]
         }

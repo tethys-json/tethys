@@ -1,5 +1,8 @@
 package tethys.derivation.builder
 
+import tethys.FieldStyle
+
+@deprecated("Use ReaderBuilder[A] instead")
 case class ReaderDerivationConfig(fieldStyle: Option[FieldStyle],
                                   isStrict: Boolean) {
   def withFieldStyle(fieldStyle: FieldStyle): ReaderDerivationConfig = this.copy(fieldStyle = Some(fieldStyle))
@@ -15,6 +18,7 @@ object ReaderDerivationConfig {
   def strict: ReaderDerivationConfig = empty.strict
 }
 
+@deprecated("Use ReaderBuilder[A] instead")
 case class ReaderDescription[A](config: ReaderDerivationConfig, operations: Seq[ReaderDescription.BuilderOperation])
 
 object ReaderDescription {

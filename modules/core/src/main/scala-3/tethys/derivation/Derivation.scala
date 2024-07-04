@@ -1,33 +1,23 @@
 package tethys.derivation
 
-import tethys.commons.TokenNode
 import tethys.writers.tokens.TokenWriter
-import tethys.readers.tokens.{QueueIterator, TokenIterator}
 import tethys.readers.FieldName
 import tethys.readers.ReaderError
-import tethys.{JsonConfig, JsonFieldStyle, JsonObjectWriter, JsonReader, JsonWriter}
+import tethys.{JsonConfig, JsonReader, JsonWriter, WriterBuilder, ReaderBuilder}
 
 import scala.compiletime.{constValueTuple, summonInline}
-import scala.deriving.Mirror
-import scala.collection.mutable
 
 private[tethys]
 object Derivation:
 
-  inline def show[T](inline value: T): Unit =
-    ${ DerivationMacro.show('{ value }) }
-
-  inline def showTree[T](inline value: T): Unit =
-    ${ DerivationMacro.showTree[T]('{ value }) }
-
   inline def fieldJsonWriter[T, F]: JsonWriter[F] =
     ${ DerivationMacro.fieldJsonWriter[T, F] }
 
-  inline def parseJsonWriterProductConfig[T](inline config: JsonWriter.ProductConfig[T]): JsonWriterProductConfigParsed[T] =
-    ${ DerivationMacro.parseJsonWriterProductConfig[T]('{config}) }
+  inline def parseWriterBuilder[T](inline config: WriterBuilder[T]): WriterBuilderParsed[T] =
+    ${ DerivationMacro.parseWriterBuilder[T]('{config}) }
 
-  inline def parseJsonReaderProductConfig[T](inline config: JsonReader.ProductConfig[T]): JsonReaderProductConfigParsed =
-    ${ DerivationMacro.parseJsonReaderProductConfig[T]('{config})}
+  inline def parseReaderBuilder[T](inline config: ReaderBuilder[T]): ReaderBuilderParsed =
+    ${ DerivationMacro.parseReaderBuilder[T]('{config})}
 
   inline def writeDiscriminator[T](inline config: JsonConfig[T]): (T, TokenWriter) => Unit =
     ${ DerivationMacro.writeDiscriminator[T]('{config})}
@@ -41,26 +31,17 @@ private[derivation]
 object DerivationMacro:
   import scala.quoted.*
 
-  def show[T: Type](value: Expr[T])(using quotes: Quotes): Expr[Unit] =
-    import quotes.reflect.*
-    '{ println(${Expr(value.asTerm.show(using Printer.TreeShortCode))}) }
-
-
-  def showTree[T: Type](value: Expr[T])(using quotes: Quotes): Expr[Unit] =
-    import quotes.reflect.*
-    '{ println(${ Expr(value.asTerm.show(using Printer.TreeStructure)) }) }
-
-  def parseJsonWriterProductConfig[T: Type](config: Expr[JsonWriter.ProductConfig[T]])(using quotes: Quotes): Expr[JsonWriterProductConfigParsed[T]] =
+  def parseWriterBuilder[T: Type](config: Expr[WriterBuilder[T]])(using quotes: Quotes): Expr[WriterBuilderParsed[T]] =
     val utils = new ConfigurationMacroUtils
     import utils.quotes.reflect.*
     '{
-      JsonWriterProductConfigParsed(
+      WriterBuilderParsed(
         ${
           Expr.ofList(
             utils.prepareWriterProductFields[T](config).map { field =>
               field.tpe.asType match
                 case '[fieldType] => '{
-                  JsonWriterProductConfigParsed.Field(
+                  WriterBuilderParsed.Field(
                     label = ${ field.label },
                     function = (value: T) => ${ field.value('{ value }.asTerm).asExprOf[fieldType] },
                     writer = Derivation.fieldJsonWriter[T, fieldType]
@@ -130,7 +111,7 @@ object DerivationMacro:
       ).asExprOf[JsonWriter[F]]
 
 
-  def parseJsonReaderProductConfig[T: Type](config: Expr[JsonReader.ProductConfig[T]])(using quotes: Quotes): Expr[JsonReaderProductConfigParsed] =
+  def parseReaderBuilder[T: Type](config: Expr[ReaderBuilder[T]])(using quotes: Quotes): Expr[ReaderBuilderParsed] =
     val utils = new ConfigurationMacroUtils
     import utils.quotes.reflect.*
     import utils.{exprOfMap, exprOfSet}
@@ -149,7 +130,7 @@ object DerivationMacro:
       }
     }.exprOfMap[String, JsonReader[?]]
 
-    val sortedFields: Expr[List[JsonReaderProductConfigParsed.Field]] = Expr.ofList {
+    val sortedFields: Expr[List[ReaderBuilderParsed.Field]] = Expr.ofList {
       fields.map {
         case field: utils.ReaderField.Basic =>
           (field.name, field.idx, field.extractor.map(_._2), Nil, false)
@@ -157,7 +138,7 @@ object DerivationMacro:
           (field.name, field.idx, Some(field.lambda), field.extractors.map((name, _) => (name -> labelsToIndices.get(name))), field.reader)
       }.map { case (name, idx, lambda, dependencies, reader) =>
         '{
-          JsonReaderProductConfigParsed.Field(
+          ReaderBuilderParsed.Field(
             name = ${Expr(name)},
             idx = ${Expr(idx)},
             function = ${lambda.map(lambda => '{ Some(${ lambda }) }).getOrElse('{None})},
@@ -169,7 +150,7 @@ object DerivationMacro:
     }
 
     '{
-      JsonReaderProductConfigParsed(
+      ReaderBuilderParsed(
         defaultValues = ${defaults.exprOfMap[String, Any]},
         fields = ${sortedFields},
         readers = ${readers},

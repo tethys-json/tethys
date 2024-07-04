@@ -19,7 +19,7 @@ object CollectionBuilder {
   inline given iterableFactoryCollectionBuilder[A, C[X] <: Iterable[X]]: CollectionBuilder[A, C[A]] =
     ${CollectionBuilderMacroImpl.fromIterableFactory[A, C]}
 
-  inline given mapFactoryCollectionBuilder[K, V, M[X, Y] <: Map[X, Y]]: MapFactoryCollectionBuilder[K, V, M] =
+  inline given mapFactoryCollectionBuilder[K, V, M[X, Y] <: scala.collection.Map[X, Y]]: CollectionBuilder[(K, V), M[K, V]] =
     ${CollectionBuilderMacroImpl.fromMapFactory[K, V, M]}
 
   object CollectionBuilderMacroImpl {
@@ -30,7 +30,7 @@ object CollectionBuilder {
       '{new tethys.compat.CollectionBuilder.IterableFactoryCollectionBuilder[A, C]($factory)}
     }
 
-    def fromMapFactory[K: Type, V: Type, M[X, Y] <: Map[X, Y]: Type](using Quotes): Expr[MapFactoryCollectionBuilder[K, V, M]] = {
+    def fromMapFactory[K: Type, V: Type, M[X, Y] <: scala.collection.Map[X, Y]: Type](using Quotes): Expr[MapFactoryCollectionBuilder[K, V, M]] = {
       import quotes.reflect.*
 
       val factory = Ref(TypeRepr.of[M].typeSymbol.companionModule).asExprOf[MapFactory[M]]
