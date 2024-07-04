@@ -195,7 +195,7 @@ lazy val circe = project
   .settings(
     name := "tethys-circe",
     libraryDependencies ++= Seq(
-      "io.circe" %% "circe-core" % "0.14.8"
+      "io.circe" %% "circe-core" % "0.14.9"
     )
   )
   .dependsOn(core, `jackson-212` % Test)
