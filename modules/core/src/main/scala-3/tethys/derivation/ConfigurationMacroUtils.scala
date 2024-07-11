@@ -8,8 +8,60 @@ import scala.compiletime.{constValueTuple, summonInline}
 import scala.deriving.Mirror
 import scala.quoted.{Expr, FromExpr, Quotes, ToExpr, Type, Varargs}
 
-class ConfigurationMacroUtils(using val quotes: Quotes):
+private[derivation] inline def searchJsonWriter[Field]: JsonWriter[Field] =
+  scala.compiletime.summonFrom[JsonWriter[Field]] {
+    case writer: JsonWriter[Field] => writer
+    case _ => scala.compiletime.error("JsonWriter not found")
+  }
+
+private[derivation] inline def searchJsonObjectWriter[Field]: JsonObjectWriter[Field] =
+  scala.compiletime.summonFrom[JsonObjectWriter[Field]] {
+    case writer: JsonObjectWriter[Field] => writer
+    case _ => scala.compiletime.error("JsonObjectWriter not found")
+  }
+
+private[derivation] inline def searchJsonReader[Field]: JsonReader[Field] =
+  scala.compiletime.summonFrom[JsonReader[Field]] {
+    case reader: JsonReader[Field] => reader
+    case _ => scala.compiletime.error("JsonReader not found")
+  }
+
+
+
+trait ConfigurationMacroUtils:
+  given Quotes = quotes
+  val quotes: Quotes
   import quotes.reflect.*
+
+  def lookup[T: Type]: Expr[T] =
+    Implicits.search(TypeRepr.of[T]) match
+      case success: ImplicitSearchSuccess =>
+        success.tree.asExprOf[T]
+      case failure: ImplicitSearchFailure =>
+        report.errorAndAbort(failure.explanation)
+        
+  def lookupOpt[T: Type]: Option[Expr[T]] =
+    Implicits.search(TypeRepr.of[T]) match
+      case success: ImplicitSearchSuccess =>
+        Some(success.tree.asExprOf[T])
+      case failure: ImplicitSearchFailure =>
+        None
+
+  def lookupJsonWriter[T: Type]: Expr[JsonWriter[T]] =
+    Implicits.search(TypeRepr.of[JsonWriter[T]]) match
+      case success: ImplicitSearchSuccess =>
+        success.tree.asExprOf[JsonWriter[T]]
+      case failure: ImplicitSearchFailure =>
+        report.errorAndAbort(failure.explanation)
+
+
+  def lookupWriterBuilder[T: Type]: Expr[WriterBuilder[T]] =
+    Implicits.search(TypeRepr.of[WriterBuilder[T]]) match
+      case success: ImplicitSearchSuccess =>
+        success.tree.asExprOf[WriterBuilder[T]]
+      case failure: ImplicitSearchFailure =>
+        '{ WriterBuilder[T](using ${lookup[Mirror.ProductOf[T]]}) }
+
 
   def prepareWriterProductFields[T: Type](
       config: Expr[WriterBuilder[T]]
@@ -30,7 +82,7 @@ class ConfigurationMacroUtils(using val quotes: Quotes):
               name,
               update.fun.map(WriterField.Update(_, update.what)),
               update.to,
-              Some(update.newName)
+              update.newName
             )
           case None =>
             WriterField.Basic(
@@ -54,9 +106,9 @@ class ConfigurationMacroUtils(using val quotes: Quotes):
 
     @tailrec
     def loop(
-      config: Expr[WriterBuilder[T]],
-      acc: WriterBuilderMacroConfig = WriterBuilderMacroConfig(),
-      updatedFields: Set[String] = Set.empty
+        config: Expr[WriterBuilder[T]],
+        acc: WriterBuilderMacroConfig = WriterBuilderMacroConfig(),
+        updatedFields: Set[String] = Set.empty
     ): (WriterBuilderMacroConfig, Set[String]) =
       config match
         case '{
@@ -131,7 +183,7 @@ class ConfigurationMacroUtils(using val quotes: Quotes):
             acc.withUpdate(
               WriterFieldUpdate(
                 name = field.name,
-                newName = '{ Some($rename) },
+                newName = Some(rename),
                 what = WriterField.Update.What.Field,
                 fun = None,
                 to = TypeRepr.of[to]
@@ -153,7 +205,7 @@ class ConfigurationMacroUtils(using val quotes: Quotes):
             acc.withUpdate(
               WriterFieldUpdate(
                 name = field.name,
-                newName = '{ None },
+                newName = None,
                 what = WriterField.Update.What.Field,
                 fun = Some(updater.asTerm),
                 to = TypeRepr.of[to]
@@ -176,7 +228,7 @@ class ConfigurationMacroUtils(using val quotes: Quotes):
             acc = acc.withUpdate(
               WriterFieldUpdate(
                 name = field.name,
-                newName = '{ Some($rename) },
+                newName = Some(rename),
                 what = WriterField.Update.What.Field,
                 fun = Some(updater.asTerm),
                 to = TypeRepr.of[to]
@@ -198,7 +250,7 @@ class ConfigurationMacroUtils(using val quotes: Quotes):
             acc = acc.withUpdate(
               WriterFieldUpdate(
                 name = field.name,
-                newName = '{ None },
+                newName = None,
                 what = WriterField.Update.What.Root,
                 fun = Some(updater.asTerm),
                 to = TypeRepr.of[to]
@@ -221,7 +273,7 @@ class ConfigurationMacroUtils(using val quotes: Quotes):
             acc = acc.withUpdate(
               WriterFieldUpdate(
                 name = field.name,
-                newName = '{ Some($rename) },
+                newName = Some(rename),
                 what = WriterField.Update.What.Root,
                 fun = Some(updater.asTerm),
                 to = TypeRepr.of[to]
@@ -242,7 +294,7 @@ class ConfigurationMacroUtils(using val quotes: Quotes):
             acc.withUpdate(
               WriterFieldUpdate(
                 name = field.name,
-                newName = '{ None },
+                newName = None,
                 what = WriterField.Update.What.Field,
                 fun = Some(updater.asTerm),
                 to = TypeRepr.of[to]
@@ -265,7 +317,7 @@ class ConfigurationMacroUtils(using val quotes: Quotes):
             acc = acc.withUpdate(
               WriterFieldUpdate(
                 name = field.name,
-                newName = '{ Some($rename) },
+                newName = Some(rename),
                 what = WriterField.Update.What.Field,
                 fun = Some(updater.asTerm),
                 to = TypeRepr.of[to]
@@ -287,7 +339,7 @@ class ConfigurationMacroUtils(using val quotes: Quotes):
             acc = acc.withUpdate(
               WriterFieldUpdate(
                 name = field.name,
-                newName = '{ None },
+                newName = None,
                 what = WriterField.Update.What.Root,
                 fun = Some(updater.asTerm),
                 to = TypeRepr.of[to]
@@ -310,7 +362,7 @@ class ConfigurationMacroUtils(using val quotes: Quotes):
             acc = acc.withUpdate(
               WriterFieldUpdate(
                 name = field.name,
-                newName = '{ Some($rename) },
+                newName = Some(rename),
                 what = WriterField.Update.What.Root,
                 fun = Some(updater.asTerm),
                 to = TypeRepr.of[to]
@@ -631,11 +683,13 @@ class ConfigurationMacroUtils(using val quotes: Quotes):
               )
             }
 
-          val discriminators = tpe.typeSymbol.children.map { childSymbol =>
-            Typed(
-              Select(stub(tpe.memberType(childSymbol)), symbol),
-              TypeTree.of[fieldType]
-            ).asExprOf[fieldType]
+          val discriminators: List[Term] = getAllChildren(tpe).map {
+            case tpe: TypeRef =>
+              Select(stub(tpe), symbol)
+            case tpe: TermRef =>
+              Select(Ref(tpe.termSymbol), symbol)
+            case tpe =>
+              report.errorAndAbort(s"Unknown tpe: $tpe")
           }
 
           loop(
@@ -685,6 +739,21 @@ class ConfigurationMacroUtils(using val quotes: Quotes):
       case Block(List(ValDef(_, _, Some(term))), _) => traverseTree(term)
       case Block(_, term)                           => traverseTree(term)
       case term                                     => term
+
+
+  private def typeReprsOf[Ts: Type]: List[TypeRepr] =
+    Type.of[Ts] match
+      case '[EmptyTuple] => Nil
+      case '[t *: ts] => TypeRepr.of[t] :: typeReprsOf[ts]
+
+  def getAllChildren(tpe: TypeRepr): List[TypeRepr] =
+    tpe.asType match
+      case '[t] =>
+        Expr.summon[scala.deriving.Mirror.Of[t]] match
+          case Some('{ $m: scala.deriving.Mirror.SumOf[t] {type MirroredElemTypes = subs} }) =>
+            typeReprsOf[subs].flatMap(getAllChildren)
+          case _ =>
+            List(tpe)
 
   case class SelectedField(name: String, selector: Term)
 
@@ -738,12 +807,9 @@ class ConfigurationMacroUtils(using val quotes: Quotes):
         nameWithStyle: String,
         update: Option[WriterField.Update],
         tpe: TypeRepr,
-        newName: Option[Expr[Option[String]]]
+        newName: Option[Expr[String]]
     ) extends WriterField:
-      def label: Expr[String] = newName match
-        case Some(newName) =>
-          '{ ${ newName }.getOrElse(${ Expr(nameWithStyle) }) }
-        case None => Expr(nameWithStyle)
+      def label: Expr[String] = newName.getOrElse(Expr(nameWithStyle))
 
     case class Added(
         name: String,
@@ -772,7 +838,7 @@ class ConfigurationMacroUtils(using val quotes: Quotes):
 
   case class WriterFieldUpdate(
       name: String,
-      newName: Expr[Option[String]],
+      newName: Option[Expr[String]],
       what: WriterField.Update.What,
       fun: Option[Term],
       to: TypeRepr
@@ -882,7 +948,7 @@ class ConfigurationMacroUtils(using val quotes: Quotes):
   case class DiscriminatorConfig(
       label: String,
       tpe: TypeRepr,
-      values: List[Expr[?]]
+      values: List[Term]
   )
 
   extension (tpe: TypeRepr)
@@ -913,6 +979,9 @@ class ConfigurationMacroUtils(using val quotes: Quotes):
 
     def exprOfSet(using to: ToExpr[A]): Expr[Set[A]] =
       '{ Set(${ Varargs(exprs.map(value => Expr(value)).toSeq) }: _*) }
+
+    def exprOfMutableSet(using to: ToExpr[A]): Expr[mutable.Set[A]] =
+      '{ mutable.Set(${ Varargs(exprs.map(value => Expr(value)).toSeq) }: _*) }
 
   given FromExpr[FieldStyle] = new FromExpr[FieldStyle]:
     override def unapply(x: Expr[FieldStyle])(using

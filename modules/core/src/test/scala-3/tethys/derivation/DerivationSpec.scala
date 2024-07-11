@@ -229,7 +229,7 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "derive reader for recursive type" in {
-    implicit val recursiveReader: JsonReader[RecursiveType] = JsonReader.derived[RecursiveType]
+    given JsonReader[RecursiveType] = JsonReader.derived[RecursiveType]
 
     read[RecursiveType](obj(
       "a" -> 1,
@@ -656,12 +656,12 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     write(SubChild(3)) shouldBe obj("c" -> 3)
   }
 
-  it should "derive writer for simple sealed trait with hierarchy with discriminator" in {
+  it should "derive reader/writer for simple sealed trait with hierarchy with discriminator" in {
     implicit val caseClassWriter: JsonObjectWriter[CaseClass] = JsonWriter.derived[CaseClass]
     implicit val simpleClassWriter: JsonObjectWriter[SimpleClass] = JsonWriter.obj[SimpleClass].addField("b")(_.b)
     implicit val justObjectWriter: JsonObjectWriter[JustObject.type] = JsonWriter.obj
     implicit val subChildWriter: JsonObjectWriter[SubChild] = JsonWriter.derived[SubChild]
-
+    given JsonReader[SimpleSealedType] = JsonReader.derived[SimpleSealedType]
     inline given JsonConfig[SimpleSealedType] = JsonConfig[SimpleSealedType]
       .discriminateBy(_.`__type`)
 
@@ -673,6 +673,11 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     write(SimpleClass(2)) shouldBe obj("__type" -> "SimpleClass", "b" -> 2)
     write(JustObject) shouldBe obj("__type" -> "JustObject")
     write(SubChild(3)) shouldBe obj("__type" -> "SubChild", "c" -> 3)
+
+    read[SimpleSealedType](obj("__type" -> "CaseClass", "a" -> 1)) shouldBe CaseClass(1)
+    read[SimpleSealedType](obj("__type" -> "SimpleClass", "b" -> 2)) shouldBe SimpleClass(2)
+    read[SimpleSealedType](obj("__type" -> "JustObject")) shouldBe JustObject
+    read[SimpleSealedType](obj("__type" -> "SubChild", "c" -> 3)) shouldBe SubChild(3)
   }
 
 

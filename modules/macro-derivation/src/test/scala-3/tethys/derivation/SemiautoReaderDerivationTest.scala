@@ -42,7 +42,7 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
   }
 
   it should "derive reader for recursive type" in {
-    implicit lazy val recursiveReader: JsonReader[RecursiveType] = jsonReader[RecursiveType]
+    given JsonReader[RecursiveType] = jsonReader[RecursiveType]
 
     read[RecursiveType](obj(
       "a" -> 1,

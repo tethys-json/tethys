@@ -38,9 +38,8 @@ class JmhWriterBench {
   @Param(Array(
     "tethys-jackson",
     "pure-jackson",
-    "circe",
-    "java.lang.StringBuilder",
-    "scala.StringBuilder",
+    "circe-jawn",
+    "circe-jackson",
     "json4s-jackson",
     "json4s-native",
     "play-json",
