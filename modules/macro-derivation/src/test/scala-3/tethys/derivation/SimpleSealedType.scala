@@ -1,6 +1,8 @@
 package tethys.derivation
 
-sealed abstract class SimpleSealedType(val __type: String)
+import tethys.selector
+
+sealed abstract class SimpleSealedType(@selector val __type: String)
 case class CaseClass(a: Int) extends SimpleSealedType("CaseClass")
 case class SimpleClass(val b: Int) extends SimpleSealedType("SimpleClass")
 case object JustObject extends SimpleSealedType("JustObject")

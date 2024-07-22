@@ -164,10 +164,10 @@ class SemiautoWriterDerivationTest extends AnyFlatSpec with Matchers {
 
     def write(simpleSealedType: SimpleSealedType): List[TokenNode] = simpleSealedType.asTokenList
 
-    write(CaseClass(1)) shouldBe obj("a" -> 1)
-    write(new SimpleClass(2)) shouldBe obj("b" -> 2)
-    write(JustObject) shouldBe obj("type" -> "JustObject")
-    write(SubChild(3)) shouldBe obj("c" -> 3)
+    write(CaseClass(1)) shouldBe obj("__type" -> "CaseClass", "a" -> 1)
+    write(SimpleClass(2)) shouldBe obj("__type" -> "SimpleClass", "b" -> 2)
+    write(JustObject) shouldBe obj("__type" -> "JustObject", "type" -> "JustObject")
+    write(SubChild(3)) shouldBe obj("__type" -> "SubChild", "c" -> 3)
   }
 
   it should "derive writer for simple sealed trait with hierarchy with discriminator" in {
@@ -176,12 +176,7 @@ class SemiautoWriterDerivationTest extends AnyFlatSpec with Matchers {
     implicit val justObjectWriter: JsonObjectWriter[JustObject.type] = JsonWriter.obj
     implicit val subChildWriter: JsonObjectWriter[SubChild] = jsonWriter[SubChild]
 
-    implicit val sealedWriter: JsonWriter[SimpleSealedType] = {
-      inline given JsonConfig[SimpleSealedType] =
-        JsonConfig[SimpleSealedType].discriminateBy(_.__type)
-
-      jsonWriter[SimpleSealedType]
-    }
+    implicit val sealedWriter: JsonWriter[SimpleSealedType] = jsonWriter[SimpleSealedType]
 
     def write(simpleSealedType: SimpleSealedType): List[TokenNode] = simpleSealedType.asTokenList
 

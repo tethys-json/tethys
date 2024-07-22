@@ -211,20 +211,19 @@ session.asJson == json
 ```
 
 ## Sealed traits and enums
-To derive **JsonReader** you **must** provide **JsonConfig** with discriminator.
+To derive **JsonReader** you **must** provide a discriminator.
+This can be done via **selector** annotation
 Discriminator for **JsonWriter** is optional.
 
 If you don't need readers/writers for subtypes, you can omit them,
 they will be derived recursively for your trait/enum.
 
 ```scala 3
+import tethys.selector
 
-sealed trait UserAccount(val typ: String) derives JsonReader, JsonObjectWriter
+sealed trait UserAccount(@selector val typ: String) derives JsonReader, JsonObjectWriter
 
 object UserAccount:
-   inline given JsonConfig[UserAccount] = 
-      JsonConfig[UserAccount].discriminateBy(_.typ)
-      
    case class Customer(
         id: Long,
         phone: String

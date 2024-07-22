@@ -137,11 +137,9 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     enum Disc derives StringEnumJsonWriter, StringEnumJsonReader:
       case A, B
 
-    sealed trait Choose(val discriminator: Disc) derives JsonObjectWriter, JsonReader
+    sealed trait Choose(@selector val discriminator: Disc) derives JsonObjectWriter, JsonReader
 
     object Choose:
-      inline given JsonConfig[Choose] = JsonConfig[Choose].discriminateBy(_.discriminator)
-
       case class AA() extends Choose(Disc.A)
       case class BB() extends Choose(Disc.B)
       
@@ -153,13 +151,9 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "write/read sum types with provided json discriminator of simple type" in {
-    enum Choose(val discriminator: Int) derives JsonObjectWriter, JsonReader:
+    enum Choose(@selector val discriminator: Int) derives JsonObjectWriter, JsonReader:
       case AA() extends Choose(0)
       case BB() extends Choose(1)
-
-    object Choose:
-      inline given JsonConfig[Choose] = JsonConfig[Choose].discriminateBy(_.discriminator)
-
 
     (Choose.AA(): Choose).asTokenList shouldBe obj("discriminator" -> 0)
     (Choose.BB(): Choose).asTokenList shouldBe obj("discriminator" -> 1)
@@ -168,33 +162,11 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     read[Choose](obj("discriminator" -> 1)) shouldBe Choose.BB()
   }
 
-  it should "write/read json for generic discriminators" in {
-    enum Disc1 derives StringEnumJsonWriter, StringEnumJsonReader:
-      case A, B
-
-    enum Disc2 derives StringEnumJsonWriter, StringEnumJsonReader:
-      case AA, BB
-
-    sealed trait Choose[A](val discriminator: A) derives JsonWriter, JsonReader
-
-    object Choose:
-      inline given [A]: JsonConfig[Choose[A]] = JsonConfig[Choose[A]].discriminateBy(_.discriminator)
-
-    case class ChooseA() extends Choose[Disc1](Disc1.A)
-    case class ChooseB() extends Choose[Disc2](Disc2.BB)
-
-    (ChooseA(): Choose[Disc1]).asTokenList shouldBe obj("discriminator" -> "A")
-    (ChooseB(): Choose[Disc2]).asTokenList shouldBe obj("discriminator" -> "BB")
-
-    read[Choose[Disc1]](obj("discriminator" -> "A")) shouldBe ChooseA()
-    read[Choose[Disc2]](obj("discriminator" -> "BB")) shouldBe ChooseB()
-  }
-
   it should "not compile derivation when discriminator override found" in {
 
     """
       |
-      |    sealed trait Foo(val x: Int) derives JsonReader, JsonObjectWriter
+      |    sealed trait Foo(@selector val x: Int) derives JsonReader, JsonObjectWriter
       |
       |    object Foo:
       |      given JsonDiscriminator[Foo, Int] = JsonDiscriminator.by(_.x)
@@ -401,8 +373,7 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
       "e" -> 2
     )) shouldBe SimpleTypeWithAny(3, "str", 1.0, None)
   }
-
-
+  
 
   it should "derive reader for fieldStyle from description" in {
     given JsonReader[CamelCaseNames] = JsonReader.derived[CamelCaseNames] {
@@ -462,7 +433,7 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
         "not_id_param" -> 2,
         "simple" -> 3
       ))
-    }).getMessage shouldBe "Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'some_param', 'simple', 'id_param'"
+    }).getMessage shouldBe "Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'some_param', 'id_param', 'simple'"
   }
 
 
@@ -489,7 +460,7 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
         "not_id_param" -> 2,
         "simple" -> 3
       ))
-    }).getMessage shouldBe "Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'some_param', 'simple', 'id_param'"
+    }).getMessage shouldBe "Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'some_param', 'id_param', 'simple'"
   }
 
 
@@ -650,10 +621,10 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
 
     def write(simpleSealedType: SimpleSealedType): List[TokenNode] = simpleSealedType.asTokenList
 
-    write(CaseClass(1)) shouldBe obj("a" -> 1)
-    write(SimpleClass(2)) shouldBe obj("b" -> 2)
-    write(JustObject) shouldBe obj("type" -> "JustObject")
-    write(SubChild(3)) shouldBe obj("c" -> 3)
+    write(CaseClass(1)) shouldBe obj("__type" -> "CaseClass", "a" -> 1)
+    write(SimpleClass(2)) shouldBe obj("__type" -> "SimpleClass", "b" -> 2)
+    write(JustObject) shouldBe obj("__type" -> "JustObject", "type" -> "JustObject")
+    write(SubChild(3)) shouldBe obj("__type" -> "SubChild", "c" -> 3)
   }
 
   it should "derive reader/writer for simple sealed trait with hierarchy with discriminator" in {
@@ -662,8 +633,6 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     implicit val justObjectWriter: JsonObjectWriter[JustObject.type] = JsonWriter.obj
     implicit val subChildWriter: JsonObjectWriter[SubChild] = JsonWriter.derived[SubChild]
     given JsonReader[SimpleSealedType] = JsonReader.derived[SimpleSealedType]
-    inline given JsonConfig[SimpleSealedType] = JsonConfig[SimpleSealedType]
-      .discriminateBy(_.`__type`)
 
     implicit val sealedWriter: JsonWriter[SimpleSealedType] = JsonWriter.derived[SimpleSealedType]
 

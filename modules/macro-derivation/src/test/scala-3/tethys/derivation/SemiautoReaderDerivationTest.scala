@@ -115,6 +115,7 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
     )) shouldBe SimpleType(2, "str", 1.0)
   }
 
+  
   it should "derive reader for extract from description with synthetic field" in {
     implicit val reader: JsonReader[SimpleType] = jsonReader[SimpleType] {
       describe {
@@ -137,6 +138,7 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
     )) shouldBe SimpleType(4, "str", 1.0)
   }
 
+  
   it should "derive reader for extract reader from description" in {
     implicit val reader: JsonReader[SimpleTypeWithAny] = jsonReader[SimpleTypeWithAny] {
       describe {
@@ -202,12 +204,11 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
       "any" -> true
     )) shouldBe SimpleTypeWithAny(3, "str", 1.0, Some(true))
 
-    //FIXME: figure out how to handle this case
-    /*read[SimpleTypeWithAny](obj(
+    read[SimpleTypeWithAny](obj(
       "s" -> "str",
       "d" -> 1.0,
       "e" -> 2
-    )) shouldBe SimpleTypeWithAny(3, "str", 1.0, None)*/
+    )) shouldBe SimpleTypeWithAny(3, "str", 1.0, None)
   }
 
   it should "derive reader for fieldStyle from description" in {
@@ -278,7 +279,7 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
         "not_id_param" -> 2,
         "simple" -> 3
       ))
-    }).getMessage shouldBe "Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'some_param', 'simple', 'id_param'"
+    }).getMessage shouldBe "Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'some_param', 'id_param', 'simple'"
   }
 
   it should "derive reader for reader config from builder" in {
@@ -304,7 +305,7 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
         "not_id_param" -> 2,
         "simple" -> 3
       ))
-    }).getMessage shouldBe "Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'some_param', 'simple', 'id_param'"
+    }).getMessage shouldBe "Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'some_param', 'id_param', 'simple'"
   }
 
 

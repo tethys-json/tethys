@@ -1,32 +1,15 @@
 package tethys.derivation
 
 import tethys.*
+import tethys.readers.FieldName
 
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.compiletime.{constValueTuple, summonInline}
 import scala.deriving.Mirror
 import scala.quoted.{Expr, FromExpr, Quotes, ToExpr, Type, Varargs}
-
-private[derivation] inline def searchJsonWriter[Field]: JsonWriter[Field] =
-  scala.compiletime.summonFrom[JsonWriter[Field]] {
-    case writer: JsonWriter[Field] => writer
-    case _ => scala.compiletime.error("JsonWriter not found")
-  }
-
-private[derivation] inline def searchJsonObjectWriter[Field]: JsonObjectWriter[Field] =
-  scala.compiletime.summonFrom[JsonObjectWriter[Field]] {
-    case writer: JsonObjectWriter[Field] => writer
-    case _ => scala.compiletime.error("JsonObjectWriter not found")
-  }
-
-private[derivation] inline def searchJsonReader[Field]: JsonReader[Field] =
-  scala.compiletime.summonFrom[JsonReader[Field]] {
-    case reader: JsonReader[Field] => reader
-    case _ => scala.compiletime.error("JsonReader not found")
-  }
-
-
+import tethys.readers.tokens.{TokenIterator, QueueIterator}
+import tethys.commons.TokenNode
 
 trait ConfigurationMacroUtils:
   given Quotes = quotes
@@ -38,7 +21,9 @@ trait ConfigurationMacroUtils:
       case success: ImplicitSearchSuccess =>
         success.tree.asExprOf[T]
       case failure: ImplicitSearchFailure =>
-        report.errorAndAbort(failure.explanation)
+        // Not sees statements put in a block (e.g. derived instances)
+        // So we use summonInline
+        '{summonInline[T]}
         
   def lookupOpt[T: Type]: Option[Expr[T]] =
     Implicits.search(TypeRepr.of[T]) match
@@ -46,22 +31,6 @@ trait ConfigurationMacroUtils:
         Some(success.tree.asExprOf[T])
       case failure: ImplicitSearchFailure =>
         None
-
-  def lookupJsonWriter[T: Type]: Expr[JsonWriter[T]] =
-    Implicits.search(TypeRepr.of[JsonWriter[T]]) match
-      case success: ImplicitSearchSuccess =>
-        success.tree.asExprOf[JsonWriter[T]]
-      case failure: ImplicitSearchFailure =>
-        report.errorAndAbort(failure.explanation)
-
-
-  def lookupWriterBuilder[T: Type]: Expr[WriterBuilder[T]] =
-    Implicits.search(TypeRepr.of[WriterBuilder[T]]) match
-      case success: ImplicitSearchSuccess =>
-        success.tree.asExprOf[WriterBuilder[T]]
-      case failure: ImplicitSearchFailure =>
-        '{ WriterBuilder[T](using ${lookup[Mirror.ProductOf[T]]}) }
-
 
   def prepareWriterProductFields[T: Type](
       config: Expr[WriterBuilder[T]]
@@ -395,15 +364,34 @@ trait ConfigurationMacroUtils:
       .map { case (symbol, idx) =>
         val default = defaults.get(idx).map(_.asExprOf[Any])
         macroConfig.extracted.get(symbol.name) match
+          case Some(field: ReaderField.Basic) =>
+            val updatedDefault = field.extractor match
+              case None => default
+              case Some((tpe, lambda)) =>
+                Option.when(tpe.isOption)('{ None }).orElse(default)
+                  .map(default => Apply(Select.unique(lambda, "apply"), List(default.asTerm))).map(_.asExprOf[Any])
+
+            field.update(idx, updatedDefault, macroConfig.fieldStyle)
+
           case Some(field) =>
             field.update(idx, default, macroConfig.fieldStyle)
+
           case None =>
             ReaderField
               .Basic(symbol.name, tpe.memberType(symbol), None)
               .update(idx, default, macroConfig.fieldStyle)
       }
-    checkLoops(fields)
-    (sortDependencies(fields), macroConfig.isStrict)
+    val existingFieldNames = fields.map(_.name).toSet
+    val additionalFields = fields.collect {
+      case field: ReaderField.Extracted =>
+        field.extractors.collect { case (name, tpe) if !existingFieldNames(name) =>
+          ReaderField.Basic(name, tpe, None, -1, Option.when(tpe.isOption)('{None}))
+        }
+    }.flatten.distinctBy(_.name)
+    val allFields = fields ::: additionalFields
+    checkLoops(allFields)
+    (sortDependencies(allFields), macroConfig.isStrict)
+
 
   private def sortDependencies(fields: List[ReaderField]): List[ReaderField] =
     val known = fields.map(_.name).toSet
@@ -528,16 +516,14 @@ trait ConfigurationMacroUtils:
             } =>
           if acc.extracted.contains(field.name) then
             exitExtractionAlreadyDefined(field.name)
-          val lambda =
-            Typed(fun.asTerm, TypeTree.of[Any => Any]).asExprOf[Any => Any]
+            
           loop(
             config = rest,
             acc = acc.withExtracted(
               ReaderField.Basic(
                 name = field.name,
-                tpe = TypeRepr.of[t1],
-                extractor = Some((TypeRepr.of[t1], lambda)),
-                default = Option.when(TypeRepr.of[t1].isOption)('{ None })
+                tpe = TypeRepr.of[t],
+                extractor = Some((TypeRepr.of[t1], Typed(fun.asTerm, TypeTree.of[t1 => t])))
               )
             )
           )
@@ -557,7 +543,7 @@ trait ConfigurationMacroUtils:
           def loopInner(
               term: Term,
               extractors: List[(String, TypeRepr)] = Nil,
-              lambda: Expr[Any => Any] = '{ identity[Any] }
+              lambda: Term = '{ identity[Any] }.asTerm
           ): ReaderBuilderMacroConfig =
             term match
               case config @ Apply(
@@ -568,15 +554,16 @@ trait ConfigurationMacroUtils:
                   exitExtractionAlreadyDefined(name)
                 loop(
                   config = term.asExprOf[ReaderBuilder[T]],
-                  acc = acc.withExtracted(
-                    ReaderField.Extracted(
-                      name,
-                      tpt.tpe,
-                      extractors,
-                      lambda,
-                      reader = false
+                  acc = acc
+                    .withExtracted(
+                      ReaderField.Extracted(
+                        name,
+                        tpt.tpe,
+                        extractors,
+                        lambda,
+                        reader = false
+                      )
                     )
-                  )
                 )
               case config @ Apply(
                     TypeApply(Select(term, "extractReader"), List(tpt)),
@@ -600,22 +587,15 @@ trait ConfigurationMacroUtils:
                 loopInner(
                   term = term,
                   extractors = Nil,
-                  lambda = '{
-                    ${ lambda.asExprOf[Any] }.asInstanceOf[Any => Any]
-                  }
+                  lambda = lambda
                 )
               case Apply(Apply(Select(term, "product"), List(mirror)), _) =>
                 loopInner(
                   term = term,
                   extractors = Nil,
-                  lambda = '{
-                    ${
-                      Select
-                        .unique(mirror, "fromProduct")
-                        .etaExpand(Symbol.spliceOwner)
-                        .asExprOf[Any]
-                    }.asInstanceOf[Any => Any]
-                  }
+                  lambda = Select
+                    .unique(mirror, "fromProduct")
+                    .etaExpand(Symbol.spliceOwner)
                 )
               case Apply(
                     TypeApply(Select(term, "from" | "and"), List(tpt)),
@@ -646,68 +626,34 @@ trait ConfigurationMacroUtils:
 
     loop(traverseTree(config.asTerm).asExprOf[ReaderBuilder[T]])
 
-  def parseSumConfig[T: Type](config: Expr[JsonConfig[T]]) =
+  def parseSumConfig[T: Type]: SumMacroConfig =
     val tpe = TypeRepr.of[T]
-    @scala.annotation.tailrec
-    def loop(
-        config: Expr[JsonConfig[T]],
-        acc: SumMacroConfig = SumMacroConfig()
-    ): SumMacroConfig =
-      config match
-        case '{ JsonConfig[T] } =>
-          acc
+    val tpt = TypeTree.of[T]
+    val annotation = TypeRepr.of[selector].typeSymbol
+    val selectors = tpe.typeSymbol.primaryConstructor.paramSymss.flatten
+      .filter(_.hasAnnotation(annotation))
 
-        case '{
-              ($rest: JsonConfig[T]).discriminateBy[fieldType](${
-                SelectedField(field)
-              })
-            } =>
-          val fieldTpe = TypeRepr.of[fieldType]
-          val symbol = tpe.typeSymbol.fieldMembers
-            .find(_.name == field.name)
-            .getOrElse(
-              report.errorAndAbort(
-                s"Selector of type ${fieldTpe.show(using Printer.TypeReprShortCode)} not found in ${tpe
-                    .show(using Printer.TypeReprShortCode)}"
-              )
-            )
+    selectors match
+      case constructorSymbol :: Nil =>
+        val symbol = tpe.typeSymbol.fieldMembers.find(_.name == constructorSymbol.name)
+          .getOrElse(report.errorAndAbort(s"Not found symbol corresponding to constructor symbol ${constructorSymbol.name}"))
 
-          tpe.typeSymbol.children
-            .find(child =>
-              child.caseFields.contains(symbol.overridingSymbol(child))
-            )
-            .foreach { child =>
-              report.errorAndAbort(
-                s"Overriding discriminator field '${symbol.name}' in ${child.typeRef
-                    .show(using Printer.TypeReprShortCode)} is prohibited"
-              )
-            }
+        val discriminators: List[Term] = getAllChildren(tpe).map {
+          case tpe: TypeRef =>
+            Select(stub(tpe), symbol)
+          case tpe: TermRef =>
+            Select(Ref(tpe.termSymbol), symbol)
+          case tpe =>
+            report.errorAndAbort(s"Unknown tpe: $tpe")
+        }
+        SumMacroConfig(Some(DiscriminatorConfig(symbol.name, tpe.memberType(symbol), discriminators)))
 
-          val discriminators: List[Term] = getAllChildren(tpe).map {
-            case tpe: TypeRef =>
-              Select(stub(tpe), symbol)
-            case tpe: TermRef =>
-              Select(Ref(tpe.termSymbol), symbol)
-            case tpe =>
-              report.errorAndAbort(s"Unknown tpe: $tpe")
-          }
+      case Nil =>
+        SumMacroConfig(None)
 
-          loop(
-            rest,
-            acc.copy(discriminator =
-              Some(
-                DiscriminatorConfig(symbol.name, fieldTpe, discriminators)
-              )
-            )
-          )
+      case multiple =>
+        report.errorAndAbort(s"Only one field can be a selector. Found ${multiple.map(_.name).mkString(", ")}")
 
-        case other =>
-          report.errorAndAbort(
-            s"Unknown tree. Config must be an inlined given.\nTree: ${other.asTerm
-                .show(using Printer.TreeStructure)}"
-          )
-
-    loop(traverseTree(config.asTerm).asExprOf[JsonConfig[T]])
 
   private def stub(tpe: TypeRepr): Term =
     import quotes.reflect.*
@@ -847,9 +793,94 @@ trait ConfigurationMacroUtils:
   sealed trait ReaderField {
     def name: String
     def tpe: TypeRepr
+    def reader: Boolean
+
+    def initializeFieldCase(
+      readers: Map[TypeRepr, Ref],
+      it: Expr[TokenIterator],
+      fieldName: Expr[FieldName]
+    ): Option[CaseDef] =
+      this match
+        case _: ReaderField.Basic =>
+          Some(
+            readerTpe.get.asType match {
+              case '[t] =>
+                CaseDef(
+                  Literal(StringConstant(name)),
+                  None,
+                  Block(
+                    init {
+                      val reader = readers.get(readerTpe.get).fold(lookup[JsonReader[t]])(_.asExprOf[JsonReader[t]])
+                      '{${reader}.read(${it})(${fieldName}.appendFieldName(${Expr(name)}))}.asTerm
+                    },
+                    '{}.asTerm
+                  )
+                )
+            }
+          )
+
+        case _: ReaderField.Extracted =>
+          iteratorRef.map { iteratorRef =>
+            CaseDef(
+              Literal(StringConstant(name)),
+              None,
+              Block(
+                initIterator('{ ${it}.collectExpression() }.asTerm),
+                '{}.asTerm
+              )
+            )
+          }
+
+
+    lazy val (initialize, ref, initRef, iteratorRef) = {
+      val flags = default.fold(Flags.Deferred | Flags.Mutable)(_ => Flags.Mutable)
+      val symbol = Symbol.newVal(Symbol.spliceOwner, s"${name}Var", tpe, flags, Symbol.noSymbol)
+      val initSymbol = Symbol.newVal(Symbol.spliceOwner, s"${name}Init", TypeRepr.of[Boolean], Flags.Mutable, Symbol.noSymbol)
+      val stat = ValDef(symbol, default.map(_.asTerm))
+      val initStat = ValDef(initSymbol, Some('{false}.asTerm))
+      val iteratorSymbol = Option.when(reader)(Symbol.newVal(Symbol.spliceOwner, s"${name}Iterator", TypeRepr.of[TokenIterator], Flags.Mutable | Flags.Deferred, Symbol.noSymbol))
+      val iteratorStat = iteratorSymbol.map(ValDef(_, None))
+      val iteratorRef = iteratorStat.map(stat => Ref(stat.symbol))
+      (List(stat, initStat) ++ iteratorStat, Ref(stat.symbol), Ref(initStat.symbol), iteratorRef)
+    }
 
     def idx: Int
     def default: Option[Expr[Any]]
+    def readerTpe: Option[TypeRepr] = this match
+      case ReaderField.Basic(name, tpe, extractor, idx, default) =>
+        Some(extractor.map(_._1).getOrElse(tpe))
+      case field: ReaderField.Extracted if field.reader =>
+        None
+      case field: ReaderField.Extracted =>
+        Some(field.tpe)
+
+
+    def init(value: Term): List[Statement] = this match
+      case ReaderField.Basic(_, _, None, _, _) =>
+        List(
+          Assign(ref, value),
+          Assign(initRef, '{true}.asTerm)
+        )
+
+      case ReaderField.Basic(_, _, Some((_, lambda)), _, _) =>
+        List(
+          Assign(ref, Apply(Select.unique(lambda, "apply") , List(value))),
+          Assign(initRef, '{true}.asTerm)
+        )
+      case extracted: ReaderField.Extracted =>
+        List(
+          Assign(ref, value),
+          Assign(initRef, '{ true }.asTerm)
+        )
+
+    def initIterator(value: Term): List[Statement] = iteratorRef.map { ref =>
+      List(
+        Assign(ref, value),
+        Assign(initRef, '{ true }.asTerm)
+      )
+    }.getOrElse(Nil)
+
+
 
     def update(
         index: Int,
@@ -859,77 +890,58 @@ trait ConfigurationMacroUtils:
       case field: ReaderField.Basic =>
         field.copy(
           idx = index,
-          default = field.default.orElse(default),
-          name =
-            fieldStyle.fold(field.name)(FieldStyle.applyStyle(field.name, _))
+          default = default,
+          name = fieldStyle.fold(field.name)(FieldStyle.applyStyle(field.name, _))
         )
       case field: ReaderField.Extracted =>
         field.copy(
           idx = index,
-          default = field.default.orElse(default),
-          name =
-            fieldStyle.fold(field.name)(FieldStyle.applyStyle(field.name, _))
+          default = default,
+          name = fieldStyle.fold(field.name)(FieldStyle.applyStyle(field.name, _))
         )
-
-    def defaults(existingFields: Set[String]): List[(String, Expr[Any])] =
-      this match
-        case field: ReaderField.Basic =>
-          field.default.map(field.name -> _).toList
-        case field: ReaderField.Extracted =>
-          field.default.map(field.name -> _).toList :::
-            field.extractors
-              .collect {
-                case (name, tpe) if !existingFields(name) && tpe.isOption =>
-                  name -> '{ (None: Any) }
-              }
-
-    def requiredLabels(existingFields: Set[String]): List[String] =
-      this match
-        case field: ReaderField.Basic => List(field.name)
-        case field: ReaderField.Extracted =>
-          field.extractors
-            .collect {
-              case (name, tpe) if !existingFields(name) && !tpe.isOption => name
-            }
-
-    def readerTypes(existingFields: Set[String]): List[(String, TypeRepr)] =
-      this match
-        case ReaderField.Basic(name, tpe, extractor, idx, default) =>
-          List(name -> tpe)
-        case ReaderField.Extracted(
-              name,
-              tpe,
-              extractors,
-              lambda,
-              reader,
-              idx,
-              default
-            ) =>
-          List(name -> tpe).filterNot(_ => reader) :::
-            extractors.collect {
-              case (name, tpe) if !existingFields(name) => name -> tpe
-            }
-
   }
 
   object ReaderField:
     case class Basic(
         name: String,
         tpe: TypeRepr,
-        extractor: Option[(TypeRepr, Expr[Any => Any])],
+        extractor: Option[(TypeRepr, Term)],
         idx: Int = 0,
         default: Option[Expr[Any]] = None
-    ) extends ReaderField
+    ) extends ReaderField:
+      def reader = false
 
     case class Extracted(
         name: String,
         tpe: TypeRepr,
         extractors: List[(String, TypeRepr)],
-        lambda: Expr[Any => Any],
+        lambda: Term,
         reader: Boolean,
         idx: Int = 0,
         default: Option[Expr[Any]] = None
-    ) extends ReaderField
+    ) extends ReaderField:
+      def extract(fields: Map[String, Ref], fieldName: Expr[FieldName]): List[Statement] =
+        val term = extractors match
+          case (depName, _) :: Nil =>
+            Apply(Select.unique(lambda, "apply"), List(fields(depName)))
+          case _ =>
+            val value = extractors
+              .map((name, _) => fields(name))
+              .foldRight[Term]('{ EmptyTuple }.asTerm) { (el, acc) =>
+                Select.unique(acc, "*:")
+                  .appliedToTypes(List(el.tpe, acc.tpe))
+                  .appliedToArgs(List(el))
+              }
+            Select.unique(lambda, "apply").appliedToArgs(List(value))
+            
+        iteratorRef match
+          case Some(iteratorRef) =>
+            val reader = Typed(term, TypeTree.of[JsonReader[Any]]).asExprOf[JsonReader[Any]]
+            val it = '{if ${initRef.asExprOf[Boolean]} then ${iteratorRef.asExprOf[TokenIterator]} else QueueIterator(List(TokenNode.NullValueNode))}
+            val value = '{${reader}.read(${it})(${fieldName}.appendFieldName(${ Expr(name) }))}
+            init(value.asTerm)
+          case None =>
+            init(term)
 
   case class ReaderBuilderMacroConfig(
       extracted: Map[String, ReaderField] = Map.empty,
@@ -953,35 +965,6 @@ trait ConfigurationMacroUtils:
 
   extension (tpe: TypeRepr)
     def isOption: Boolean = tpe <:< TypeRepr.of[Option[Any]]
-
-  extension [A: Type](exprs: Iterable[A])(using Quotes)
-    def exprOfMutableMap[K: ToExpr: Type, V: Type](using
-        ev: A <:< (K, Expr[V])
-    ): Expr[mutable.Map[K, V]] =
-      '{
-        mutable.Map(${
-          Varargs(
-            exprs.map(value => Expr.ofTuple(Expr(value._1) -> value._2)).toSeq
-          )
-        }: _*)
-      }
-
-    def exprOfMap[K: ToExpr: Type, V: Type](using
-        ev: A <:< (K, Expr[V])
-    ): Expr[Map[K, V]] =
-      '{
-        Map(${
-          Varargs(
-            exprs.map(value => Expr.ofTuple(Expr(value._1) -> value._2)).toSeq
-          )
-        }: _*)
-      }
-
-    def exprOfSet(using to: ToExpr[A]): Expr[Set[A]] =
-      '{ Set(${ Varargs(exprs.map(value => Expr(value)).toSeq) }: _*) }
-
-    def exprOfMutableSet(using to: ToExpr[A]): Expr[mutable.Set[A]] =
-      '{ mutable.Set(${ Varargs(exprs.map(value => Expr(value)).toSeq) }: _*) }
 
   given FromExpr[FieldStyle] = new FromExpr[FieldStyle]:
     override def unapply(x: Expr[FieldStyle])(using
