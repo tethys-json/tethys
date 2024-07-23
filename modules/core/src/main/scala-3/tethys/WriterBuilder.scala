@@ -13,10 +13,14 @@ sealed trait WriterBuilder[A]:
 
   def update[B](field: A => B): FunApply[A, B] with WithRename[FunApply[A, B]]
   
-  @deprecated("Use 'update' instead.")
+  @deprecated("Use 'update' instead")
   def updatePartial[B](field: A => B): FunApply[A, B] with WithRename[FunApply[A, B]]
 
   def fieldStyle(style: FieldStyle): WriterBuilder[A]
+  
+  @deprecated("Use tethys.FieldStyle instead")
+  def fieldStyle(fieldStyle: tethys.derivation.builder.FieldStyle): WriterBuilder[A]
+
 
 
 object WriterBuilder:

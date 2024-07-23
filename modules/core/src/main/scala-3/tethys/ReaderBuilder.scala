@@ -9,6 +9,9 @@ sealed trait ReaderBuilder[A]:
 
   def fieldStyle(fieldStyle: FieldStyle): ReaderBuilder[A]
 
+  @deprecated("Use tethys.FieldStyle instead")
+  def fieldStyle(fieldStyle: tethys.derivation.builder.FieldStyle): ReaderBuilder[A]
+
   def strict: ReaderBuilder[A]
 
 

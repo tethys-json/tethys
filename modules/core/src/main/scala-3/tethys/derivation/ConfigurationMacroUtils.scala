@@ -100,6 +100,14 @@ trait ConfigurationMacroUtils:
           (acc.copy(fieldStyle = Some(fieldStyle.valueOrAbort)), updatedFields)
 
         case '{
+          ($rest: WriterBuilder[T]).fieldStyle(${ style }: tethys.derivation.builder.FieldStyle)
+        } =>
+          val fieldStyle = legacyFieldStyleToFieldStyle(style).getOrElse {
+            report.errorAndAbort(s"Can't extract fieldStyle from ${style.asTerm.show(using Printer.TreeShortCode)}")
+          }
+          (acc.copy(fieldStyle = Some(fieldStyle)), updatedFields)
+          
+        case '{
               ($rest: WriterBuilder[T])
                 .add($field: String)
                 .apply[to]($lambda)
@@ -533,6 +541,17 @@ trait ConfigurationMacroUtils:
           loop(
             config = rest,
             acc = acc.copy(fieldStyle = Some(style.valueOrAbort))
+          )
+
+        case '{
+          ($rest: ReaderBuilder[T]).fieldStyle(${ style }: tethys.derivation.builder.FieldStyle)
+        } =>
+          val fieldStyle = legacyFieldStyleToFieldStyle(style).getOrElse {
+            report.errorAndAbort(s"Can't extract fieldStyle from ${style.asTerm.show(using Printer.TreeShortCode)}")
+          }
+          loop(
+            config = rest,
+            acc = acc.copy(fieldStyle = Some(fieldStyle))
           )
         case '{ ($rest: ReaderBuilder[T]).strict } =>
           loop(
@@ -986,3 +1005,19 @@ trait ConfigurationMacroUtils:
         case '{ FieldStyle.CapitalizedSnakeCase } =>
           Some(FieldStyle.CapitalizedSnakeCase)
         case _ => None
+
+  def legacyFieldStyleToFieldStyle(x: Expr[tethys.derivation.builder.FieldStyle]): Option[FieldStyle] =
+    x match
+      case '{ tethys.derivation.builder.FieldStyle.UpperCase } => Some(FieldStyle.UpperCase)
+      case '{ tethys.derivation.builder.FieldStyle.LowerCase } => Some(FieldStyle.LowerCase)
+      case '{ tethys.derivation.builder.FieldStyle.Capitalize } => Some(FieldStyle.Capitalize)
+      case '{ tethys.derivation.builder.FieldStyle.Uncapitalize } => Some(FieldStyle.Uncapitalize)
+      case '{ tethys.derivation.builder.FieldStyle.KebabCase } => Some(FieldStyle.KebabCase)
+      case '{ tethys.derivation.builder.FieldStyle.LowerKebabCase } => Some(FieldStyle.LowerKebabCase)
+      case '{ tethys.derivation.builder.FieldStyle.UpperKebabCase } => Some(FieldStyle.UpperKebabCase)
+      case '{ tethys.derivation.builder.FieldStyle.CapitalizedKebabCase } => Some(FieldStyle.CapitalizedKebabCase)
+      case '{ tethys.derivation.builder.FieldStyle.SnakeCase } => Some(FieldStyle.SnakeCase)
+      case '{ tethys.derivation.builder.FieldStyle.LowerSnakeCase } => Some(FieldStyle.LowerSnakeCase)
+      case '{ tethys.derivation.builder.FieldStyle.UpperSnakeCase } => Some(FieldStyle.UpperSnakeCase)
+      case '{ tethys.derivation.builder.FieldStyle.CapitalizedSnakeCase } => Some(FieldStyle.CapitalizedSnakeCase)
+      case _ => None
