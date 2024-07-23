@@ -180,7 +180,7 @@ lazy val json4s = project.in(modules / "json4s")
   .settings(
     name := "tethys-json4s",
     libraryDependencies ++= Seq(
-      "org.json4s" %% "json4s-ast" % "4.0.6"
+      "org.json4s" %% "json4s-ast" % "4.1.0-M6"
     )
   )
   .dependsOn(core)
@@ -220,13 +220,14 @@ lazy val benchmarks = project.in(modules / "benchmarks")
     publishTo := None,
     libraryDependencies ++= Seq(
       "io.spray" %% "spray-json" % "1.3.6",
-      "org.json4s" %% "json4s-native" % "4.0.6",
-      "org.json4s" %% "json4s-jackson" % "4.0.6",
-      "io.circe" %% "circe-core" % "0.14.3",
-      "io.circe" %% "circe-generic" % "0.14.3",
-      "io.circe" %% "circe-jawn" % "0.14.3",
+      "org.json4s" %% "json4s-native" % "4.0.7",
+      "org.json4s" %% "json4s-jackson" % "4.0.7",
+      "io.circe" %% "circe-core" % "0.14.9",
+      "io.circe" %% "circe-generic" % "0.14.9",
+      "io.circe" %% "circe-jawn" % "0.14.9",
       "io.circe" %% "circe-jackson210" % "0.14.0",
-      "com.typesafe.play" %% "play-json" % "2.10.0-RC7",
+      "dev.zio" %% "zio-json" % "0.7.1",
+      "com.typesafe.play" %% "play-json" % "2.10.5",
       "org.knowm.xchart" % "xchart" % "3.8.2" exclude("de.erichseifert.vectorgraphics2d", "VectorGraphics2D") withSources()
     ),
     scalacOptions ++= {

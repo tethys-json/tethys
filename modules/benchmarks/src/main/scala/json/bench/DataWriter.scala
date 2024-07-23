@@ -7,6 +7,7 @@ import json.bench.model.Data
 import json.bench.play.PlayBench
 import json.bench.spray.SprayBench
 import json.bench.tethysjson.TethysBench
+import json.bench.ziojson.ZIOJsonBench
 
 trait DataWriter {
   def write(seq: Seq[Data]): String
@@ -22,6 +23,7 @@ object DataWriter {
     "json4s-jackson" -> Json4sBench.Json4sJacksonDataProcessor,
     "json4s-native" -> Json4sBench.Json4sNativeDataProcessor,
     "play-json" -> PlayBench.PlayDataProcessor,
-    "spray-json" -> SprayBench.SprayDataProcessor
+    "spray-json" -> SprayBench.SprayDataProcessor,
+    "zio-json" -> ZIOJsonBench.ZIOJsonDataProcesser
   )
 }

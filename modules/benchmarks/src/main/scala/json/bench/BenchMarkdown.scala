@@ -28,13 +28,12 @@ object BenchMarkdown {
     case "circe" => 3
     case "circe-jawn" => 4
     case "circe-jackson" => 5
-    case "java.lang.StringBuilder" => 6
-    case "scala.StringBuilder" => 7
     case "json4s-jackson" => 8
     case "json4s-native" => 9
     case "play-json" => 10
     case "spray-json" => 11
     case "pushka" => 12
+    case "zio-json" => 13
     case _ => 13
   }
 

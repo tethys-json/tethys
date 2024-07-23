@@ -38,12 +38,10 @@ class JmhWriterBench {
   @Param(Array(
     "tethys-jackson",
     "pure-jackson",
-    "circe-jawn",
-    "circe-jackson",
-    "json4s-jackson",
-    "json4s-native",
+    "circe",
     "play-json",
-    "spray-json"
+    "spray-json",
+    "zio-json"
   ))
   var processorName: String = _
 
