@@ -2,7 +2,7 @@ package tethys.derivation.builder
 
 import java.util.regex.Pattern
 
-@deprecated
+@deprecated("use tethys.FieldStyle")
 enum FieldStyle {
   case Capitalize, Uncapitalize, LowerCase, UpperCase
 

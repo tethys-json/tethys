@@ -254,6 +254,27 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
   }
 
 
+  it should "work for deprecated ReaderBuilder" in {
+    import tethys.derivation.builder.ReaderBuilder
+    given JsonReader[SimpleType] = JsonReader.derived[SimpleType] {
+      ReaderBuilder[SimpleType]
+        .extract(_.i).as[Option[Int]](_.getOrElse(2))
+    }
+
+
+    read[SimpleType](obj(
+      "i" -> 1,
+      "s" -> "str",
+      "d" -> 1.0
+    )) shouldBe SimpleType(1, "str", 1.0)
+
+    read[SimpleType](obj(
+      "s" -> "str",
+      "d" -> 1.0
+    )) shouldBe SimpleType(2, "str", 1.0)
+  }
+
+
 
   it should "derive reader for extract from description" in {
     given JsonReader[SimpleType] = JsonReader.derived {
@@ -467,6 +488,32 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
 
   it should "generate proper writer from WriterDescription" in {
     def freeVariable: String = "e"
+
+    implicit val dWriter: JsonWriter[D] = JsonWriter.derived[D](
+      WriterBuilder[D].fieldStyle(FieldStyle.UpperCase)
+    )
+
+    implicit val testWriter: JsonWriter[JsonTreeTestData] = JsonWriter.derived {
+      WriterBuilder[JsonTreeTestData]
+        .remove(_.b)
+        .update(_.a).fromRoot(d => d.a.toDouble + d.c.d.a)
+        .update(_.c)(_.d)
+        .add("d")(_.a * 2)
+        .add(freeVariable)(_.b)
+    }
+    JsonTreeTestData(5, b = false, C(D(1))).asTokenList shouldBe obj(
+      "a" -> 6.0,
+      "c" -> obj(
+        "A" -> 1
+      ),
+      "d" -> 10,
+      "e" -> false
+    )
+  }
+
+  it should "work for deprecated WriterBuilder" in {
+    def freeVariable: String = "e"
+    import tethys.derivation.builder.WriterBuilder
 
     implicit val dWriter: JsonWriter[D] = JsonWriter.derived[D](
       WriterBuilder[D].fieldStyle(FieldStyle.UpperCase)
