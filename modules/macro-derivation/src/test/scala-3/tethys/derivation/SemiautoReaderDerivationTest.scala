@@ -332,4 +332,61 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
       token(ParametrizedEnum.TWO.toString)
     ) shouldBe ParametrizedEnum.TWO
   }
+
+  it should "derive reader for fieldStyle from description 1" in {
+    given JsonReader[CamelCaseNames] = JsonReader.derived[CamelCaseNames] {
+      ReaderDerivationConfig.withFieldStyle(FieldStyle.LowerSnakeCase)
+    }
+
+    read[CamelCaseNames](obj(
+      "some_param" -> 1,
+      "id_param" -> 2,
+      "simple" -> 3
+    )) shouldBe CamelCaseNames(
+      someParam = 1,
+      IDParam = 2,
+      simple = 3
+    )
+  }
+
+  it should "derive reader for fieldStyle from description 2" in {
+    given JsonReader[CamelCaseNames] = JsonReader.derived[CamelCaseNames] {
+      ReaderDerivationConfig.empty.withFieldStyle(FieldStyle.LowerSnakeCase)
+    }
+
+    read[CamelCaseNames](obj(
+      "some_param" -> 1,
+      "id_param" -> 2,
+      "simple" -> 3
+    )) shouldBe CamelCaseNames(
+      someParam = 1,
+      IDParam = 2,
+      simple = 3
+    )
+  }
+
+  it should "derive strict reader" in {
+    implicit val reader: JsonReader[CamelCaseNames] = jsonReader[CamelCaseNames](
+      ReaderDerivationConfig.withFieldStyle(FieldStyle.LowerSnakeCase).strict
+    )
+
+    read[CamelCaseNames](obj(
+      "some_param" -> 1,
+      "id_param" -> 2,
+      "simple" -> 3
+    )) shouldBe CamelCaseNames(
+      someParam = 1,
+      IDParam = 2,
+      simple = 3
+    )
+
+    (the[ReaderError] thrownBy {
+      read[CamelCaseNames](obj(
+        "some_param" -> 1,
+        "not_id_param" -> 2,
+        "simple" -> 3
+      ))
+    }).getMessage shouldBe "Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'some_param', 'id_param', 'simple'"
+  }
+
 }

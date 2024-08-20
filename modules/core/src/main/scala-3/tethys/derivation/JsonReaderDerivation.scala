@@ -5,6 +5,7 @@ import tethys.readers.tokens.{QueueIterator, TokenIterator}
 import tethys.readers.{FieldName, ReaderError}
 import tethys.JsonReader
 import tethys.ReaderBuilder
+import tethys.derivation.builder.ReaderDerivationConfig
 
 import scala.collection.mutable
 import scala.deriving.Mirror
@@ -25,7 +26,9 @@ trait JsonReaderDerivation:
 
   inline def derived[A](inline config: ReaderBuilder[A])(using mirror: Mirror.ProductOf[A]): JsonReader[A] =
     Derivation.deriveJsonReaderForProduct[A](config)
-
+    
+  inline def derived[A](inline config: ReaderDerivationConfig)(using mirror: Mirror.ProductOf[A]): JsonReader[A] =
+    Derivation.deriveJsonReaderForProductLegacy[A](config)
 
   inline def derived[A](using mirror: Mirror.Of[A]): JsonReader[A] =
     inline mirror match

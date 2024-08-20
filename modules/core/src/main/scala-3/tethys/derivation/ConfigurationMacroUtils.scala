@@ -8,8 +8,9 @@ import scala.collection.mutable
 import scala.compiletime.{constValueTuple, summonInline}
 import scala.deriving.Mirror
 import scala.quoted.{Expr, FromExpr, Quotes, ToExpr, Type, Varargs}
-import tethys.readers.tokens.{TokenIterator, QueueIterator}
+import tethys.readers.tokens.{QueueIterator, TokenIterator}
 import tethys.commons.TokenNode
+import tethys.derivation.builder.{ReaderDerivationConfig, WriterDerivationConfig}
 
 trait ConfigurationMacroUtils:
   given Quotes = quotes
@@ -1006,6 +1007,7 @@ trait ConfigurationMacroUtils:
           Some(FieldStyle.CapitalizedSnakeCase)
         case _ => None
 
+  @deprecated
   def legacyFieldStyleToFieldStyle(x: Expr[tethys.derivation.builder.FieldStyle]): Option[FieldStyle] =
     x match
       case '{ tethys.derivation.builder.FieldStyle.UpperCase } => Some(FieldStyle.UpperCase)
@@ -1021,3 +1023,82 @@ trait ConfigurationMacroUtils:
       case '{ tethys.derivation.builder.FieldStyle.UpperSnakeCase } => Some(FieldStyle.UpperSnakeCase)
       case '{ tethys.derivation.builder.FieldStyle.CapitalizedSnakeCase } => Some(FieldStyle.CapitalizedSnakeCase)
       case _ => None
+
+
+  @deprecated
+  def parseLegacyReaderDerivationConfig[T: Type](config: Expr[ReaderDerivationConfig],
+                                                 mirror: Expr[Mirror.ProductOf[T]]): Expr[ReaderBuilder[T]] =
+    config match
+      case '{ ReaderDerivationConfig.withFieldStyle(${ fieldStyle }: FieldStyle) } =>
+        '{ ReaderBuilder[T](using ${ mirror }).fieldStyle(${ fieldStyle }) }
+
+      case '{ ReaderDerivationConfig.withFieldStyle(${ fieldStyle }: tethys.derivation.builder.FieldStyle) } =>
+        '{ ReaderBuilder[T](using ${ mirror }).fieldStyle(${ fieldStyle }) }
+
+      case '{ ReaderDerivationConfig.empty.withFieldStyle(${ fieldStyle }: FieldStyle) } =>
+        '{ ReaderBuilder[T](using ${ mirror }).fieldStyle(${ fieldStyle }) }
+
+      case '{ ReaderDerivationConfig.empty.withFieldStyle(${ fieldStyle }: tethys.derivation.builder.FieldStyle) } =>
+        '{ ReaderBuilder[T](using ${ mirror }).fieldStyle(${ fieldStyle }) }
+
+      case '{ ReaderDerivationConfig.strict } =>
+        '{ ReaderBuilder[T](using ${ mirror }).strict }
+
+      case '{ ReaderDerivationConfig.empty.strict } =>
+        '{ ReaderBuilder[T](using ${ mirror }).strict }
+
+      case '{ ReaderDerivationConfig.withFieldStyle(${ fieldStyle }: FieldStyle).strict } =>
+        '{ ReaderBuilder[T](using ${ mirror }).strict.fieldStyle(${ fieldStyle }) }
+
+      case '{ ReaderDerivationConfig.withFieldStyle(${ fieldStyle }: tethys.derivation.builder.FieldStyle).strict } =>
+        '{ ReaderBuilder[T](using ${ mirror }).strict.fieldStyle(${ fieldStyle }) }
+
+      case '{ ReaderDerivationConfig.strict.withFieldStyle(${ fieldStyle }: FieldStyle) } =>
+        '{ ReaderBuilder[T](using ${ mirror }).strict.fieldStyle(${ fieldStyle }) }
+
+      case '{ ReaderDerivationConfig.strict.withFieldStyle(${ fieldStyle }: tethys.derivation.builder.FieldStyle) } =>
+        '{ ReaderBuilder[T](using ${ mirror }).strict.fieldStyle(${ fieldStyle }) }
+
+      case '{ ReaderDerivationConfig.empty.withFieldStyle(${ fieldStyle }: FieldStyle).strict } =>
+        '{ ReaderBuilder[T](using ${ mirror }).strict.fieldStyle(${ fieldStyle }) }
+
+      case '{ ReaderDerivationConfig.empty.withFieldStyle(${ fieldStyle }: tethys.derivation.builder.FieldStyle).strict } =>
+        '{ ReaderBuilder[T](using ${ mirror }).strict.fieldStyle(${ fieldStyle }) }
+
+      case '{ ReaderDerivationConfig.empty.strict.withFieldStyle(${ fieldStyle }: FieldStyle) } =>
+        '{ ReaderBuilder[T](using ${ mirror }).strict.fieldStyle(${ fieldStyle }) }
+
+      case '{ ReaderDerivationConfig.empty.strict.withFieldStyle(${ fieldStyle }: tethys.derivation.builder.FieldStyle) } =>
+        '{ ReaderBuilder[T](using ${ mirror }).strict.fieldStyle(${ fieldStyle }) }
+
+      case other =>
+        report.errorAndAbort(s"Unknown tree: ${other.asTerm.show(using Printer.TreeShortCode)}")
+
+  @deprecated
+  def parseLegacyWriterDerivationConfig[T: Type](config: Expr[WriterDerivationConfig],
+                                                 mirror: Expr[Mirror.ProductOf[T]]): Expr[WriterBuilder[T]] =
+    config match
+      case '{ WriterDerivationConfig.withFieldStyle(${ fieldStyle }: FieldStyle) } =>
+        '{ WriterBuilder[T](using ${ mirror }).fieldStyle(${ fieldStyle }) }
+
+      case '{ WriterDerivationConfig.withFieldStyle(${ fieldStyle }: tethys.derivation.builder.FieldStyle) } =>
+        '{ WriterBuilder[T](using ${ mirror }).fieldStyle(${ fieldStyle }) }
+
+      case '{ WriterDerivationConfig.empty.withFieldStyle(${ fieldStyle }: FieldStyle) } =>
+        '{ WriterBuilder[T](using ${ mirror }).fieldStyle(${ fieldStyle }) }
+
+      case '{ WriterDerivationConfig.empty.withFieldStyle(${ fieldStyle }: tethys.derivation.builder.FieldStyle) } =>
+        '{ WriterBuilder[T](using ${ mirror }).fieldStyle(${ fieldStyle }) }
+
+      case other =>
+        report.errorAndAbort(s"Unknown tree: ${other.asTerm.show(using Printer.TreeShortCode)}")
+
+  def parseLegacyDiscriminator[T: Type](config: Expr[WriterDerivationConfig]): DiscriminatorConfig =
+    val name: String = config match
+      case '{ WriterDerivationConfig.withDiscriminator($name: String)} => name.valueOrAbort
+      case '{ WriterDerivationConfig.empty.withDiscriminator($name: String)} => name.valueOrAbort
+      case other =>
+        report.errorAndAbort(s"Unknown tree: ${other.asTerm.show(using Printer.TreeShortCode)}")
+
+    DiscriminatorConfig(name, TypeRepr.of[String], Nil)
+

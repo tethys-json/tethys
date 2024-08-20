@@ -5,14 +5,16 @@ import tethys.derivation.builder.WriterDescription.BuilderOperation
 
 @deprecated("Use WriterBuilder[A] instead")
 case class WriterDerivationConfig(fieldStyle: Option[FieldStyle], discriminator: Option[String] = None) {
-  def withFieldStyle(fieldStyle: FieldStyle): WriterDerivationConfig = this.copy(fieldStyle = Some(fieldStyle))
-  def withDiscriminator(discriminator: String): WriterDerivationConfig = this.copy(discriminator = Some(discriminator))
+  def withFieldStyle(fieldStyle: FieldStyle): WriterDerivationConfig = this
+  def withFieldStyle(fieldStyle: tethys.derivation.builder.FieldStyle): WriterDerivationConfig = this
+  def withDiscriminator(discriminator: String): WriterDerivationConfig = this
 }
 
 object WriterDerivationConfig {
   def empty: WriterDerivationConfig = WriterDerivationConfig(None)
-  def withFieldStyle(fieldStyle: FieldStyle): WriterDerivationConfig = empty.copy(fieldStyle = Some(fieldStyle))
-  def withDiscriminator(discriminator: String): WriterDerivationConfig = empty.copy(discriminator = Some(discriminator))
+  def withFieldStyle(fieldStyle: FieldStyle): WriterDerivationConfig = empty
+  def withFieldStyle(fieldStyle: tethys.derivation.builder.FieldStyle): WriterDerivationConfig = empty
+  def withDiscriminator(discriminator: String): WriterDerivationConfig = empty
 }
 
 @deprecated("Use WriterBuilder[A] instead")

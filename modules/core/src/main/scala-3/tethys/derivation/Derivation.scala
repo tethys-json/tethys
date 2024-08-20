@@ -1,10 +1,10 @@
 package tethys.derivation
 
+import tethys.derivation.builder.{ReaderDerivationConfig, WriterDerivationConfig}
 import tethys.writers.tokens.TokenWriter
 import tethys.readers.{FieldName, ReaderError}
 import tethys.readers.tokens.TokenIterator
 import tethys.{JsonObjectWriter, JsonReader, JsonWriter, ReaderBuilder, WriterBuilder}
-
 import scala.Tuple2
 import scala.annotation.tailrec
 import scala.compiletime.{constValueTuple, summonInline}
@@ -24,6 +24,18 @@ object Derivation:
   inline def deriveJsonReaderForProduct[T](inline config: ReaderBuilder[T]): JsonReader[T] =
     ${ DerivationMacro.deriveJsonReaderForProduct[T]('{config})}
 
+  @deprecated
+  inline def deriveJsonReaderForProductLegacy[T](inline config: ReaderDerivationConfig)(using mirror: Mirror.ProductOf[T]): JsonReader[T] =
+    ${ DerivationMacro.deriveJsonReaderForProductLegacy[T]('{config}, '{mirror}) }
+
+  @deprecated
+  inline def deriveJsonWriterForProductLegacy[T](inline config: WriterDerivationConfig)(using mirror: Mirror.ProductOf[T]): JsonObjectWriter[T] =
+    ${ DerivationMacro.deriveJsonWriterForProductLegacy[T]('{config}, '{mirror}) }
+
+  @deprecated
+  inline def deriveJsonWriterForSumLegacy[T](inline config: WriterDerivationConfig): JsonObjectWriter[T] =
+    ${ DerivationMacro.deriveJsonWriterForSumLegacy[T]('{ config }) }
+
   inline def deriveJsonReaderForSum[T]: JsonReader[T] =
     ${ DerivationMacro.deriveJsonReaderForSum[T] }
 
@@ -32,13 +44,25 @@ object DerivationMacro:
     new DerivationMacro(quotes).deriveJsonWriterForProduct[T](config)
 
   def deriveJsonWriterForSum[T: Type](using quotes: Quotes): Expr[JsonObjectWriter[T]] =
-    new DerivationMacro(quotes).deriveJsonWriterForSum[T]
+    new DerivationMacro(quotes).deriveJsonWriterForSum[T](None)
 
   def deriveJsonReaderForProduct[T: Type](config: Expr[ReaderBuilder[T]])(using quotes: Quotes): Expr[JsonReader[T]] =
     new DerivationMacro(quotes).deriveJsonReaderForProduct[T](config)
 
   def deriveJsonReaderForSum[T: Type](using quotes: Quotes): Expr[JsonReader[T]] =
     new DerivationMacro(quotes).deriveJsonReaderForSum[T]
+
+  @deprecated
+  def deriveJsonReaderForProductLegacy[T: Type](config: Expr[ReaderDerivationConfig], mirror: Expr[Mirror.ProductOf[T]])(using quotes: Quotes): Expr[JsonReader[T]] =
+    new DerivationMacro(quotes).deriveJsonReaderForProductLegacy[T](config, mirror)
+
+  @deprecated
+  def deriveJsonWriterForProductLegacy[T: Type](config: Expr[WriterDerivationConfig], mirror: Expr[Mirror.ProductOf[T]])(using quotes: Quotes): Expr[JsonObjectWriter[T]] =
+    new DerivationMacro(quotes).deriveJsonWriterForProductLegacy[T](config, mirror)
+
+  @deprecated
+  def deriveJsonWriterForSumLegacy[T: Type](config: Expr[WriterDerivationConfig])(using quotes: Quotes): Expr[JsonObjectWriter[T]] =
+    new DerivationMacro(quotes).deriveJsonWriterForSumLegacy[T](config)
 
 private[derivation]
 class DerivationMacro(val quotes: Quotes) extends ConfigurationMacroUtils:
@@ -66,17 +90,29 @@ class DerivationMacro(val quotes: Quotes) extends ConfigurationMacroUtils:
     )
     writer.asExprOf[JsonObjectWriter[T]]
 
-  def deriveJsonWriterForSum[T: Type]: Expr[JsonObjectWriter[T]] =
+  def deriveJsonWriterForSum[T: Type](legacyConfig: Option[DiscriminatorConfig]): Expr[JsonObjectWriter[T]] =
     val tpe = TypeRepr.of[T]
     val parsedConfig = parseSumConfig[T]
     val types = getAllChildren(tpe)
     val (missingWriters, refs) = deriveMissingWritersForSum(types)
+    val mirror = '{summonInline[Mirror.SumOf[T]]}
     val writer = Block(
       missingWriters,
     '{
       new JsonObjectWriter[T]:
         override def writeValues(value: T, tokenWriter: TokenWriter): Unit =
-          $ {
+          ${
+            legacyConfig.fold('{}) { case DiscriminatorConfig(label, tpe, values) =>
+              '{
+                JsonWriter.stringWriter.write(
+                  name = ${ Expr(label) },
+                  value = ${Expr.ofList(types.map(t => Expr(t.typeSymbol.name.filterNot(_ == '$'))))}.apply(${mirror}.ordinal(value)),
+                  tokenWriter = tokenWriter
+                )
+              }
+            }
+          }
+          ${
             parsedConfig.discriminator.fold('{}) { case DiscriminatorConfig(label, tpe, discriminators) =>
               tpe.asType match
                 case '[discriminatorType] =>
@@ -403,4 +439,22 @@ class DerivationMacro(val quotes: Quotes) extends ConfigurationMacroUtils:
                 Some((valDef, (tpe, Ref(valDef.symbol))))
       }.unzip
     (stats, refs.toMap)
+
+
+  @deprecated
+  def deriveJsonReaderForProductLegacy[T: Type](config: Expr[ReaderDerivationConfig],
+                                                 mirror: Expr[Mirror.ProductOf[T]]
+                                               ): Expr[JsonReader[T]] =
+    deriveJsonReaderForProduct(parseLegacyReaderDerivationConfig(config, mirror))
+
+  @deprecated
+  def deriveJsonWriterForProductLegacy[T: Type](config: Expr[WriterDerivationConfig],
+                                                mirror: Expr[Mirror.ProductOf[T]]): Expr[JsonObjectWriter[T]] =
+    deriveJsonWriterForProduct(parseLegacyWriterDerivationConfig(config, mirror))
+
+
+  @deprecated
+  def deriveJsonWriterForSumLegacy[T: Type](config: Expr[WriterDerivationConfig]): Expr[JsonObjectWriter[T]] =
+    deriveJsonWriterForSum(Some(parseLegacyDiscriminator(config)))
+
 

@@ -3,19 +3,18 @@ package tethys.derivation.builder
 import tethys.FieldStyle
 
 @deprecated("Use ReaderBuilder[A] instead")
-case class ReaderDerivationConfig(fieldStyle: Option[FieldStyle],
-                                  isStrict: Boolean) {
-  def withFieldStyle(fieldStyle: FieldStyle): ReaderDerivationConfig = this.copy(fieldStyle = Some(fieldStyle))
-  def strict: ReaderDerivationConfig = this.copy(isStrict = true)
+case class ReaderDerivationConfig() {
+  def withFieldStyle(fieldStyle: FieldStyle): ReaderDerivationConfig = this
+  def withFieldStyle(fieldStyle: tethys.derivation.builder.FieldStyle): ReaderDerivationConfig = this
+  def strict: ReaderDerivationConfig = this
 }
 
+@deprecated("Use ReaderBuilder[A] instead")
 object ReaderDerivationConfig {
-  def empty: ReaderDerivationConfig = ReaderDerivationConfig(
-    fieldStyle = None,
-    isStrict = false
-  )
-  def withFieldStyle(fieldStyle: FieldStyle): ReaderDerivationConfig = empty.withFieldStyle(fieldStyle)
-  def strict: ReaderDerivationConfig = empty.strict
+  def empty: ReaderDerivationConfig = ReaderDerivationConfig()
+  def withFieldStyle(fieldStyle: FieldStyle): ReaderDerivationConfig = empty
+  def withFieldStyle(fieldStyle: tethys.derivation.builder.FieldStyle): ReaderDerivationConfig = empty
+  def strict: ReaderDerivationConfig = empty
 }
 
 @deprecated("Use ReaderBuilder[A] instead")
