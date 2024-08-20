@@ -389,4 +389,29 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
     }).getMessage shouldBe "Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'some_param', 'id_param', 'simple'"
   }
 
+  it should "derive strict reader with legacy field style" in {
+    import tethys.derivation.builder.FieldStyle
+    implicit val reader: JsonReader[CamelCaseNames] = jsonReader[CamelCaseNames](
+      ReaderDerivationConfig.withFieldStyle(FieldStyle.lowerSnakeCase).strict
+    )
+
+    read[CamelCaseNames](obj(
+      "some_param" -> 1,
+      "id_param" -> 2,
+      "simple" -> 3
+    )) shouldBe CamelCaseNames(
+      someParam = 1,
+      IDParam = 2,
+      simple = 3
+    )
+
+    (the[ReaderError] thrownBy {
+      read[CamelCaseNames](obj(
+        "some_param" -> 1,
+        "not_id_param" -> 2,
+        "simple" -> 3
+      ))
+    }).getMessage shouldBe "Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'some_param', 'id_param', 'simple'"
+  }
+
 }
