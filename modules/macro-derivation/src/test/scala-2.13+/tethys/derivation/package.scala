@@ -24,4 +24,6 @@ package object derivation {
   case class SeqMaster4(a: Seq[Int])
 
   case class CamelCaseNames(someParam: Int, IDParam: Int, simple: Int)
+
+  case class DefaultField[T](value: T, default: Boolean = true)
 }

@@ -63,6 +63,7 @@ class JsonReaderBuilderTest extends AnyFlatSpec with Matchers {
         .addField[Boolean]("c")
         .addField[Seq[String]]("d")
         .addField[Double]("e")
+        .addField[Char]("f")
         .addField[Option[Int]]("opt")
         .buildReader(FatClass.apply)
     }
@@ -72,13 +73,15 @@ class JsonReaderBuilderTest extends AnyFlatSpec with Matchers {
       "b" -> "s",
       "c" -> true,
       "d" -> arr("a", "b", "c"),
-      "e" -> 4
+      "e" -> 4,
+      "f" -> "c"
     )) shouldBe FatClass(
       a = 1,
       b = "s",
       c = true,
       d = Seq("a", "b", "c"),
       e = 4.0D,
+      f = 'c',
       opt = None
     )
   }
@@ -165,5 +168,6 @@ object JsonReaderBuilderTest {
                       c: Boolean,
                       d: Seq[String],
                       e: Double,
+                      f: Char,
                       opt: Option[Int])
 }

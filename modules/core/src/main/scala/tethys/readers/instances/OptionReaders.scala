@@ -5,6 +5,12 @@ import tethys.readers.FieldName
 import tethys.readers.tokens.TokenIterator
 
 private[tethys] trait OptionReaders extends LowPriorityOptionReaders {
+  implicit lazy val byteOptionReader: JsonReader[Option[Byte]] = new OptionJsonReader[Byte] {
+    override protected def readSomeValue(it: TokenIterator)(implicit fieldName: FieldName): Option[Byte] = {
+      Some(PrimitiveReaders.ByteJsonReader.read(it))
+    }
+  }
+
   implicit lazy val shortOptionReader: JsonReader[Option[Short]] = new OptionJsonReader[Short] {
     override protected def readSomeValue(it: TokenIterator)(implicit fieldName: FieldName): Option[Short] = {
       Some(PrimitiveReaders.ShortJsonReader.read(it))

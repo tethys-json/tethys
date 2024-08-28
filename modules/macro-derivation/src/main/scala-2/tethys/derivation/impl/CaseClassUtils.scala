@@ -10,7 +10,7 @@ trait CaseClassUtils extends LoggingUtils {
   import c.universe._
 
   case class CaseClassDefinition(tpe: Type, fields: List[CaseClassField])
-  case class CaseClassField(name: String, tpe: Type)
+  case class CaseClassField(name: String, tpe: Type, defaultValue: Option[Tree])
 
   def caseClassDefinition[A: WeakTypeTag]: CaseClassDefinition = caseClassDefinition(weakTypeOf[A])
 
@@ -18,7 +18,7 @@ trait CaseClassUtils extends LoggingUtils {
     val ctor = getConstructor(tpe)
     CaseClassDefinition(
       tpe = tpe,
-      fields = ctor.paramLists.head.map(constructorParameterToCaseClassField(tpe))
+      fields = ctor.paramLists.head.zipWithIndex.map{ case (sym, idx) => constructorParameterToCaseClassField(tpe)(idx, sym) }
     )
   }
 
@@ -39,13 +39,21 @@ trait CaseClassUtils extends LoggingUtils {
     }
   }
 
-  private def constructorParameterToCaseClassField(tpe: Type)(param: Symbol): CaseClassField = {
+  private def constructorParameterToCaseClassField(tpe: Type)(idx: Int, param: Symbol): CaseClassField = {
     val possibleRealType = tpe.decls.collectFirst {
       case s if s.name == param.name => s.typeSignatureIn(tpe).finalResultType
     }
+
     CaseClassField(
       name = param.name.decodedName.toString,
-      tpe = possibleRealType.getOrElse(param.typeSignatureIn(tpe))
+      tpe = possibleRealType.getOrElse(param.typeSignatureIn(tpe)),
+      defaultValue = 
+        if (param.asTerm.isParamWithDefault) {
+          val methodName = TermName(s"apply$$default$$${idx + 1}") 
+          val select = q"${tpe.companion.typeSymbol.asClass.module}.$methodName"
+          Some(select)
+        } else
+          None
     )
   }
 }

@@ -1,5 +1,5 @@
 lazy val scala212 = "2.12.19"
-lazy val scala213 = "2.13.12"
+lazy val scala213 = "2.13.14"
 /* FIXME
 Return to use a stable version when 'scala.quoted.Quotes.reflectModuleSymbol.newClass'
 and 'scala.quoted.Quotes.reflectModule.ClassDef.apply' are no longer experimental methods
@@ -64,8 +64,8 @@ def crossScalaSettings = {
 
 lazy val testSettings = Seq(
   libraryDependencies ++= Seq(
-    "org.scalatest" %% "scalatest-flatspec" % "3.2.15" % Test,
-    "org.scalatest" %% "scalatest-shouldmatchers" % "3.2.15" % Test
+    "org.scalatest" %% "scalatest-flatspec" % "3.2.19" % Test,
+    "org.scalatest" %% "scalatest-shouldmatchers" % "3.2.19" % Test
   )
 )
 
@@ -75,7 +75,18 @@ lazy val tethys = project.in(file("."))
     crossScalaVersions := Seq.empty,
     commonSettings
   )
-  .aggregate(core, `macro-derivation`, `jackson-211`, `jackson-212`, `jackson-213`, json4s, circe, refined, enumeratum, cats)
+  .aggregate(
+    core,
+    `macro-derivation`,
+    `jackson-211`,
+    `jackson-212`,
+    `jackson-213`,
+    json4s,
+    circe,
+    refined,
+    enumeratum,
+    cats
+  )
 
 lazy val modules = file("modules")
 
@@ -169,7 +180,7 @@ lazy val circe = project.in(modules / "circe")
   .settings(
     name := "tethys-circe",
     libraryDependencies ++= Seq(
-      "io.circe" %% "circe-core" % "0.14.7"
+      "io.circe" %% "circe-core" % "0.14.8"
     )
   )
   .dependsOn(core, `jackson-212` % Test)

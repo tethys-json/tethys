@@ -22,6 +22,8 @@ class SimpleTokenWriter extends TokenWriter {
 
   override def writeString(v: String): SimpleTokenWriter.this.type = append(StringValueNode(v))
 
+  override def writeNumber(v: Byte): SimpleTokenWriter.this.type = append(ByteValueNode(v))
+
   override def writeNumber(v: Short): SimpleTokenWriter.this.type = append(ShortValueNode(v))
 
   override def writeNumber(v: Int): SimpleTokenWriter.this.type = append(IntValueNode(v))

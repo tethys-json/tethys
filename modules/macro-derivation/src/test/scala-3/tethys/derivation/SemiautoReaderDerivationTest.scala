@@ -115,7 +115,7 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
     )) shouldBe SimpleType(2, "str", 1.0)
   }
 
-  
+
   it should "derive reader for extract from description with synthetic field" in {
     implicit val reader: JsonReader[SimpleType] = jsonReader[SimpleType] {
       describe {
@@ -138,7 +138,7 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
     )) shouldBe SimpleType(4, "str", 1.0)
   }
 
-  
+
   it should "derive reader for extract reader from description" in {
     implicit val reader: JsonReader[SimpleTypeWithAny] = jsonReader[SimpleTypeWithAny] {
       describe {

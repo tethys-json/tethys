@@ -10,6 +10,17 @@ import scala.collection.mutable
 import scala.language.higherKinds
 
 private[tethys] trait MapReaders extends LowPriorityMapReaders {
+  implicit def byteMapReader[K, M[X, Y] <: scala.collection.Map[X, Y]](implicit
+                                                                        keyReader: KeyReader[K],
+                                                                        cb: CollectionBuilder[(K, Byte), M[K, Byte]]
+                                                                       ): JsonReader[M[K, Byte]] = {
+    new MapReader[K, Byte, M] {
+      override protected def appendBuilder(it: TokenIterator, builder: mutable.Builder[(K, Byte), M[K, Byte]], key: K)(implicit fieldName: FieldName): Unit = {
+        builder += key -> PrimitiveReaders.ByteJsonReader.read(it)
+      }
+    }
+  }
+
   implicit def shortMapReader[K, M[X, Y] <: scala.collection.Map[X, Y]](implicit
                                                                         keyReader: KeyReader[K],
                                                                         cb: CollectionBuilder[(K, Short), M[K, Short]]

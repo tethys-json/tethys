@@ -4,6 +4,18 @@ import tethys.readers.tokens.TokenIterator
 import tethys.readers.{FieldName, ReaderError}
 
 object PrimitiveReaders {
+  object ByteJsonReader {
+    def read(it: TokenIterator)(implicit fieldName: FieldName): Byte = {
+      if(it.currentToken().isNumberValue) {
+        val res = it.byte()
+        it.nextToken()
+        res
+      } else {
+        ReaderError.wrongJson(s"Expected byte value but found: ${it.currentToken()}")
+      }
+    }
+  }
+
   object ShortJsonReader {
     def read(it: TokenIterator)(implicit fieldName: FieldName): Short = {
       if(it.currentToken().isNumberValue) {

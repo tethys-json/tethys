@@ -38,6 +38,7 @@ class QueueIterator(private var nodes: immutable.Queue[TokenNode]) extends BaseT
 
   override def number(): Number = nodes.front match {
     case NumberValueNode(value) => value
+    case ByteValueNode(value) => value
     case ShortValueNode(value) => value
     case IntValueNode(value) => value
     case LongValueNode(value) => value
@@ -46,9 +47,21 @@ class QueueIterator(private var nodes: immutable.Queue[TokenNode]) extends BaseT
     case node => fail[NumberValueNode](node)
   }
 
+  override def byte(): Byte = nodes.front match {
+    case ByteValueNode(value) => value
+    case NumberValueNode(value) => value.byteValue()
+    case ShortValueNode(value) => value.toByte
+    case IntValueNode(value) => value.toByte
+    case LongValueNode(value) => value.toByte
+    case FloatValueNode(value) => value.toByte
+    case DoubleValueNode(value) => value.toByte
+    case node => fail[ByteValueNode](node)
+  }
+
   override def short(): Short = nodes.front match {
     case ShortValueNode(value) => value
     case NumberValueNode(value) => value.shortValue()
+    case ByteValueNode(value) => value.toShort
     case IntValueNode(value) => value.toShort
     case LongValueNode(value) => value.toShort
     case FloatValueNode(value) => value.toShort
@@ -59,6 +72,7 @@ class QueueIterator(private var nodes: immutable.Queue[TokenNode]) extends BaseT
   override def int(): Int = nodes.front match {
     case IntValueNode(value) => value
     case NumberValueNode(value) => value.intValue()
+    case ByteValueNode(value) => value.toInt
     case ShortValueNode(value) => value.toInt
     case LongValueNode(value) => value.toInt
     case FloatValueNode(value) => value.toInt
@@ -69,6 +83,7 @@ class QueueIterator(private var nodes: immutable.Queue[TokenNode]) extends BaseT
   override def long(): Long = nodes.front match {
     case LongValueNode(value) => value
     case NumberValueNode(value) => value.longValue()
+    case ByteValueNode(value) => value.toLong
     case ShortValueNode(value) => value.toLong
     case IntValueNode(value) => value.toLong
     case FloatValueNode(value) => value.toLong
@@ -79,6 +94,7 @@ class QueueIterator(private var nodes: immutable.Queue[TokenNode]) extends BaseT
   override def float(): Float = nodes.front match {
     case FloatValueNode(value) => value
     case NumberValueNode(value) => value.floatValue()
+    case ByteValueNode(value) => value.toFloat
     case ShortValueNode(value) => value.toFloat
     case IntValueNode(value) => value.toFloat
     case LongValueNode(value) => value.toFloat
@@ -89,6 +105,7 @@ class QueueIterator(private var nodes: immutable.Queue[TokenNode]) extends BaseT
   override def double(): Double = nodes.front match {
     case DoubleValueNode(value) => value
     case NumberValueNode(value) => value.doubleValue()
+    case ByteValueNode(value) => value.toDouble
     case ShortValueNode(value) => value.toDouble
     case IntValueNode(value) => value.toDouble
     case LongValueNode(value) => value.toDouble

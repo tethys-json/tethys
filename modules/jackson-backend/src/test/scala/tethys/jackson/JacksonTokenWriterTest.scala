@@ -23,6 +23,10 @@ class JacksonTokenWriterTest extends AnyFlatSpec with Matchers {
     iterate(_.writeString("string")) shouldBe """"string""""
   }
 
+  it should "write Byte value" in {
+    iterate(_.writeNumber(1: Byte)) shouldBe """1"""
+  }
+
   it should "write Short value" in {
     iterate(_.writeNumber(1: Short)) shouldBe """1"""
   }

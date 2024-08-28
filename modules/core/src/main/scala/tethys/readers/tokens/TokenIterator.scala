@@ -17,6 +17,8 @@ trait TokenIterator {
 
   def number(): Number
 
+  def byte(): Byte
+
   def short(): Short
 
   def int(): Int

@@ -12,6 +12,10 @@ trait AllJsonWriters extends OptionWriters with EitherWriters {
     override def write(value: Long, tokenWriter: TokenWriter): Unit = tokenWriter.writeNumber(value)
   }
 
+  implicit lazy val byteWriter: JsonWriter[Byte] = new JsonWriter[Byte] {
+    override def write(value: Byte, tokenWriter: TokenWriter): Unit = tokenWriter.writeNumber(value)
+  }
+
   implicit lazy val shortWriter: JsonWriter[Short] = new JsonWriter[Short] {
     override def write(value: Short, tokenWriter: TokenWriter): Unit = tokenWriter.writeNumber(value)
   }
@@ -40,12 +44,20 @@ trait AllJsonWriters extends OptionWriters with EitherWriters {
     override def write(value: String, tokenWriter: TokenWriter): Unit = tokenWriter.writeString(value)
   }
 
+  implicit lazy val charWriter: JsonWriter[Char] = new JsonWriter[Char] {
+    override def write(value: Char, tokenWriter: TokenWriter): Unit = tokenWriter.writeString(value.toString)
+  }
+
   implicit lazy val javaIntWriter: JsonWriter[java.lang.Integer] = new JsonWriter[java.lang.Integer] {
     override def write(value: java.lang.Integer, tokenWriter: TokenWriter): Unit = tokenWriter.writeNumber(value)
   }
 
   implicit lazy val javaLongWriter: JsonWriter[java.lang.Long] = new JsonWriter[java.lang.Long] {
     override def write(value: java.lang.Long, tokenWriter: TokenWriter): Unit = tokenWriter.writeNumber(value)
+  }
+
+  implicit lazy val javaByteWriter: JsonWriter[java.lang.Byte] = new JsonWriter[java.lang.Byte] {
+    override def write(value: java.lang.Byte, tokenWriter: TokenWriter): Unit = tokenWriter.writeNumber(value)
   }
 
   implicit lazy val javaShortWriter: JsonWriter[java.lang.Short] = new JsonWriter[java.lang.Short] {
@@ -79,4 +91,34 @@ trait AllJsonWriters extends OptionWriters with EitherWriters {
   implicit lazy val nullWriter: JsonWriter[Null] = new JsonWriter[Null] {
     override def write(value: Null, tokenWriter: TokenWriter): Unit = tokenWriter.writeNull()
   }
+
+  implicit lazy val instantWriter: JsonWriter[java.time.Instant] =
+    new JsonWriter[java.time.Instant] {
+      override def write(value: java.time.Instant, tokenWriter: TokenWriter): Unit =
+        tokenWriter.writeString(value.toString)
+    }
+
+  implicit lazy val localDateWriter: JsonWriter[java.time.LocalDate] =
+    new JsonWriter[java.time.LocalDate] {
+      override def write(value: java.time.LocalDate, tokenWriter: TokenWriter): Unit =
+        tokenWriter.writeString(value.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE))
+    }
+
+  implicit lazy val localDateTimeWriter: JsonWriter[java.time.LocalDateTime] =
+    new JsonWriter[java.time.LocalDateTime] {
+      override def write(value: java.time.LocalDateTime, tokenWriter: TokenWriter): Unit =
+        tokenWriter.writeString(value.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+    }
+
+  implicit lazy val offsetDateTimeWriter: JsonWriter[java.time.OffsetDateTime] =
+    new JsonWriter[java.time.OffsetDateTime] {
+      override def write(value: java.time.OffsetDateTime, tokenWriter: TokenWriter): Unit =
+        tokenWriter.writeString(value.format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+    }
+
+  implicit lazy val zonedDateTimeWriter: JsonWriter[java.time.ZonedDateTime] =
+    new JsonWriter[java.time.ZonedDateTime] {
+      override def write(value: java.time.ZonedDateTime, tokenWriter: TokenWriter): Unit =
+        tokenWriter.writeString(value.format(java.time.format.DateTimeFormatter.ISO_ZONED_DATE_TIME))
+    }
 }
