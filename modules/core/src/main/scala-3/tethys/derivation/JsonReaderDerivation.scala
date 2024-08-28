@@ -26,7 +26,8 @@ trait JsonReaderDerivation:
 
   inline def derived[A](inline config: ReaderBuilder[A])(using mirror: Mirror.ProductOf[A]): JsonReader[A] =
     Derivation.deriveJsonReaderForProduct[A](config)
-    
+
+  @deprecated("Use ReaderBuilder instead")
   inline def derived[A](inline config: ReaderDerivationConfig)(using mirror: Mirror.ProductOf[A]): JsonReader[A] =
     Derivation.deriveJsonReaderForProductLegacy[A](config)
 

@@ -15,7 +15,7 @@ import tethys.writers.tokens.SimpleTokenWriter
 class SemiautoWriterDerivationTest extends AnyFlatSpec with Matchers {
 
   behavior of "semiauto derivation"
-  it should "generate proper writer from WriterDescription" in {
+  it should "generate proper writer from WriterBuilder" in {
     def freeVariable: String = "e"
     implicit val dWriter: JsonWriter[D] = jsonWriter[D](WriterBuilder[D].fieldStyle(FieldStyle.UpperCase))
 
@@ -34,6 +34,27 @@ class SemiautoWriterDerivationTest extends AnyFlatSpec with Matchers {
       ),
       "d" -> 10,
       "e" -> false
+    )
+  }
+
+  it should "generate proper writer from WriterDerivationConfig" in {
+    def freeVariable: String = "e"
+
+    implicit val dWriter: JsonWriter[D] = jsonWriter[D](
+      WriterDerivationConfig.withFieldStyle(tethys.derivation.builder.FieldStyle.uppercase)
+    )
+
+    implicit val testWriter: JsonWriter[JsonTreeTestData] = jsonWriter {
+      WriterDerivationConfig.withFieldStyle(FieldStyle.UpperCase)
+    }
+    JsonTreeTestData(5, b = false, C(D(1))).asTokenList shouldBe obj(
+      "A" -> 5,
+      "B" -> false,
+      "C" -> obj(
+        "d" -> obj(
+          "A" -> 1
+        )
+      )
     )
   }
 
