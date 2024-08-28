@@ -11,4 +11,3 @@ object StringEnumJsonWriter:
     (value: A, tokenWriter: writers.tokens.TokenWriter) =>
       tokenWriter.writeFieldName(label)
       tokenWriter.writeString(value.toString)
-

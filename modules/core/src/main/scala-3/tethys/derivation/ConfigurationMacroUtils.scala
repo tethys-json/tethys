@@ -1113,4 +1113,3 @@ trait ConfigurationMacroUtils:
         report.errorAndAbort(s"Unknown tree: ${other.asTerm.show(using Printer.TreeShortCode)}")
 
     DiscriminatorConfig(name, TypeRepr.of[String], Nil)
-

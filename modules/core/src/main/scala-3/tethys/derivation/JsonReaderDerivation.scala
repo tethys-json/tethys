@@ -42,3 +42,4 @@ trait JsonReaderDerivation:
         )
       case given Mirror.SumOf[A] =>
         Derivation.deriveJsonReaderForSum[A]
+        

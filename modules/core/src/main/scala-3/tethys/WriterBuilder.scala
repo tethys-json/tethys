@@ -35,7 +35,3 @@ object WriterBuilder:
 
   sealed trait FunApply[A, B] extends FunApply0[A, B]:
     def fromRoot[C](fun: A => C): WriterBuilder[A]
-
-
-sealed trait JsonWriterSumConfig[A]:
-  def fieldStyle(style: FieldStyle): JsonWriterSumConfig[A]

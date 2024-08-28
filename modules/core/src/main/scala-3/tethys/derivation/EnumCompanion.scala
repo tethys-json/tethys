@@ -31,5 +31,3 @@ object EnumCompanionMacro:
   def isEnum[T: scala.quoted.Type](using quotes: Quotes): Expr[Boolean] =
     import quotes.reflect.*
     Expr(TypeRepr.of[T].typeSymbol.flags.is(Flags.Enum))
-
-

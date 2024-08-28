@@ -19,5 +19,3 @@ object StringEnumJsonReader:
               ReaderError.wrongJson(s"Unknown enum name: $res")
         else
           ReaderError.wrongJson(s"Expected string value but found: ${it.currentToken()}")
-
-

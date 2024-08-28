@@ -456,5 +456,3 @@ class DerivationMacro(val quotes: Quotes) extends ConfigurationMacroUtils:
   @deprecated
   def deriveJsonWriterForSumLegacy[T: Type](config: Expr[WriterDerivationConfig]): Expr[JsonObjectWriter[T]] =
     deriveJsonWriterForSum(Some(parseLegacyDiscriminator(config)))
-
-

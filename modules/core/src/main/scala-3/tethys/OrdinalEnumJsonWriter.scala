@@ -13,5 +13,3 @@ object OrdinalEnumJsonWriter:
     (value: A, tokenWriter: writers.tokens.TokenWriter) =>
       tokenWriter.writeFieldName(label)
       tokenWriter.writeNumber(value.ordinal)
-
-

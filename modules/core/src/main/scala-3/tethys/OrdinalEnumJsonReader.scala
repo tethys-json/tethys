@@ -18,4 +18,3 @@ object OrdinalEnumJsonReader:
               ReaderError.wrongJson(s"Unknown enum ordinal: $res")
         else
           ReaderError.wrongJson(s"Expected int value but found: ${it.currentToken()}")
-

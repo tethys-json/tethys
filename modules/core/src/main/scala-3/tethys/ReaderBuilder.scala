@@ -55,3 +55,4 @@ object ReaderBuilder:
     def product
     (using mirror: scala.deriving.Mirror.ProductOf[Field])
     (using ev: Collected =:= mirror.MirroredElemTypes): ReaderBuilder[A]
+    
