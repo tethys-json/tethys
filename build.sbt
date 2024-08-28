@@ -169,7 +169,7 @@ lazy val circe = project.in(modules / "circe")
   .settings(
     name := "tethys-circe",
     libraryDependencies ++= Seq(
-      "io.circe" %% "circe-core" % "0.14.5"
+      "io.circe" %% "circe-core" % "0.14.7"
     )
   )
   .dependsOn(core, `jackson-212` % Test)
@@ -181,7 +181,7 @@ lazy val json4s = project.in(modules / "json4s")
   .settings(
     name := "tethys-json4s",
     libraryDependencies ++= Seq(
-      "org.json4s" %% "json4s-ast" % "4.1.0-M6"
+      "org.json4s" %% "json4s-ast" % "4.0.6"
     )
   )
   .dependsOn(core)
