@@ -5,13 +5,16 @@ import tethys.{JsonObjectWriter, JsonReader, JsonWriter}
 
 import scala.reflect.macros.blackbox
 
-class AutoDerivationMacro(val c: blackbox.Context) extends WriterDerivation with ReaderDerivation {
+class AutoDerivationMacro(val c: blackbox.Context)
+    extends WriterDerivation
+    with ReaderDerivation {
 
   import c.universe._
 
   override protected def showError: Boolean = true
 
-  def jsonWriter[A: WeakTypeTag]: Expr[LowPriorityInstance[JsonObjectWriter[A]]] = {
+  def jsonWriter[A: WeakTypeTag]
+      : Expr[LowPriorityInstance[JsonObjectWriter[A]]] = {
     val tpe = weakTypeOf[A]
     val clazz = classSym(tpe)
     val instance: Expr[JsonWriter[A]] = {
@@ -54,12 +57,11 @@ class AutoDerivationMacro(val c: blackbox.Context) extends WriterDerivation with
       case q"$_.${method: TermName}[${tt: Tree}]" => method -> tt.tpe
     }
 
-    val counts = tpes.map {
-      case (m1, t1) =>
-        tpes.foldLeft(0) {
-          case (count, (m2, t2)) if m1 == m2 && t1 =:= t2 => count + 1
-          case (count, _) => count
-        }
+    val counts = tpes.map { case (m1, t1) =>
+      tpes.foldLeft(0) {
+        case (count, (m2, t2)) if m1 == m2 && t1 =:= t2 => count + 1
+        case (count, _)                                 => count
+      }
     }
 
     counts.exists(_ > 1)
