@@ -1,6 +1,3 @@
 package tethys.derivation
 
-
-private [tethys] trait JsonObjectWriterDerivation {
-
-}
+private[tethys] trait JsonObjectWriterDerivation {}

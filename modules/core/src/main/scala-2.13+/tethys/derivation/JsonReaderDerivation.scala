@@ -1,6 +1,3 @@
 package tethys.derivation
 
-
-private [tethys] trait JsonReaderDerivation {
-
-}
+private[tethys] trait JsonReaderDerivation {}
