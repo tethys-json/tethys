@@ -20,7 +20,7 @@ trait JsonReader[@specialized(specializations) A] {
   }
 }
 
-object JsonReader extends AllJsonReaders {
+object JsonReader extends AllJsonReaders with derivation.JsonReaderDerivation {
   def apply[A](implicit jsonReader: JsonReader[A]): JsonReader[A] = jsonReader
 
   val builder: JsonReaderBuilder.type = JsonReaderBuilder

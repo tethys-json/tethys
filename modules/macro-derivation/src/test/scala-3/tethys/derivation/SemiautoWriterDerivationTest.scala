@@ -3,11 +3,11 @@ package tethys.derivation
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 import tethys.commons.TokenNode
-import tethys.{JsonObjectWriter, JsonWriter}
-import tethys.derivation.builder.{FieldStyle, WriterBuilder, WriterDerivationConfig}
+import tethys.*
 import tethys.writers.tokens.SimpleTokenWriter.*
 import tethys.commons.TokenNode.{value as token, *}
 import tethys.derivation.ADTWithType.{ADTWithTypeA, ADTWithTypeB}
+import tethys.derivation.builder.WriterDerivationConfig
 import tethys.derivation.semiauto.*
 import tethys.writers.instances.SimpleJsonObjectWriter
 import tethys.writers.tokens.SimpleTokenWriter
@@ -15,9 +15,9 @@ import tethys.writers.tokens.SimpleTokenWriter
 class SemiautoWriterDerivationTest extends AnyFlatSpec with Matchers {
 
   behavior of "semiauto derivation"
-  it should "generate proper writer from WriterDescription" in {
+  it should "generate proper writer from WriterBuilder" in {
     def freeVariable: String = "e"
-    implicit val dWriter: JsonWriter[D] = jsonWriter[D](WriterDerivationConfig.withFieldStyle(FieldStyle.UpperCase))
+    implicit val dWriter: JsonWriter[D] = jsonWriter[D](WriterBuilder[D].fieldStyle(FieldStyle.UpperCase))
 
     implicit val testWriter: JsonWriter[JsonTreeTestData] = jsonWriter {
       WriterBuilder[JsonTreeTestData]
@@ -37,17 +37,36 @@ class SemiautoWriterDerivationTest extends AnyFlatSpec with Matchers {
     )
   }
 
+  it should "generate proper writer from WriterDerivationConfig" in {
+    def freeVariable: String = "e"
+
+    implicit val dWriter: JsonWriter[D] = jsonWriter[D](
+      WriterDerivationConfig.withFieldStyle(tethys.derivation.builder.FieldStyle.uppercase)
+    )
+
+    implicit val testWriter: JsonWriter[JsonTreeTestData] = jsonWriter {
+      WriterDerivationConfig.withFieldStyle(FieldStyle.UpperCase)
+    }
+    JsonTreeTestData(5, b = false, C(D(1))).asTokenList shouldBe obj(
+      "A" -> 5,
+      "B" -> false,
+      "C" -> obj(
+        "d" -> obj(
+          "A" -> 1
+        )
+      )
+    )
+  }
+
   it should "derive writer for update partial" in {
     implicit val partialWriter: JsonWriter[D] = jsonWriter {
-      describe {
-        WriterBuilder[D]
-          .updatePartial(_.a) {
-            case 1 => "uno!"
-            case 2 => 1
-            case v if v > 0 => v * 2
-            case _ => throw new IllegalArgumentException("Wrong value!")
-          }
-      }
+      WriterBuilder[D]
+        .updatePartial(_.a) {
+          case 1 => "uno!"
+          case 2 => 1
+          case v if v > 0 => v * 2
+          case _ => throw new IllegalArgumentException("Wrong value!")
+        }
     }
 
     D(1).asTokenList shouldBe obj("a" -> "uno!")
@@ -61,15 +80,13 @@ class SemiautoWriterDerivationTest extends AnyFlatSpec with Matchers {
 
   it should "derive writer for update partial from root" in {
     implicit val partialWriter: JsonWriter[D] = jsonWriter {
-      describe {
-        WriterBuilder[D]
-          .updatePartial(_.a).fromRoot {
-            case d if d.a == 1 => "uno!"
-            case d if d.a == 2 => 1
-            case d if d.a > 0 => d.a * 2
-            case _ => throw new IllegalArgumentException("Wrong value!")
-          }
-      }
+      WriterBuilder[D]
+        .updatePartial(_.a).fromRoot {
+          case d if d.a == 1 => "uno!"
+          case d if d.a == 2 => 1
+          case d if d.a > 0 => d.a * 2
+          case _ => throw new IllegalArgumentException("Wrong value!")
+        }
     }
 
     D(1).asTokenList shouldBe obj("a" -> "uno!")
@@ -164,12 +181,13 @@ class SemiautoWriterDerivationTest extends AnyFlatSpec with Matchers {
     implicit val justObjectWriter: JsonObjectWriter[JustObject.type] = JsonWriter.obj.addField("type")(_ => "JustObject")
     implicit val subChildWriter: JsonObjectWriter[SubChild] = jsonWriter[SubChild]
 
+    implicit val sealedSubWriter: JsonObjectWriter[SimpleSealedTypeSub] = jsonWriter[SimpleSealedTypeSub]
     implicit val sealedWriter: JsonWriter[SimpleSealedType] = jsonWriter[SimpleSealedType]
 
     def write(simpleSealedType: SimpleSealedType): List[TokenNode] = simpleSealedType.asTokenList
 
     write(CaseClass(1)) shouldBe obj("a" -> 1)
-    write(new SimpleClass(2)) shouldBe obj("b" -> 2)
+    write(SimpleClass(2)) shouldBe obj( "b" -> 2)
     write(JustObject) shouldBe obj("type" -> "JustObject")
     write(SubChild(3)) shouldBe obj("c" -> 3)
   }
@@ -180,53 +198,41 @@ class SemiautoWriterDerivationTest extends AnyFlatSpec with Matchers {
     implicit val justObjectWriter: JsonObjectWriter[JustObject.type] = JsonWriter.obj
     implicit val subChildWriter: JsonObjectWriter[SubChild] = jsonWriter[SubChild]
 
-    implicit val sealedWriter: JsonWriter[SimpleSealedType] = jsonWriter[SimpleSealedType](
-      WriterDerivationConfig.empty.withDiscriminator("__type")
-    )
+    implicit val sealedWriter: JsonWriter[SimpleSealedType] = jsonWriter[SimpleSealedType] {
+      WriterDerivationConfig.withDiscriminator("__type")
+    }
 
     def write(simpleSealedType: SimpleSealedType): List[TokenNode] = simpleSealedType.asTokenList
 
-    write(CaseClass(1)) shouldBe obj("a" -> 1, "__type" -> "CaseClass")
-    write(new SimpleClass(2)) shouldBe obj("b" -> 2, "__type" -> "SimpleClass")
+    write(CaseClass(1)) shouldBe obj("__type" -> "CaseClass", "a" -> 1)
+    write(new SimpleClass(2)) shouldBe obj("__type" -> "SimpleClass", "b" -> 2)
     write(JustObject) shouldBe obj("__type" -> "JustObject")
-    write(SubChild(3)) shouldBe obj("c" -> 3, "__type" -> "SubChild")
+    write(SubChild(3)) shouldBe obj("__type" -> "SubChild", "c" -> 3)
   }
 
   it should "derive writer for simple enum" in {
-    implicit val oneWriter: JsonObjectWriter[SimpleEnum.ONE.type] = jsonWriter[SimpleEnum.ONE.type]
-    implicit val twoWriter: JsonObjectWriter[SimpleEnum.TWO.type] = jsonWriter[SimpleEnum.TWO.type]
-    implicit val simpleEnumWriter: JsonWriter[SimpleEnum] = jsonWriter[SimpleEnum]
+    implicit val simpleEnumWriter: JsonWriter[SimpleEnum] = StringEnumJsonWriter.derived
     
     SimpleEnum.ONE.asTokenList shouldBe token("ONE")
     SimpleEnum.TWO.asTokenList shouldBe token("TWO")
   }
 
   it should "derive writer for parametrized enum" in {
-    implicit val oneWriter: JsonObjectWriter[ParametrizedEnum.ONE.type] = jsonWriter[ParametrizedEnum.ONE.type]
-    implicit val twoWriter: JsonObjectWriter[ParametrizedEnum.TWO.type] = jsonWriter[ParametrizedEnum.TWO.type]
-    implicit val parametrizedEnumWriter: JsonWriter[ParametrizedEnum] = jsonWriter[ParametrizedEnum]
+    implicit val parametrizedEnumWriter: JsonWriter[ParametrizedEnum] = StringEnumJsonWriter.derived
 
     ParametrizedEnum.ONE.asTokenList shouldBe token("ONE")
     ParametrizedEnum.TWO.asTokenList shouldBe token("TWO")
   }
 
   it should "derive writer with discriminator for simple enum" in {
-    implicit val oneWriter: JsonObjectWriter[SimpleEnum.ONE.type] = jsonWriter[SimpleEnum.ONE.type]
-    implicit val twoWriter: JsonObjectWriter[SimpleEnum.TWO.type] = jsonWriter[SimpleEnum.TWO.type]
-    implicit val simpleEnumWriter: JsonWriter[SimpleEnum] = jsonWriter[SimpleEnum](
-      WriterDerivationConfig.empty.withDiscriminator("__type")
-    )
+    implicit val simpleEnumWriter: JsonWriter[SimpleEnum] = StringEnumJsonWriter.withLabel("__type")
 
     SimpleEnum.ONE.asTokenList shouldBe obj("__type" -> "ONE")
     SimpleEnum.TWO.asTokenList shouldBe obj("__type" -> "TWO")
   }
 
   it should "derive writer with discriminator for parametrized enum" in {
-    implicit val oneWriter: JsonObjectWriter[ParametrizedEnum.ONE.type] = jsonWriter[ParametrizedEnum.ONE.type]
-    implicit val twoWriter: JsonObjectWriter[ParametrizedEnum.TWO.type] = jsonWriter[ParametrizedEnum.TWO.type]
-    implicit val simpleEnumWriter: JsonWriter[ParametrizedEnum] = jsonWriter[ParametrizedEnum](
-      WriterDerivationConfig.empty.withDiscriminator("__type")
-    )
+    implicit val simpleEnumWriter: JsonWriter[ParametrizedEnum] = StringEnumJsonWriter.withLabel("__type")
 
     ParametrizedEnum.ONE.asTokenList shouldBe obj ("__type" -> "ONE")
     ParametrizedEnum.TWO.asTokenList shouldBe obj ("__type" -> "TWO")

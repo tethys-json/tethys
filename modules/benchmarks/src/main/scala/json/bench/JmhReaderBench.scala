@@ -43,10 +43,9 @@ class JmhReaderBench {
     "pure-jackson",
     "circe-jawn",
     "circe-jackson",
-    "json4s-jackson",
-    "json4s-native",
     "play-json",
-    "spray-json"
+    "spray-json",
+    "zio-json"
   ))
   var processorName: String = _
 

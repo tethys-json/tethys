@@ -24,6 +24,7 @@ out
 gpg.sbt
 
 modules/**/target
+.DS_Store
 */jmh-result.json
 
 .vscode

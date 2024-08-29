@@ -26,7 +26,8 @@ trait JsonWriter[@specialized(specializations) A] {
   }
 }
 
-object JsonWriter extends AllJsonWriters {
+object JsonWriter extends AllJsonWriters with derivation.JsonObjectWriterDerivation {
+
   def apply[A](implicit jsonWriter: JsonWriter[A]): JsonWriter[A] = jsonWriter
 
   def obj[A]: SimpleJsonObjectWriter[A] = SimpleJsonObjectWriter[A]

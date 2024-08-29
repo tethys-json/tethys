@@ -20,7 +20,7 @@ object CollectionBuilder {
   }
 
   implicit def iterableFactoryCollectionBuilder[A, C[X] <: IterableFactoryDefaults[X, C]]: IterableFactoryCollectionBuilder[A, C] = macro CollectionBuilderMacroImpl.fromIterableFactory[A, C]
-  implicit def mapFactoryCollectionBuilder[K, V, M[X, Y] <: Map[X, Y]]: MapFactoryCollectionBuilder[K, V, M] = macro CollectionBuilderMacroImpl.fromMapFactory[K, V, M]
+  implicit def mapFactoryCollectionBuilder[K, V, M[X, Y] <: scala.collection.Map[X, Y]]: CollectionBuilder[(K, V), M[K, V]] = macro CollectionBuilderMacroImpl.fromMapFactory[K, V, M]
 
   private class CollectionBuilderMacroImpl(val c: blackbox.Context) {
     import c.universe._
@@ -30,7 +30,7 @@ object CollectionBuilder {
       q"new tethys.compat.CollectionBuilder.IterableFactoryCollectionBuilder[${A.tpe}, ${C.tpe}]($ref)"
     }
 
-    def fromMapFactory[K, V, M[X, Y] <: Map[X, Y]](implicit
+    def fromMapFactory[K, V, M[X, Y] <: scala.collection.Map[X, Y]](implicit
                                                    K: WeakTypeTag[K],
                                                    V: WeakTypeTag[V],
                                                    M: WeakTypeTag[M[K, V]]): Tree = {

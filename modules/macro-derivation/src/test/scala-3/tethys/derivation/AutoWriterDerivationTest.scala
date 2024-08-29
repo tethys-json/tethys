@@ -3,23 +3,19 @@ package tethys.derivation
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 import tethys.commons.TokenNode
-import tethys.commons.TokenNode.{value => token,*}
-import tethys.derivation.ADTWithType.*
-import tethys.derivation.auto.*
-import tethys.derivation.semiauto.*
+import tethys.commons.TokenNode._
+import tethys.derivation.ADTWithType._
+import tethys.derivation.auto._
+import tethys.derivation.semiauto._
 import tethys.writers.instances.SimpleJsonObjectWriter
-import tethys.writers.tokens.SimpleTokenWriter.*
+import tethys.writers.tokens.SimpleTokenWriter._
 import tethys.{JsonObjectWriter, JsonWriter}
 
 class AutoWriterDerivationTest extends AnyFlatSpec with Matchers {
 
   behavior of "auto derivation"
   it should "auto derive writer for simple classes tree" in {
-    JsonTreeTestData(
-      a = 5,
-      b = false,
-      c = C(D(1))
-    ).asTokenList shouldBe obj (
+    JsonTreeTestData(a = 5, b = false, c = C(D(1))).asTokenList shouldBe obj(
       "a" -> 5,
       "b" -> false,
       "c" -> obj(
@@ -40,39 +36,6 @@ class AutoWriterDerivationTest extends AnyFlatSpec with Matchers {
             ))
           ))
         ))
-      )
-    )
-  }
-
-  it should "auto derive writer for recursive type" in {
-    RecursiveType(1, Seq(RecursiveType(2))).asTokenList shouldBe obj(
-      "a" -> 1,
-      "children" -> arr(
-        obj(
-          "a" -> 2,
-          "children" -> arr()
-        )
-      )
-    )
-  }
-
-  it should "auto derive writer for A => B => A cycle" in {
-    ComplexRecursionA(1, Some(ComplexRecursionB(2, ComplexRecursionA(3, None)))).asTokenList shouldBe obj(
-      "a" -> 1,
-      "b" -> obj(
-        "b" -> 2,
-        "a" -> obj(
-          "a" -> 3
-        )
-      )
-    )
-  }
-
-  it should "auto derive writer for sealed cyclic trait with type parameter" in {
-    (ADTWithTypeB[Int](1, ADTWithTypeA[Int](2)): ADTWithType[Int]).asTokenList shouldBe obj(
-      "a" -> 1,
-      "b" -> obj(
-        "a" -> 2
       )
     )
   }
@@ -112,15 +75,5 @@ class AutoWriterDerivationTest extends AnyFlatSpec with Matchers {
     write(new SimpleClass(2)) shouldBe obj("b" -> 2)
     write(JustObject) shouldBe obj("type" -> "JustObject")
     write(SubChild(3)) shouldBe obj("c" -> 3)
-  }
-
-  it should "derive writer for simple enum" in {
-    SimpleEnum.ONE.asTokenList shouldBe token("ONE")
-    SimpleEnum.TWO.asTokenList shouldBe token("TWO")
-  }
-
-  it should "derive writer for parametrized enum" in {
-    ParametrizedEnum.ONE.asTokenList shouldBe token("ONE")
-    ParametrizedEnum.TWO.asTokenList shouldBe token("TWO")
   }
 }

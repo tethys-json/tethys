@@ -39,12 +39,9 @@ class JmhWriterBench {
     "tethys-jackson",
     "pure-jackson",
     "circe",
-    "java.lang.StringBuilder",
-    "scala.StringBuilder",
-    "json4s-jackson",
-    "json4s-native",
     "play-json",
-    "spray-json"
+    "spray-json",
+    "zio-json"
   ))
   var processorName: String = _
 

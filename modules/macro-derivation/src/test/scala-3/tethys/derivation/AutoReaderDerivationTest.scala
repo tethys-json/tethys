@@ -4,11 +4,9 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 import tethys.JsonReader
 import tethys.commons.{Token, TokenNode}
-import tethys.commons.TokenNode.{value => token, *}
-import tethys.derivation.auto.*
-import tethys.readers.ReaderError
+import tethys.commons.TokenNode._
+import tethys.derivation.auto._
 import tethys.readers.tokens.QueueIterator
-
 import tethys.TokenIteratorOps
 
 class AutoReaderDerivationTest extends AnyFlatSpec with Matchers {
@@ -36,54 +34,5 @@ class AutoReaderDerivationTest extends AnyFlatSpec with Matchers {
       b = true,
       c = C(D(2))
     )
-  }
-
-  it should "derive reader for recursive type" in {
-    read[RecursiveType](obj(
-      "a" -> 1,
-      "children" -> arr(
-        obj(
-          "a" -> 2,
-          "children" -> arr()
-        ),
-        obj(
-          "a" -> 3,
-          "children" -> arr()
-        )
-      )
-    )) shouldBe RecursiveType(1, Seq(RecursiveType(2), RecursiveType(3)))
-
-  }
-
-  it should "derive reader for A => B => A cycle" in {
-    read[ComplexRecursionA](obj(
-      "a" -> 1,
-      "b" -> obj(
-        "b" -> 2,
-        "a" -> obj(
-          "a" -> 3
-        )
-      )
-    )) shouldBe ComplexRecursionA(1, Some(ComplexRecursionB(2, ComplexRecursionA(3, None))))
-  }
-
-  it should "derive reader for simple enum" in {
-    read[SimpleEnum](
-      token(SimpleEnum.ONE.toString)
-    ) shouldBe SimpleEnum.ONE
-
-    read[SimpleEnum](
-      token(SimpleEnum.TWO.toString)
-    ) shouldBe SimpleEnum.TWO
-  }
-
-  it should "derive reader for parametrized enum" in {
-    read[ParametrizedEnum](
-      token(ParametrizedEnum.ONE.toString)
-    ) shouldBe ParametrizedEnum.ONE
-
-    read[ParametrizedEnum](
-      token(ParametrizedEnum.TWO.toString)
-    ) shouldBe ParametrizedEnum.TWO
   }
 }

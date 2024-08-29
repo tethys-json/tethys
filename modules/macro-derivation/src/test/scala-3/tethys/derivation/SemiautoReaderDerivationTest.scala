@@ -2,15 +2,13 @@ package tethys.derivation
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
-import tethys.JsonReader
-import tethys.commons.TokenNode.{value => token, *}
+import tethys.*
+import tethys.commons.TokenNode.{value as token, *}
 import tethys.commons.{Token, TokenNode}
-import tethys.derivation.builder.{FieldStyle, ReaderBuilder, ReaderDerivationConfig}
+import tethys.derivation.builder.ReaderDerivationConfig
 import tethys.derivation.semiauto.*
 import tethys.readers.ReaderError
 import tethys.readers.tokens.QueueIterator
-
-import tethys.TokenIteratorOps
 
 class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
 
@@ -44,7 +42,7 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
   }
 
   it should "derive reader for recursive type" in {
-    implicit val recursiveReader: JsonReader[RecursiveType] = jsonReader[RecursiveType]
+    given JsonReader[RecursiveType] = jsonReader[RecursiveType]
 
     read[RecursiveType](obj(
       "a" -> 1,
@@ -101,7 +99,7 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
     implicit val reader: JsonReader[SimpleType] = jsonReader[SimpleType] {
       describe {
         ReaderBuilder[SimpleType]
-          .extract(_.i).from(_.s, _.d)((_, _) => 2)
+          .extract(_.i).from(_.s).and(_.d)((_, _) => 2)
       }
     }
 
@@ -117,11 +115,12 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
     )) shouldBe SimpleType(2, "str", 1.0)
   }
 
+
   it should "derive reader for extract from description with synthetic field" in {
     implicit val reader: JsonReader[SimpleType] = jsonReader[SimpleType] {
       describe {
         ReaderBuilder[SimpleType]
-          .extract(_.i).from(_.d).and(Symbol("e").as[Double])((d, e) => (d + e).toInt)
+          .extract(_.i).from(_.d).and[Double]("e")((d, e) => (d + e).toInt)
       }
     }
 
@@ -138,6 +137,7 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
       "e" -> 3.0
     )) shouldBe SimpleType(4, "str", 1.0)
   }
+
 
   it should "derive reader for extract reader from description" in {
     implicit val reader: JsonReader[SimpleTypeWithAny] = jsonReader[SimpleTypeWithAny] {
@@ -173,7 +173,7 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
         case 2 => JsonReader[Int]
         case _ => JsonReader[Option[Boolean]]
       }
-        .extract(_.i).from(_.d).and(Symbol("e").as[Int])((d, e) => d.toInt + e)
+        .extract(_.i).from(_.d).and[Int]("e")((d, e) => d.toInt + e)
         .extract(_.d).as[Option[Double]](_.getOrElse(1.0))
     }
 
@@ -204,12 +204,11 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
       "any" -> true
     )) shouldBe SimpleTypeWithAny(3, "str", 1.0, Some(true))
 
-    //FIXME: figure out how to handle this case
-    /*read[SimpleTypeWithAny](obj(
+    read[SimpleTypeWithAny](obj(
       "s" -> "str",
       "d" -> 1.0,
       "e" -> 2
-    )) shouldBe SimpleTypeWithAny(3, "str", 1.0, None)*/
+    )) shouldBe SimpleTypeWithAny(3, "str", 1.0, None)
   }
 
   it should "derive reader for fieldStyle from description" in {
@@ -248,35 +247,20 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
     implicit val reader: JsonReader[SimpleType] = jsonReader[SimpleType] {
       describe {
         ReaderBuilder[SimpleType]
-          .extract(_.i).from("i".as[Int])(identity)
+          .extract(_.i).as[String](_.toInt)
       }
     }
 
     read[SimpleType](obj(
-      "i" -> 1,
+      "i" -> "1",
       "s" -> "str",
       "d" -> 1.0
     )) shouldBe SimpleType(1, "str", 1.0)
   }
 
-  it should "derive reader for extract field even it described few times" in {
-    implicit val reader: JsonReader[SimpleType] = jsonReader[SimpleType] {
-      describe {
-        ReaderBuilder[SimpleType]
-          .extract(_.i).from("i".as[Int])(identity)
-          .extract(_.s).from("i".as[Long])(_.toString)
-          .extract(_.d).from(_.i)(_.toDouble)
-      }
-    }
-
-    read[SimpleType](obj(
-      "i" -> 1
-    )) shouldBe SimpleType(1, "1", 1.0)
-  }
-
   it should "derive reader for reader config" in {
     implicit val reader: JsonReader[CamelCaseNames] = jsonReader[CamelCaseNames](
-      ReaderDerivationConfig.withFieldStyle(FieldStyle.LowerSnakeCase).strict
+      ReaderBuilder[CamelCaseNames].fieldStyle(FieldStyle.LowerSnakeCase).strict
     )
 
     read[CamelCaseNames](obj(
@@ -295,7 +279,7 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
         "not_id_param" -> 2,
         "simple" -> 3
       ))
-    }).getMessage shouldBe "Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'simple', 'id_param', 'some_param'"
+    }).getMessage shouldBe "Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'some_param', 'id_param', 'simple'"
   }
 
   it should "derive reader for reader config from builder" in {
@@ -321,14 +305,12 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
         "not_id_param" -> 2,
         "simple" -> 3
       ))
-    }).getMessage shouldBe "Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'simple', 'id_param', 'some_param'"
+    }).getMessage shouldBe "Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'some_param', 'id_param', 'simple'"
   }
 
 
   it should "derive reader for simple enum" in {
-    implicit val oneReader: JsonReader[SimpleEnum.ONE.type] = jsonReader[SimpleEnum.ONE.type]
-    implicit val twoReader: JsonReader[SimpleEnum.TWO.type] = jsonReader[SimpleEnum.TWO.type]
-    implicit val simpleEnumReader: JsonReader[SimpleEnum] = jsonReader[SimpleEnum]
+    implicit val simpleEnumReader: JsonReader[SimpleEnum] = StringEnumJsonReader.derived
 
     read[SimpleEnum](
       token(SimpleEnum.ONE.toString)
@@ -340,9 +322,7 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
   }
 
   it should "derive reader for parametrized enum" in {
-    implicit val oneReader: JsonReader[ParametrizedEnum.ONE.type] = jsonReader[ParametrizedEnum.ONE.type]
-    implicit val twoReader: JsonReader[ParametrizedEnum.TWO.type] = jsonReader[ParametrizedEnum.TWO.type]
-    implicit val parametrizedEnumReader: JsonReader[ParametrizedEnum] = jsonReader[ParametrizedEnum]
+    implicit val parametrizedEnumReader: JsonReader[ParametrizedEnum] = StringEnumJsonReader.derived
 
     read[ParametrizedEnum](
       token(ParametrizedEnum.ONE.toString)
@@ -353,22 +333,85 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
     ) shouldBe ParametrizedEnum.TWO
   }
 
-  it should "derive reader for class with default params" in {
-    implicit val reader: JsonReader[DefaultField[Int]] = jsonReader[DefaultField[Int]]
+  it should "derive reader for fieldStyle from description 1" in {
+    given JsonReader[CamelCaseNames] = JsonReader.derived[CamelCaseNames] {
+      ReaderDerivationConfig.withFieldStyle(FieldStyle.LowerSnakeCase)
+    }
 
-    read[DefaultField[Int]](obj(
-      "value" -> 1,
-      "default" -> false
-    )) shouldBe DefaultField[Int](
-      value = 1,
-      default = false
-    )
-
-    read[DefaultField[Int]](obj(
-      "value" -> 1
-    )) shouldBe DefaultField[Int](
-      value = 1,
-      default = true
+    read[CamelCaseNames](obj(
+      "some_param" -> 1,
+      "id_param" -> 2,
+      "simple" -> 3
+    )) shouldBe CamelCaseNames(
+      someParam = 1,
+      IDParam = 2,
+      simple = 3
     )
   }
+
+  it should "derive reader for fieldStyle from description 2" in {
+    given JsonReader[CamelCaseNames] = JsonReader.derived[CamelCaseNames] {
+      ReaderDerivationConfig.empty.withFieldStyle(FieldStyle.LowerSnakeCase)
+    }
+
+    read[CamelCaseNames](obj(
+      "some_param" -> 1,
+      "id_param" -> 2,
+      "simple" -> 3
+    )) shouldBe CamelCaseNames(
+      someParam = 1,
+      IDParam = 2,
+      simple = 3
+    )
+  }
+
+  it should "derive strict reader" in {
+    implicit val reader: JsonReader[CamelCaseNames] = jsonReader[CamelCaseNames](
+      ReaderDerivationConfig.withFieldStyle(FieldStyle.LowerSnakeCase).strict
+    )
+
+    read[CamelCaseNames](obj(
+      "some_param" -> 1,
+      "id_param" -> 2,
+      "simple" -> 3
+    )) shouldBe CamelCaseNames(
+      someParam = 1,
+      IDParam = 2,
+      simple = 3
+    )
+
+    (the[ReaderError] thrownBy {
+      read[CamelCaseNames](obj(
+        "some_param" -> 1,
+        "not_id_param" -> 2,
+        "simple" -> 3
+      ))
+    }).getMessage shouldBe "Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'some_param', 'id_param', 'simple'"
+  }
+
+  it should "derive strict reader with legacy field style" in {
+    import tethys.derivation.builder.FieldStyle
+    implicit val reader: JsonReader[CamelCaseNames] = jsonReader[CamelCaseNames](
+      ReaderDerivationConfig.withFieldStyle(FieldStyle.lowerSnakeCase).strict
+    )
+
+    read[CamelCaseNames](obj(
+      "some_param" -> 1,
+      "id_param" -> 2,
+      "simple" -> 3
+    )) shouldBe CamelCaseNames(
+      someParam = 1,
+      IDParam = 2,
+      simple = 3
+    )
+
+    (the[ReaderError] thrownBy {
+      read[CamelCaseNames](obj(
+        "some_param" -> 1,
+        "not_id_param" -> 2,
+        "simple" -> 3
+      ))
+    }).getMessage shouldBe "Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'some_param', 'id_param', 'simple'"
+  }
+
 }
