@@ -21,7 +21,13 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "compile and correctly write and read product" in {
-    case class Person(id: Int, name: String, phone: Option[String], default: String = "") derives JsonObjectWriter, JsonReader
+    case class Person(
+        id: Int,
+        name: String,
+        phone: Option[String],
+        default: String = ""
+    ) derives JsonObjectWriter,
+          JsonReader
 
     case class Wrapper(person: Person) derives JsonObjectWriter, JsonReader
 
@@ -35,7 +41,11 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
       "person" -> obj("id" -> 3, "name" -> "Parker", "default" -> "abc")
     )
 
-    read[Person](obj("id" -> 1, "name" -> "abc")) shouldBe Person(1, "abc", None)
+    read[Person](obj("id" -> 1, "name" -> "abc")) shouldBe Person(
+      1,
+      "abc",
+      None
+    )
 
     read[Person](
       obj(
@@ -60,7 +70,6 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     case class B(b: Int, i: String) extends A derives JsonObjectWriter
 
     case class C(c: String) extends A derives JsonObjectWriter
-
 
     (B(2, "abc"): A).asTokenList shouldBe obj(
       "b" -> 2,
@@ -120,7 +129,8 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
 
   it should "correctly read case classes with default parameters" in {
     object Mod {
-      case class WithOpt(x: Int, y: Option[String] = Some("default")) derives JsonReader
+      case class WithOpt(x: Int, y: Option[String] = Some("default"))
+          derives JsonReader
     }
 
     read[Mod.WithOpt](obj("x" -> 5)) shouldBe Mod.WithOpt(5)
@@ -130,19 +140,23 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     case class WithArg[A](x: Int, y: Option[A] = None) derives JsonReader
 
     read[WithArg[Int]](obj("x" -> 5)) shouldBe WithArg[Int](5)
-    read[WithArg[String]](obj("x" -> 5, "y" -> "lool")) shouldBe WithArg[String](5, Some("lool"))
+    read[WithArg[String]](obj("x" -> 5, "y" -> "lool")) shouldBe WithArg[
+      String
+    ](5, Some("lool"))
   }
 
   it should "write/read sum types with provided json discriminator" in {
     enum Disc derives StringEnumJsonWriter, StringEnumJsonReader:
       case A, B
 
-    sealed trait Choose(@selector val discriminator: Disc) derives JsonObjectWriter, JsonReader
+    sealed trait Choose(@selector val discriminator: Disc)
+        derives JsonObjectWriter,
+          JsonReader
 
     object Choose:
       case class AA() extends Choose(Disc.A)
       case class BB() extends Choose(Disc.B)
-      
+
     (Choose.AA(): Choose).asTokenList shouldBe obj("discriminator" -> "A")
     (Choose.BB(): Choose).asTokenList shouldBe obj("discriminator" -> "B")
 
@@ -151,7 +165,9 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "write/read sum types with provided json discriminator of simple type" in {
-    enum Choose(@selector val discriminator: Int) derives JsonObjectWriter, JsonReader:
+    enum Choose(@selector val discriminator: Int)
+        derives JsonObjectWriter,
+          JsonReader:
       case AA() extends Choose(0)
       case BB() extends Choose(1)
 
@@ -177,23 +193,25 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
       |
       |""" shouldNot compile
 
-
   }
 
   it should "derive readers for simple case class hierarchy" in {
     implicit val dReader: JsonReader[D] = JsonReader.derived[D]
     implicit val cReader: JsonReader[C] = JsonReader.derived[C]
-    implicit val jsonTreeTestDataReader: JsonReader[JsonTreeTestData] = JsonReader.derived[JsonTreeTestData]
+    implicit val jsonTreeTestDataReader: JsonReader[JsonTreeTestData] =
+      JsonReader.derived[JsonTreeTestData]
 
-    read[JsonTreeTestData](obj(
-      "a" -> 1,
-      "b" -> true,
-      "c" -> obj(
-        "d" -> obj(
-          "a" -> 2
+    read[JsonTreeTestData](
+      obj(
+        "a" -> 1,
+        "b" -> true,
+        "c" -> obj(
+          "d" -> obj(
+            "a" -> 2
+          )
         )
       )
-    )) shouldBe JsonTreeTestData(
+    ) shouldBe JsonTreeTestData(
       a = 1,
       b = true,
       c = C(D(2))
@@ -203,198 +221,244 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
   it should "derive reader for recursive type" in {
     given JsonReader[RecursiveType] = JsonReader.derived[RecursiveType]
 
-    read[RecursiveType](obj(
-      "a" -> 1,
-      "children" -> arr(
-        obj(
-          "a" -> 2,
-          "children" -> arr()
-        ),
-        obj(
-          "a" -> 3,
-          "children" -> arr()
+    read[RecursiveType](
+      obj(
+        "a" -> 1,
+        "children" -> arr(
+          obj(
+            "a" -> 2,
+            "children" -> arr()
+          ),
+          obj(
+            "a" -> 3,
+            "children" -> arr()
+          )
         )
       )
-    )) shouldBe RecursiveType(1, Seq(RecursiveType(2), RecursiveType(3)))
+    ) shouldBe RecursiveType(1, Seq(RecursiveType(2), RecursiveType(3)))
 
   }
 
   it should "derive reader for A => B => A cycle" in {
-    implicit lazy val testReader1: JsonReader[ComplexRecursionA] = JsonReader.derived[ComplexRecursionA]
-    implicit lazy val testReader2: JsonReader[ComplexRecursionB] = JsonReader.derived[ComplexRecursionB]
+    implicit lazy val testReader1: JsonReader[ComplexRecursionA] =
+      JsonReader.derived[ComplexRecursionA]
+    implicit lazy val testReader2: JsonReader[ComplexRecursionB] =
+      JsonReader.derived[ComplexRecursionB]
 
-    read[ComplexRecursionA](obj(
-      "a" -> 1,
-      "b" -> obj(
-        "b" -> 2,
-        "a" -> obj(
-          "a" -> 3
+    read[ComplexRecursionA](
+      obj(
+        "a" -> 1,
+        "b" -> obj(
+          "b" -> 2,
+          "a" -> obj(
+            "a" -> 3
+          )
         )
       )
-    )) shouldBe ComplexRecursionA(1, Some(ComplexRecursionB(2, ComplexRecursionA(3, None))))
+    ) shouldBe ComplexRecursionA(
+      1,
+      Some(ComplexRecursionB(2, ComplexRecursionA(3, None)))
+    )
   }
 
   it should "derive reader for extract as description" in {
     given JsonReader[SimpleType] = JsonReader.derived[SimpleType] {
       ReaderBuilder[SimpleType]
-        .extract(_.i).as[Option[Int]](_.getOrElse(2))
+        .extract(_.i)
+        .as[Option[Int]](_.getOrElse(2))
     }
 
+    read[SimpleType](
+      obj(
+        "i" -> 1,
+        "s" -> "str",
+        "d" -> 1.0
+      )
+    ) shouldBe SimpleType(1, "str", 1.0)
 
-    read[SimpleType](obj(
-      "i" -> 1,
-      "s" -> "str",
-      "d" -> 1.0
-    )) shouldBe SimpleType(1, "str", 1.0)
-
-    read[SimpleType](obj(
-      "s" -> "str",
-      "d" -> 1.0
-    )) shouldBe SimpleType(2, "str", 1.0)
+    read[SimpleType](
+      obj(
+        "s" -> "str",
+        "d" -> 1.0
+      )
+    ) shouldBe SimpleType(2, "str", 1.0)
   }
-
 
   it should "work for deprecated ReaderBuilder" in {
     import tethys.derivation.builder.ReaderBuilder
     given JsonReader[SimpleType] = JsonReader.derived[SimpleType] {
       ReaderBuilder[SimpleType]
-        .extract(_.i).as[Option[Int]](_.getOrElse(2))
+        .extract(_.i)
+        .as[Option[Int]](_.getOrElse(2))
     }
 
+    read[SimpleType](
+      obj(
+        "i" -> 1,
+        "s" -> "str",
+        "d" -> 1.0
+      )
+    ) shouldBe SimpleType(1, "str", 1.0)
 
-    read[SimpleType](obj(
-      "i" -> 1,
-      "s" -> "str",
-      "d" -> 1.0
-    )) shouldBe SimpleType(1, "str", 1.0)
-
-    read[SimpleType](obj(
-      "s" -> "str",
-      "d" -> 1.0
-    )) shouldBe SimpleType(2, "str", 1.0)
+    read[SimpleType](
+      obj(
+        "s" -> "str",
+        "d" -> 1.0
+      )
+    ) shouldBe SimpleType(2, "str", 1.0)
   }
-
-
 
   it should "derive reader for extract from description" in {
     given JsonReader[SimpleType] = JsonReader.derived {
       ReaderBuilder[SimpleType]
-        .extract(_.i).from(_.s).and(_.d).apply((_, _) => 2)
+        .extract(_.i)
+        .from(_.s)
+        .and(_.d)
+        .apply((_, _) => 2)
     }
 
-    read[SimpleType](obj(
-      "i" -> 1,
-      "s" -> "str",
-      "d" -> 1.0
-    )) shouldBe SimpleType(2, "str", 1.0)
+    read[SimpleType](
+      obj(
+        "i" -> 1,
+        "s" -> "str",
+        "d" -> 1.0
+      )
+    ) shouldBe SimpleType(2, "str", 1.0)
 
-    read[SimpleType](obj(
-      "s" -> "str",
-      "d" -> 1.0
-    )) shouldBe SimpleType(2, "str", 1.0)
+    read[SimpleType](
+      obj(
+        "s" -> "str",
+        "d" -> 1.0
+      )
+    ) shouldBe SimpleType(2, "str", 1.0)
   }
-
 
   it should "derive reader for extract from description with synthetic field" in {
     given JsonReader[SimpleType] = JsonReader.derived[SimpleType] {
       ReaderBuilder[SimpleType]
-        .extract(_.i).from(_.d).and[Double]("e")((d, e) => (d + e).toInt)
+        .extract(_.i)
+        .from(_.d)
+        .and[Double]("e")((d, e) => (d + e).toInt)
     }
 
-      read[SimpleType](obj(
+    read[SimpleType](
+      obj(
         "i" -> 1,
         "s" -> "str",
         "d" -> 1.0,
         "e" -> 2.0
-      )) shouldBe SimpleType(3, "str", 1.0)
+      )
+    ) shouldBe SimpleType(3, "str", 1.0)
 
-      read[SimpleType](obj(
+    read[SimpleType](
+      obj(
         "s" -> "str",
         "d" -> 1.0,
         "e" -> 3.0
-      )) shouldBe SimpleType(4, "str", 1.0)
+      )
+    ) shouldBe SimpleType(4, "str", 1.0)
   }
 
-  it should "extract and build product" in  {
+  it should "extract and build product" in {
     case class Person(name: String, age: Int)
     case class Wrapper(person: Person) derives JsonReader
 
     inline given ReaderBuilder[Wrapper] = ReaderBuilder[Wrapper]
-      .extract(_.person).from[String]("name").and[Int]("age").product
+      .extract(_.person)
+      .from[String]("name")
+      .and[Int]("age")
+      .product
 
-
-    read[Wrapper](obj(
-      "name" -> "str",
-      "age" -> 2
-    )) shouldBe Wrapper(Person("str", 2))
+    read[Wrapper](
+      obj(
+        "name" -> "str",
+        "age" -> 2
+      )
+    ) shouldBe Wrapper(Person("str", 2))
   }
 
-
   it should "derive reader for extract reader from description" in {
-    given JsonReader[SimpleTypeWithAny] = JsonReader.derived[SimpleTypeWithAny] {
-      ReaderBuilder[SimpleTypeWithAny]
-        .extractReader(_.any).from(_.d) {
-          case 1.0 => JsonReader[String]
-          case 2.0 => JsonReader[Int]
-        }
-    }
+    given JsonReader[SimpleTypeWithAny] =
+      JsonReader.derived[SimpleTypeWithAny] {
+        ReaderBuilder[SimpleTypeWithAny]
+          .extractReader(_.any)
+          .from(_.d) {
+            case 1.0 => JsonReader[String]
+            case 2.0 => JsonReader[Int]
+          }
+      }
 
-    read[SimpleTypeWithAny](obj(
-      "i" -> 1,
-      "s" -> "str",
-      "d" -> 1.0,
-      "any" -> "anyStr"
-    )) shouldBe SimpleTypeWithAny(1, "str", 1.0, "anyStr")
+    read[SimpleTypeWithAny](
+      obj(
+        "i" -> 1,
+        "s" -> "str",
+        "d" -> 1.0,
+        "any" -> "anyStr"
+      )
+    ) shouldBe SimpleTypeWithAny(1, "str", 1.0, "anyStr")
 
-    read[SimpleTypeWithAny](obj(
-      "i" -> 1,
-      "s" -> "str",
-      "d" -> 2.0,
-      "any" -> 2
-    )) shouldBe SimpleTypeWithAny(1, "str", 2.0, 2)
+    read[SimpleTypeWithAny](
+      obj(
+        "i" -> 1,
+        "s" -> "str",
+        "d" -> 2.0,
+        "any" -> 2
+      )
+    ) shouldBe SimpleTypeWithAny(1, "str", 2.0, 2)
   }
 
   it should "derive reader for complex extraction case" in {
-    given JsonReader[SimpleTypeWithAny] = JsonReader.derived[SimpleTypeWithAny] {
-      ReaderBuilder[SimpleTypeWithAny]
-        .extractReader(_.any).from(_.i) {
-          case 1 => JsonReader[String]
-          case 2 => JsonReader[Int]
-          case _ => JsonReader[Option[Boolean]]
-        }
-        .extract(_.i).from(_.d).and[Int]("e")((d, e) => d.toInt + e)
-        .extract(_.d).as[Option[Double]](_.getOrElse(1.0))
-    }
+    given JsonReader[SimpleTypeWithAny] =
+      JsonReader.derived[SimpleTypeWithAny] {
+        ReaderBuilder[SimpleTypeWithAny]
+          .extractReader(_.any)
+          .from(_.i) {
+            case 1 => JsonReader[String]
+            case 2 => JsonReader[Int]
+            case _ => JsonReader[Option[Boolean]]
+          }
+          .extract(_.i)
+          .from(_.d)
+          .and[Int]("e")((d, e) => d.toInt + e)
+          .extract(_.d)
+          .as[Option[Double]](_.getOrElse(1.0))
+      }
 
-    read[SimpleTypeWithAny](obj(
-      "s" -> "str",
-      "d" -> 1.0,
-      "e" -> 0,
-      "any" -> "anyStr"
-    )) shouldBe SimpleTypeWithAny(1, "str", 1.0, "anyStr")
+    read[SimpleTypeWithAny](
+      obj(
+        "s" -> "str",
+        "d" -> 1.0,
+        "e" -> 0,
+        "any" -> "anyStr"
+      )
+    ) shouldBe SimpleTypeWithAny(1, "str", 1.0, "anyStr")
 
+    read[SimpleTypeWithAny](
+      obj(
+        "s" -> "str",
+        "d" -> 1.0,
+        "e" -> 1,
+        "any" -> 3
+      )
+    ) shouldBe SimpleTypeWithAny(2, "str", 1.0, 3)
 
-    read[SimpleTypeWithAny](obj(
-      "s" -> "str",
-      "d" -> 1.0,
-      "e" -> 1,
-      "any" -> 3
-    )) shouldBe SimpleTypeWithAny(2, "str", 1.0, 3)
+    read[SimpleTypeWithAny](
+      obj(
+        "s" -> "str",
+        "d" -> 1.0,
+        "e" -> 2,
+        "any" -> true
+      )
+    ) shouldBe SimpleTypeWithAny(3, "str", 1.0, Some(true))
 
-    read[SimpleTypeWithAny](obj(
-      "s" -> "str",
-      "d" -> 1.0,
-      "e" -> 2,
-      "any" -> true
-    )) shouldBe SimpleTypeWithAny(3, "str", 1.0, Some(true))
-
-    read[SimpleTypeWithAny](obj(
-      "s" -> "str",
-      "d" -> 1.0,
-      "e" -> 2
-    )) shouldBe SimpleTypeWithAny(3, "str", 1.0, None)
+    read[SimpleTypeWithAny](
+      obj(
+        "s" -> "str",
+        "d" -> 1.0,
+        "e" -> 2
+      )
+    ) shouldBe SimpleTypeWithAny(3, "str", 1.0, None)
   }
-  
 
   it should "derive reader for fieldStyle from description" in {
     given JsonReader[CamelCaseNames] = JsonReader.derived[CamelCaseNames] {
@@ -402,11 +466,13 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
         .fieldStyle(FieldStyle.LowerSnakeCase)
     }
 
-    read[CamelCaseNames](obj(
-      "some_param" -> 1,
-      "id_param" -> 2,
-      "simple" -> 3
-    )) shouldBe CamelCaseNames(
+    read[CamelCaseNames](
+      obj(
+        "some_param" -> 1,
+        "id_param" -> 2,
+        "simple" -> 3
+      )
+    ) shouldBe CamelCaseNames(
       someParam = 1,
       IDParam = 2,
       simple = 3
@@ -419,17 +485,18 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
         .fieldStyle(FieldStyle.Capitalize)
     }
 
-    read[CamelCaseNames](obj(
-      "SomeParam" -> 1,
-      "IDParam" -> 2,
-      "Simple" -> 3
-    )) shouldBe CamelCaseNames(
+    read[CamelCaseNames](
+      obj(
+        "SomeParam" -> 1,
+        "IDParam" -> 2,
+        "Simple" -> 3
+      )
+    ) shouldBe CamelCaseNames(
       someParam = 1,
       IDParam = 2,
       simple = 3
     )
   }
-
 
   it should "derive reader for reader config" in {
     given JsonReader[CamelCaseNames] = JsonReader.derived[CamelCaseNames](
@@ -438,53 +505,58 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
         .strict
     )
 
-    read[CamelCaseNames](obj(
-      "some_param" -> 1,
-      "id_param" -> 2,
-      "simple" -> 3
-    )) shouldBe CamelCaseNames(
+    read[CamelCaseNames](
+      obj(
+        "some_param" -> 1,
+        "id_param" -> 2,
+        "simple" -> 3
+      )
+    ) shouldBe CamelCaseNames(
       someParam = 1,
       IDParam = 2,
       simple = 3
     )
 
     (the[ReaderError] thrownBy {
-      read[CamelCaseNames](obj(
-        "some_param" -> 1,
-        "not_id_param" -> 2,
-        "simple" -> 3
-      ))
+      read[CamelCaseNames](
+        obj(
+          "some_param" -> 1,
+          "not_id_param" -> 2,
+          "simple" -> 3
+        )
+      )
     }).getMessage shouldBe "Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'some_param', 'id_param', 'simple'"
   }
-
 
   it should "derive reader for reader config from builder" in {
-    implicit val reader: JsonReader[CamelCaseNames] = JsonReader.derived[CamelCaseNames](
-      ReaderBuilder[CamelCaseNames]
-        .strict
-        .fieldStyle(FieldStyle.LowerSnakeCase)
-    )
+    implicit val reader: JsonReader[CamelCaseNames] =
+      JsonReader.derived[CamelCaseNames](
+        ReaderBuilder[CamelCaseNames].strict
+          .fieldStyle(FieldStyle.LowerSnakeCase)
+      )
 
-    read[CamelCaseNames](obj(
-      "some_param" -> 1,
-      "id_param" -> 2,
-      "simple" -> 3
-    )) shouldBe CamelCaseNames(
+    read[CamelCaseNames](
+      obj(
+        "some_param" -> 1,
+        "id_param" -> 2,
+        "simple" -> 3
+      )
+    ) shouldBe CamelCaseNames(
       someParam = 1,
       IDParam = 2,
       simple = 3
     )
 
     (the[ReaderError] thrownBy {
-      read[CamelCaseNames](obj(
-        "some_param" -> 1,
-        "not_id_param" -> 2,
-        "simple" -> 3
-      ))
+      read[CamelCaseNames](
+        obj(
+          "some_param" -> 1,
+          "not_id_param" -> 2,
+          "simple" -> 3
+        )
+      )
     }).getMessage shouldBe "Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'some_param', 'id_param', 'simple'"
   }
-
-
 
   it should "generate proper writer from WriterDescription" in {
     def freeVariable: String = "e"
@@ -496,7 +568,8 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     implicit val testWriter: JsonWriter[JsonTreeTestData] = JsonWriter.derived {
       WriterBuilder[JsonTreeTestData]
         .remove(_.b)
-        .update(_.a).fromRoot(d => d.a.toDouble + d.c.d.a)
+        .update(_.a)
+        .fromRoot(d => d.a.toDouble + d.c.d.a)
         .update(_.c)(_.d)
         .add("d")(_.a * 2)
         .add(freeVariable)(_.b)
@@ -522,7 +595,8 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     implicit val testWriter: JsonWriter[JsonTreeTestData] = JsonWriter.derived {
       WriterBuilder[JsonTreeTestData]
         .remove(_.b)
-        .update(_.a).fromRoot(d => d.a.toDouble + d.c.d.a)
+        .update(_.a)
+        .fromRoot(d => d.a.toDouble + d.c.d.a)
         .update(_.c)(_.d)
         .add("d")(_.a * 2)
         .add(freeVariable)(_.b)
@@ -537,14 +611,13 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     )
   }
 
-
   it should "derive writer for update partial" in {
     inline given WriterBuilder[D] = WriterBuilder[D]
       .update(_.a) {
-        case 1 => "uno!"
-        case 2 => 1
+        case 1          => "uno!"
+        case 2          => 1
         case v if v > 0 => v * 2
-        case _ => throw new IllegalArgumentException("Wrong value!")
+        case _          => throw new IllegalArgumentException("Wrong value!")
       }
 
     given JsonWriter[D] = JsonWriter.derived
@@ -561,13 +634,14 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
   it should "derive writer for update partial from root" in {
     implicit val partialWriter: JsonWriter[D] = JsonWriter.derived[D] {
       WriterBuilder[D]
-        .update(_.a).fromRoot {
+        .update(_.a)
+        .fromRoot {
           case d if d.a == 1 => "uno!"
           case d if d.a == 2 => 1
-          case d if d.a > 0 => d.a * 2
+          case d if d.a > 0  => d.a * 2
           case _ => throw new IllegalArgumentException("Wrong value!")
         }
-      }
+    }
 
     D(1).asTokenList shouldBe obj("a" -> "uno!")
     D(2).asTokenList shouldBe obj("a" -> 1)
@@ -583,7 +657,8 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "derive writer for recursive type" in {
-    implicit lazy val testWriter: JsonWriter[RecursiveType] = JsonWriter.derived[RecursiveType]
+    implicit lazy val testWriter: JsonWriter[RecursiveType] =
+      JsonWriter.derived[RecursiveType]
 
     RecursiveType(1, Seq(RecursiveType(2))).asTokenList shouldBe obj(
       "a" -> 1,
@@ -597,10 +672,15 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "derive writer for A => B => A cycle" in {
-    implicit lazy val testWriter1: JsonWriter[ComplexRecursionA] = JsonWriter.derived[ComplexRecursionA]
-    implicit lazy val testWriter2: JsonWriter[ComplexRecursionB] = JsonWriter.derived[ComplexRecursionB]
+    implicit lazy val testWriter1: JsonWriter[ComplexRecursionA] =
+      JsonWriter.derived[ComplexRecursionA]
+    implicit lazy val testWriter2: JsonWriter[ComplexRecursionB] =
+      JsonWriter.derived[ComplexRecursionB]
 
-    ComplexRecursionA(1, Some(ComplexRecursionB(2, ComplexRecursionA(3, None)))).asTokenList shouldBe obj(
+    ComplexRecursionA(
+      1,
+      Some(ComplexRecursionB(2, ComplexRecursionA(3, None)))
+    ).asTokenList shouldBe obj(
       "a" -> 1,
       "b" -> obj(
         "b" -> 2,
@@ -612,13 +692,20 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "derive writer for sealed cyclic trait with type parameter" in {
-    implicit def recursionTraitWithTypeWriter[B: JsonWriter]: JsonObjectWriter[ADTWithType[B]] = JsonWriter.derived[ADTWithType[B]]
+    implicit def recursionTraitWithTypeWriter[B: JsonWriter]
+        : JsonObjectWriter[ADTWithType[B]] = JsonWriter.derived[ADTWithType[B]]
 
-    implicit def recursionTraitWithTypeAWriter[B: JsonWriter]: JsonObjectWriter[ADTWithTypeA[B]] = JsonWriter.derived[ADTWithTypeA[B]]
+    implicit def recursionTraitWithTypeAWriter[B: JsonWriter]
+        : JsonObjectWriter[ADTWithTypeA[B]] =
+      JsonWriter.derived[ADTWithTypeA[B]]
 
-    implicit def recursionTraitWithTypeBWriter[B: JsonWriter]: JsonObjectWriter[ADTWithTypeB[B]] = JsonWriter.derived[ADTWithTypeB[B]]
+    implicit def recursionTraitWithTypeBWriter[B: JsonWriter]
+        : JsonObjectWriter[ADTWithTypeB[B]] =
+      JsonWriter.derived[ADTWithTypeB[B]]
 
-    (ADTWithTypeB[Int](1, ADTWithTypeA[Int](2)): ADTWithType[Int]).asTokenList shouldBe obj(
+    (ADTWithTypeB[Int](1, ADTWithTypeA[Int](2)): ADTWithType[
+      Int
+    ]).asTokenList shouldBe obj(
       "a" -> 1,
       "b" -> obj(
         "a" -> 2
@@ -627,19 +714,27 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "derive writer that normally concatenates with other JsonWriter.derived's" in {
-    implicit def recursionTraitWithTypeWriter[B: JsonWriter]: JsonWriter[ADTWithType[B]] = {
-      val simpleJsonWriter = SimpleJsonObjectWriter[ADTWithType[B]].addField("clazz") {
-        case _: ADTWithTypeA[B] => "ADTWithTypeA"
-        case _: ADTWithTypeB[B] => "ADTWithTypeB"
-      }
+    implicit def recursionTraitWithTypeWriter[B: JsonWriter]
+        : JsonWriter[ADTWithType[B]] = {
+      val simpleJsonWriter =
+        SimpleJsonObjectWriter[ADTWithType[B]].addField("clazz") {
+          case _: ADTWithTypeA[B] => "ADTWithTypeA"
+          case _: ADTWithTypeB[B] => "ADTWithTypeB"
+        }
       simpleJsonWriter ++ JsonWriter.derived[ADTWithType[B]]
     }
 
-    implicit def recursionTraitWithTypeAWriter[B: JsonWriter]: JsonObjectWriter[ADTWithTypeA[B]] = JsonWriter.derived[ADTWithTypeA[B]]
+    implicit def recursionTraitWithTypeAWriter[B: JsonWriter]
+        : JsonObjectWriter[ADTWithTypeA[B]] =
+      JsonWriter.derived[ADTWithTypeA[B]]
 
-    implicit def recursionTraitWithTypeBWriter[B: JsonWriter]: JsonObjectWriter[ADTWithTypeB[B]] = JsonWriter.derived[ADTWithTypeB[B]]
+    implicit def recursionTraitWithTypeBWriter[B: JsonWriter]
+        : JsonObjectWriter[ADTWithTypeB[B]] =
+      JsonWriter.derived[ADTWithTypeB[B]]
 
-    (ADTWithTypeB[Int](1, ADTWithTypeA[Int](2)): ADTWithType[Int]).asTokenList shouldBe obj(
+    (ADTWithTypeB[Int](1, ADTWithTypeA[Int](2)): ADTWithType[
+      Int
+    ]).asTokenList shouldBe obj(
       "clazz" -> "ADTWithTypeB",
       "a" -> 1,
       "b" -> obj(
@@ -658,44 +753,64 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "derive writer for simple sealed trait with hierarchy" in {
-    implicit val caseClassWriter: JsonObjectWriter[CaseClass] = JsonWriter.derived[CaseClass]
-    implicit val simpleClassWriter: JsonObjectWriter[SimpleClass] = JsonWriter.obj[SimpleClass].addField("b")(_.b)
-    implicit val justObjectWriter: JsonObjectWriter[JustObject.type] = JsonWriter.obj.addField("type")(_ => "JustObject")
-    implicit val subChildWriter: JsonObjectWriter[SubChild] = JsonWriter.derived[SubChild]
+    implicit val caseClassWriter: JsonObjectWriter[CaseClass] =
+      JsonWriter.derived[CaseClass]
+    implicit val simpleClassWriter: JsonObjectWriter[SimpleClass] =
+      JsonWriter.obj[SimpleClass].addField("b")(_.b)
+    implicit val justObjectWriter: JsonObjectWriter[JustObject.type] =
+      JsonWriter.obj.addField("type")(_ => "JustObject")
+    implicit val subChildWriter: JsonObjectWriter[SubChild] =
+      JsonWriter.derived[SubChild]
 
-    implicit val sealedSubWriter: JsonObjectWriter[SimpleSealedTypeSub] = JsonWriter.derived[SimpleSealedTypeSub]
-    implicit val sealedWriter: JsonWriter[SimpleSealedType] = JsonWriter.derived[SimpleSealedType]
+    implicit val sealedSubWriter: JsonObjectWriter[SimpleSealedTypeSub] =
+      JsonWriter.derived[SimpleSealedTypeSub]
+    implicit val sealedWriter: JsonWriter[SimpleSealedType] =
+      JsonWriter.derived[SimpleSealedType]
 
-    def write(simpleSealedType: SimpleSealedType): List[TokenNode] = simpleSealedType.asTokenList
+    def write(simpleSealedType: SimpleSealedType): List[TokenNode] =
+      simpleSealedType.asTokenList
 
     write(CaseClass(1)) shouldBe obj("__type" -> "CaseClass", "a" -> 1)
     write(SimpleClass(2)) shouldBe obj("__type" -> "SimpleClass", "b" -> 2)
-    write(JustObject) shouldBe obj("__type" -> "JustObject", "type" -> "JustObject")
+    write(JustObject) shouldBe obj(
+      "__type" -> "JustObject",
+      "type" -> "JustObject"
+    )
     write(SubChild(3)) shouldBe obj("__type" -> "SubChild", "c" -> 3)
   }
 
   it should "derive reader/writer for simple sealed trait with hierarchy with discriminator" in {
-    implicit val caseClassWriter: JsonObjectWriter[CaseClass] = JsonWriter.derived[CaseClass]
-    implicit val simpleClassWriter: JsonObjectWriter[SimpleClass] = JsonWriter.obj[SimpleClass].addField("b")(_.b)
-    implicit val justObjectWriter: JsonObjectWriter[JustObject.type] = JsonWriter.obj
-    implicit val subChildWriter: JsonObjectWriter[SubChild] = JsonWriter.derived[SubChild]
+    implicit val caseClassWriter: JsonObjectWriter[CaseClass] =
+      JsonWriter.derived[CaseClass]
+    implicit val simpleClassWriter: JsonObjectWriter[SimpleClass] =
+      JsonWriter.obj[SimpleClass].addField("b")(_.b)
+    implicit val justObjectWriter: JsonObjectWriter[JustObject.type] =
+      JsonWriter.obj
+    implicit val subChildWriter: JsonObjectWriter[SubChild] =
+      JsonWriter.derived[SubChild]
     given JsonReader[SimpleSealedType] = JsonReader.derived[SimpleSealedType]
 
-    implicit val sealedWriter: JsonWriter[SimpleSealedType] = JsonWriter.derived[SimpleSealedType]
+    implicit val sealedWriter: JsonWriter[SimpleSealedType] =
+      JsonWriter.derived[SimpleSealedType]
 
-    def write(simpleSealedType: SimpleSealedType): List[TokenNode] = simpleSealedType.asTokenList
+    def write(simpleSealedType: SimpleSealedType): List[TokenNode] =
+      simpleSealedType.asTokenList
 
     write(CaseClass(1)) shouldBe obj("__type" -> "CaseClass", "a" -> 1)
     write(SimpleClass(2)) shouldBe obj("__type" -> "SimpleClass", "b" -> 2)
     write(JustObject) shouldBe obj("__type" -> "JustObject")
     write(SubChild(3)) shouldBe obj("__type" -> "SubChild", "c" -> 3)
 
-    read[SimpleSealedType](obj("__type" -> "CaseClass", "a" -> 1)) shouldBe CaseClass(1)
-    read[SimpleSealedType](obj("__type" -> "SimpleClass", "b" -> 2)) shouldBe SimpleClass(2)
+    read[SimpleSealedType](
+      obj("__type" -> "CaseClass", "a" -> 1)
+    ) shouldBe CaseClass(1)
+    read[SimpleSealedType](
+      obj("__type" -> "SimpleClass", "b" -> 2)
+    ) shouldBe SimpleClass(2)
     read[SimpleSealedType](obj("__type" -> "JustObject")) shouldBe JustObject
-    read[SimpleSealedType](obj("__type" -> "SubChild", "c" -> 3)) shouldBe SubChild(3)
+    read[SimpleSealedType](
+      obj("__type" -> "SubChild", "c" -> 3)
+    ) shouldBe SubChild(3)
   }
-
-
 
 }

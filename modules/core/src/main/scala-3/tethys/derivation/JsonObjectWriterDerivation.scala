@@ -7,15 +7,24 @@ import tethys.{JsonObjectWriter, JsonWriter, WriterBuilder}
 import tethys.writers.tokens.TokenWriter
 
 import scala.deriving.Mirror
-import scala.compiletime.{constValueTuple, erasedValue, summonFrom, summonInline}
+import scala.compiletime.{
+  constValueTuple,
+  erasedValue,
+  summonFrom,
+  summonInline
+}
 
 private[tethys] trait JsonObjectWriterDerivation:
 
-  inline def derived[A](inline config: WriterBuilder[A])(using mirror: Mirror.ProductOf[A]) =
+  inline def derived[A](inline config: WriterBuilder[A])(using
+      mirror: Mirror.ProductOf[A]
+  ) =
     Derivation.deriveJsonWriterForProduct[A](config)
-    
+
   @deprecated("Use WriterBuilder instead")
-  inline def derived[A](inline config: WriterDerivationConfig)(using mirror: Mirror.Of[A]) =
+  inline def derived[A](inline config: WriterDerivationConfig)(using
+      mirror: Mirror.Of[A]
+  ) =
     inline mirror match
       case given Mirror.ProductOf[A] =>
         Derivation.deriveJsonWriterForProductLegacy[A](config)
@@ -36,4 +45,3 @@ private[tethys] trait JsonObjectWriterDerivation:
 
       case given Mirror.SumOf[A] =>
         Derivation.deriveJsonWriterForSum[A]
-        

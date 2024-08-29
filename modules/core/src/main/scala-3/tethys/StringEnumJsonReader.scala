@@ -12,10 +12,11 @@ object StringEnumJsonReader:
         if it.currentToken().isStringValue then
           val res = it.string()
           it.next()
-          try
-            derivation.EnumCompanion.getByName[A](res)
-          catch 
+          try derivation.EnumCompanion.getByName[A](res)
+          catch
             case ex: NoSuchElementException =>
               ReaderError.wrongJson(s"Unknown enum name: $res")
         else
-          ReaderError.wrongJson(s"Expected string value but found: ${it.currentToken()}")
+          ReaderError.wrongJson(
+            s"Expected string value but found: ${it.currentToken()}"
+          )

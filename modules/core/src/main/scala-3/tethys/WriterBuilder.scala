@@ -12,21 +12,27 @@ sealed trait WriterBuilder[A]:
   def rename[B](field: A => B)(rename: String): WriterBuilder[A]
 
   def update[B](field: A => B): FunApply[A, B] with WithRename[FunApply[A, B]]
-  
+
   @deprecated("Use 'update' instead")
-  def updatePartial[B](field: A => B): FunApply[A, B] with WithRename[FunApply[A, B]]
+  def updatePartial[B](
+      field: A => B
+  ): FunApply[A, B] with WithRename[FunApply[A, B]]
 
   def fieldStyle(style: FieldStyle): WriterBuilder[A]
-  
+
   @deprecated("Use tethys.FieldStyle instead")
-  def fieldStyle(fieldStyle: tethys.derivation.builder.FieldStyle): WriterBuilder[A]
-
-
+  def fieldStyle(
+      fieldStyle: tethys.derivation.builder.FieldStyle
+  ): WriterBuilder[A]
 
 object WriterBuilder:
-  def apply[A](using mirror: scala.deriving.Mirror.ProductOf[A]): WriterBuilder[A] =
-    throw IllegalStateException("Config must be an inlined given or provided directly to 'derived'")
-  
+  def apply[A](using
+      mirror: scala.deriving.Mirror.ProductOf[A]
+  ): WriterBuilder[A] =
+    throw IllegalStateException(
+      "Config must be an inlined given or provided directly to 'derived'"
+    )
+
   sealed trait WithRename[Res]:
     def withRename(rename: String): Res
 

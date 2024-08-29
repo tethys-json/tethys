@@ -9,8 +9,8 @@ enum FieldStyle {
   case KebabCase, LowerKebabCase, UpperKebabCase, CapitalizedKebabCase
 
   case SnakeCase, LowerSnakeCase, UpperSnakeCase, CapitalizedSnakeCase
-  
+
   case capitalize, uncapitalize, lowercase, uppercase
   case kebabCase, lowerKebabCase, upperKebabCase, capitalizedKebabCase
-  case snakeCase, lowerSnakeCase, upperSnakeCase, capitalizedSnakeCase 
+  case snakeCase, lowerSnakeCase, upperSnakeCase, capitalizedSnakeCase
 }

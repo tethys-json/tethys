@@ -1,7 +1,12 @@
 package tethys.derivation
 
 import tethys.{JsonObjectWriter, JsonReader, ReaderBuilder, WriterBuilder}
-import tethys.derivation.builder.{ReaderDerivationConfig, ReaderDescription, WriterDerivationConfig, WriterDescription}
+import tethys.derivation.builder.{
+  ReaderDerivationConfig,
+  ReaderDescription,
+  WriterDerivationConfig,
+  WriterDescription
+}
 
 import scala.deriving.Mirror
 
@@ -39,27 +44,33 @@ trait SemiautoDerivation {
            """
       )
 
-
-
   @deprecated("Use JsonObjectWriter.derived instead")
   inline def jsonWriter[T](using mirror: Mirror.Of[T]): JsonObjectWriter[T] =
     failWriterDerivationForEnum[T]
     JsonObjectWriter.derived[T]
 
-  inline def jsonWriter[T](inline description: WriterDescription[T]): JsonObjectWriter[T] =
+  inline def jsonWriter[T](
+      inline description: WriterDescription[T]
+  ): JsonObjectWriter[T] =
     scala.compiletime.error("Use WriterBuilder[T] directly")
 
   @deprecated("Use JsonObjectWriter.derived or derives instead")
-  inline def jsonWriter[T](inline builder: WriterBuilder[T])(using mirror: Mirror.ProductOf[T]): JsonObjectWriter[T] =
+  inline def jsonWriter[T](inline builder: WriterBuilder[T])(using
+      mirror: Mirror.ProductOf[T]
+  ): JsonObjectWriter[T] =
     failWriterDerivationForEnum[T]
     JsonObjectWriter.derived[T](builder)
 
   @deprecated("Use JsonObjectWriter.derived or derives instead")
-  inline def jsonWriter[T](inline config: WriterDerivationConfig)(using mirror: Mirror.Of[T]): JsonObjectWriter[T] =
+  inline def jsonWriter[T](inline config: WriterDerivationConfig)(using
+      mirror: Mirror.Of[T]
+  ): JsonObjectWriter[T] =
     JsonObjectWriter.derived[T](config)
 
   @deprecated("Use WriterBuilder[T] directly")
-  inline def describe[T <: Product](inline builder: WriterBuilder[T]): WriterBuilder[T] =
+  inline def describe[T <: Product](
+      inline builder: WriterBuilder[T]
+  ): WriterBuilder[T] =
     scala.compiletime.error("Use WriterBuilder[T] directly")
 
   @deprecated("Use JsonReader.derived instead")
@@ -67,19 +78,27 @@ trait SemiautoDerivation {
     failReaderDerivationForEnum[T]
     JsonReader.derived[T]
 
-  inline def jsonReader[T](inline description: ReaderDescription[T]): JsonReader[T] =
+  inline def jsonReader[T](
+      inline description: ReaderDescription[T]
+  ): JsonReader[T] =
     scala.compiletime.error("Use ReaderBuilder[T] instead")
 
   @deprecated("Use JsonReader.derived or derives instead")
-  inline def jsonReader[T](inline config: ReaderDerivationConfig)(using mirror: Mirror.ProductOf[T]): JsonReader[T] =
+  inline def jsonReader[T](inline config: ReaderDerivationConfig)(using
+      mirror: Mirror.ProductOf[T]
+  ): JsonReader[T] =
     JsonReader.derived[T](config)
 
   @deprecated("Use JsonReader.derived and derives instead")
-  inline def jsonReader[T](inline builder: ReaderBuilder[T])(using mirror: Mirror.ProductOf[T]): JsonReader[T] =
+  inline def jsonReader[T](inline builder: ReaderBuilder[T])(using
+      mirror: Mirror.ProductOf[T]
+  ): JsonReader[T] =
     failReaderDerivationForEnum[T]
     JsonReader.derived(builder)
 
   @deprecated("Use ReaderBuilder[T] directly")
-  inline def describe[T <: Product](inline builder: ReaderBuilder[T]): ReaderBuilder[T] =
+  inline def describe[T <: Product](
+      inline builder: ReaderBuilder[T]
+  ): ReaderBuilder[T] =
     builder
 }
