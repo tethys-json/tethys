@@ -27,29 +27,41 @@ class AutoWriterDerivationTest extends AnyFlatSpec with Matchers {
   }
 
   it should "auto derive writers for a lot of embedded classes" in {
-    Seq(SeqMaster1(Seq(SeqMaster2(Seq(SeqMaster3(Seq(SeqMaster4(Seq(1))))))))).asTokenList shouldBe arr(
+    Seq(
+      SeqMaster1(Seq(SeqMaster2(Seq(SeqMaster3(Seq(SeqMaster4(Seq(1))))))))
+    ).asTokenList shouldBe arr(
       obj(
-        "a" -> arr(obj(
-          "a" -> arr(obj(
-            "a" -> arr(obj(
-              "a" -> arr(1)
-            ))
-          ))
-        ))
+        "a" -> arr(
+          obj(
+            "a" -> arr(
+              obj(
+                "a" -> arr(
+                  obj(
+                    "a" -> arr(1)
+                  )
+                )
+              )
+            )
+          )
+        )
       )
     )
   }
 
   it should "auto derive writer that normally concatenates with other JsonObjectWriter's" in {
-    implicit def recursionTraitWithTypeWriter[B: JsonWriter]: JsonObjectWriter[ADTWithType[B]] = {
-      val simpleJsonObjectWriter = SimpleJsonObjectWriter[ADTWithType[B]].addField("clazz") {
-        case _: ADTWithTypeA[B] => "ADTWithTypeA"
-        case _: ADTWithTypeB[B] => "ADTWithTypeB"
-      }
+    implicit def recursionTraitWithTypeWriter[B: JsonWriter]
+        : JsonObjectWriter[ADTWithType[B]] = {
+      val simpleJsonObjectWriter =
+        SimpleJsonObjectWriter[ADTWithType[B]].addField("clazz") {
+          case _: ADTWithTypeA[B] => "ADTWithTypeA"
+          case _: ADTWithTypeB[B] => "ADTWithTypeB"
+        }
       simpleJsonObjectWriter ++ jsonWriter[ADTWithType[B]]
     }
 
-    (ADTWithTypeB[Int](1, ADTWithTypeA[Int](2)): ADTWithType[Int]).asTokenList shouldBe obj(
+    (ADTWithTypeB[Int](1, ADTWithTypeA[Int](2)): ADTWithType[
+      Int
+    ]).asTokenList shouldBe obj(
       "clazz" -> "ADTWithTypeB",
       "a" -> 1,
       "b" -> obj(
@@ -64,12 +76,16 @@ class AutoWriterDerivationTest extends AnyFlatSpec with Matchers {
   }
 
   it should "auto derive writer for simple sealed trait with hierarchy" in {
-    implicit val simpleClassWriter: JsonObjectWriter[SimpleClass] = JsonWriter.obj[SimpleClass].addField("b")(_.b)
-    implicit val justObjectWriter: JsonObjectWriter[JustObject.type] = JsonWriter.obj.addField("type")(_ => "JustObject")
+    implicit val simpleClassWriter: JsonObjectWriter[SimpleClass] =
+      JsonWriter.obj[SimpleClass].addField("b")(_.b)
+    implicit val justObjectWriter: JsonObjectWriter[JustObject.type] =
+      JsonWriter.obj.addField("type")(_ => "JustObject")
 
-    implicit val sealedWriter: JsonWriter[SimpleSealedType] = jsonWriter[SimpleSealedType]
+    implicit val sealedWriter: JsonWriter[SimpleSealedType] =
+      jsonWriter[SimpleSealedType]
 
-    def write(simpleSealedType: SimpleSealedType): List[TokenNode] = simpleSealedType.asTokenList
+    def write(simpleSealedType: SimpleSealedType): List[TokenNode] =
+      simpleSealedType.asTokenList
 
     write(CaseClass(1)) shouldBe obj("a" -> 1)
     write(new SimpleClass(2)) shouldBe obj("b" -> 2)

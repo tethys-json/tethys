@@ -10,7 +10,10 @@ import scala.deriving.Mirror
 import scala.quoted.{Expr, FromExpr, Quotes, ToExpr, Type, Varargs}
 import tethys.readers.tokens.{QueueIterator, TokenIterator}
 import tethys.commons.TokenNode
-import tethys.derivation.builder.{ReaderDerivationConfig, WriterDerivationConfig}
+import tethys.derivation.builder.{
+  ReaderDerivationConfig,
+  WriterDerivationConfig
+}
 
 trait ConfigurationMacroUtils:
   given Quotes = quotes
@@ -24,8 +27,8 @@ trait ConfigurationMacroUtils:
       case failure: ImplicitSearchFailure =>
         // Not sees statements put in a block (e.g. derived instances)
         // So we use summonInline
-        '{summonInline[T]}
-        
+        '{ summonInline[T] }
+
   def lookupOpt[T: Type]: Option[Expr[T]] =
     Implicits.search(TypeRepr.of[T]) match
       case success: ImplicitSearchSuccess =>
@@ -101,13 +104,17 @@ trait ConfigurationMacroUtils:
           (acc.copy(fieldStyle = Some(fieldStyle.valueOrAbort)), updatedFields)
 
         case '{
-          ($rest: WriterBuilder[T]).fieldStyle(${ style }: tethys.derivation.builder.FieldStyle)
-        } =>
+              ($rest: WriterBuilder[T]).fieldStyle(${
+                style
+              }: tethys.derivation.builder.FieldStyle)
+            } =>
           val fieldStyle = legacyFieldStyleToFieldStyle(style).getOrElse {
-            report.errorAndAbort(s"Can't extract fieldStyle from ${style.asTerm.show(using Printer.TreeShortCode)}")
+            report.errorAndAbort(
+              s"Can't extract fieldStyle from ${style.asTerm.show(using Printer.TreeShortCode)}"
+            )
           }
           (acc.copy(fieldStyle = Some(fieldStyle)), updatedFields)
-          
+
         case '{
               ($rest: WriterBuilder[T])
                 .add($field: String)
@@ -377,8 +384,13 @@ trait ConfigurationMacroUtils:
             val updatedDefault = field.extractor match
               case None => default
               case Some((tpe, lambda)) =>
-                Option.when(tpe.isOption)('{ None }).orElse(default)
-                  .map(default => Apply(Select.unique(lambda, "apply"), List(default.asTerm))).map(_.asExprOf[Any])
+                Option
+                  .when(tpe.isOption)('{ None })
+                  .orElse(default)
+                  .map(default =>
+                    Apply(Select.unique(lambda, "apply"), List(default.asTerm))
+                  )
+                  .map(_.asExprOf[Any])
 
             field.update(idx, updatedDefault, macroConfig.fieldStyle)
 
@@ -391,16 +403,24 @@ trait ConfigurationMacroUtils:
               .update(idx, default, macroConfig.fieldStyle)
       }
     val existingFieldNames = fields.map(_.name).toSet
-    val additionalFields = fields.collect {
-      case field: ReaderField.Extracted =>
-        field.extractors.collect { case (name, tpe) if !existingFieldNames(name) =>
-          ReaderField.Basic(name, tpe, None, -1, Option.when(tpe.isOption)('{None}))
+    val additionalFields = fields
+      .collect { case field: ReaderField.Extracted =>
+        field.extractors.collect {
+          case (name, tpe) if !existingFieldNames(name) =>
+            ReaderField.Basic(
+              name,
+              tpe,
+              None,
+              -1,
+              Option.when(tpe.isOption)('{ None })
+            )
         }
-    }.flatten.distinctBy(_.name)
+      }
+      .flatten
+      .distinctBy(_.name)
     val allFields = fields ::: additionalFields
     checkLoops(allFields)
     (sortDependencies(allFields), macroConfig.isStrict)
-
 
   private def sortDependencies(fields: List[ReaderField]): List[ReaderField] =
     val known = fields.map(_.name).toSet
@@ -525,14 +545,16 @@ trait ConfigurationMacroUtils:
             } =>
           if acc.extracted.contains(field.name) then
             exitExtractionAlreadyDefined(field.name)
-            
+
           loop(
             config = rest,
             acc = acc.withExtracted(
               ReaderField.Basic(
                 name = field.name,
                 tpe = TypeRepr.of[t],
-                extractor = Some((TypeRepr.of[t1], Typed(fun.asTerm, TypeTree.of[t1 => t])))
+                extractor = Some(
+                  (TypeRepr.of[t1], Typed(fun.asTerm, TypeTree.of[t1 => t]))
+                )
               )
             )
           )
@@ -545,10 +567,14 @@ trait ConfigurationMacroUtils:
           )
 
         case '{
-          ($rest: ReaderBuilder[T]).fieldStyle(${ style }: tethys.derivation.builder.FieldStyle)
-        } =>
+              ($rest: ReaderBuilder[T]).fieldStyle(${
+                style
+              }: tethys.derivation.builder.FieldStyle)
+            } =>
           val fieldStyle = legacyFieldStyleToFieldStyle(style).getOrElse {
-            report.errorAndAbort(s"Can't extract fieldStyle from ${style.asTerm.show(using Printer.TreeShortCode)}")
+            report.errorAndAbort(
+              s"Can't extract fieldStyle from ${style.asTerm.show(using Printer.TreeShortCode)}"
+            )
           }
           loop(
             config = rest,
@@ -655,8 +681,13 @@ trait ConfigurationMacroUtils:
 
     selectors match
       case constructorSymbol :: Nil =>
-        val symbol = tpe.typeSymbol.fieldMembers.find(_.name == constructorSymbol.name)
-          .getOrElse(report.errorAndAbort(s"Not found symbol corresponding to constructor symbol ${constructorSymbol.name}"))
+        val symbol = tpe.typeSymbol.fieldMembers
+          .find(_.name == constructorSymbol.name)
+          .getOrElse(
+            report.errorAndAbort(
+              s"Not found symbol corresponding to constructor symbol ${constructorSymbol.name}"
+            )
+          )
 
         val discriminators: List[Term] = getAllChildren(tpe).map {
           case tpe: TypeRef =>
@@ -666,14 +697,23 @@ trait ConfigurationMacroUtils:
           case tpe =>
             report.errorAndAbort(s"Unknown tpe: $tpe")
         }
-        SumMacroConfig(Some(DiscriminatorConfig(symbol.name, tpe.memberType(symbol), discriminators)))
+        SumMacroConfig(
+          Some(
+            DiscriminatorConfig(
+              symbol.name,
+              tpe.memberType(symbol),
+              discriminators
+            )
+          )
+        )
 
       case Nil =>
         SumMacroConfig(None)
 
       case multiple =>
-        report.errorAndAbort(s"Only one field can be a selector. Found ${multiple.map(_.name).mkString(", ")}")
-
+        report.errorAndAbort(
+          s"Only one field can be a selector. Found ${multiple.map(_.name).mkString(", ")}"
+        )
 
   private def stub(tpe: TypeRepr): Term =
     import quotes.reflect.*
@@ -706,17 +746,20 @@ trait ConfigurationMacroUtils:
       case Block(_, term)                           => traverseTree(term)
       case term                                     => term
 
-
   private def typeReprsOf[Ts: Type]: List[TypeRepr] =
     Type.of[Ts] match
       case '[EmptyTuple] => Nil
-      case '[t *: ts] => TypeRepr.of[t] :: typeReprsOf[ts]
+      case '[t *: ts]    => TypeRepr.of[t] :: typeReprsOf[ts]
 
   def getAllChildren(tpe: TypeRepr): List[TypeRepr] =
     tpe.asType match
       case '[t] =>
         Expr.summon[scala.deriving.Mirror.Of[t]] match
-          case Some('{ $m: scala.deriving.Mirror.SumOf[t] {type MirroredElemTypes = subs} }) =>
+          case Some('{
+                $m: scala.deriving.Mirror.SumOf[t] {
+                  type MirroredElemTypes = subs
+                }
+              }) =>
             typeReprsOf[subs].flatMap(getAllChildren)
           case _ =>
             List(tpe)
@@ -816,9 +859,9 @@ trait ConfigurationMacroUtils:
     def reader: Boolean
 
     def initializeFieldCase(
-      readers: Map[TypeRepr, Ref],
-      it: Expr[TokenIterator],
-      fieldName: Expr[FieldName]
+        readers: Map[TypeRepr, Ref],
+        it: Expr[TokenIterator],
+        fieldName: Expr[FieldName]
     ): Option[CaseDef] =
       this match
         case _: ReaderField.Basic =>
@@ -830,8 +873,14 @@ trait ConfigurationMacroUtils:
                   None,
                   Block(
                     init {
-                      val reader = readers.get(readerTpe.get).fold(lookup[JsonReader[t]])(_.asExprOf[JsonReader[t]])
-                      '{${reader}.read(${it})(${fieldName}.appendFieldName(${Expr(name)}))}.asTerm
+                      val reader = readers
+                        .get(readerTpe.get)
+                        .fold(lookup[JsonReader[t]])(_.asExprOf[JsonReader[t]])
+                      '{
+                        ${ reader }.read(${ it })(
+                          ${ fieldName }.appendFieldName(${ Expr(name) })
+                        )
+                      }.asTerm
                     },
                     '{}.asTerm
                   )
@@ -845,23 +894,48 @@ trait ConfigurationMacroUtils:
               Literal(StringConstant(name)),
               None,
               Block(
-                initIterator('{ ${it}.collectExpression() }.asTerm),
+                initIterator('{ ${ it }.collectExpression() }.asTerm),
                 '{}.asTerm
               )
             )
           }
 
-
     lazy val (initialize, ref, initRef, iteratorRef) = {
-      val flags = default.fold(Flags.Deferred | Flags.Mutable)(_ => Flags.Mutable)
-      val symbol = Symbol.newVal(Symbol.spliceOwner, s"${name}Var", tpe, flags, Symbol.noSymbol)
-      val initSymbol = Symbol.newVal(Symbol.spliceOwner, s"${name}Init", TypeRepr.of[Boolean], Flags.Mutable, Symbol.noSymbol)
+      val flags =
+        default.fold(Flags.Deferred | Flags.Mutable)(_ => Flags.Mutable)
+      val symbol = Symbol.newVal(
+        Symbol.spliceOwner,
+        s"${name}Var",
+        tpe,
+        flags,
+        Symbol.noSymbol
+      )
+      val initSymbol = Symbol.newVal(
+        Symbol.spliceOwner,
+        s"${name}Init",
+        TypeRepr.of[Boolean],
+        Flags.Mutable,
+        Symbol.noSymbol
+      )
       val stat = ValDef(symbol, default.map(_.asTerm))
-      val initStat = ValDef(initSymbol, Some('{false}.asTerm))
-      val iteratorSymbol = Option.when(reader)(Symbol.newVal(Symbol.spliceOwner, s"${name}Iterator", TypeRepr.of[TokenIterator], Flags.Mutable | Flags.Deferred, Symbol.noSymbol))
+      val initStat = ValDef(initSymbol, Some('{ false }.asTerm))
+      val iteratorSymbol = Option.when(reader)(
+        Symbol.newVal(
+          Symbol.spliceOwner,
+          s"${name}Iterator",
+          TypeRepr.of[TokenIterator],
+          Flags.Mutable | Flags.Deferred,
+          Symbol.noSymbol
+        )
+      )
       val iteratorStat = iteratorSymbol.map(ValDef(_, None))
       val iteratorRef = iteratorStat.map(stat => Ref(stat.symbol))
-      (List(stat, initStat) ++ iteratorStat, Ref(stat.symbol), Ref(initStat.symbol), iteratorRef)
+      (
+        List(stat, initStat) ++ iteratorStat,
+        Ref(stat.symbol),
+        Ref(initStat.symbol),
+        iteratorRef
+      )
     }
 
     def idx: Int
@@ -874,18 +948,17 @@ trait ConfigurationMacroUtils:
       case field: ReaderField.Extracted =>
         Some(field.tpe)
 
-
     def init(value: Term): List[Statement] = this match
       case ReaderField.Basic(_, _, None, _, _) =>
         List(
           Assign(ref, value),
-          Assign(initRef, '{true}.asTerm)
+          Assign(initRef, '{ true }.asTerm)
         )
 
       case ReaderField.Basic(_, _, Some((_, lambda)), _, _) =>
         List(
-          Assign(ref, Apply(Select.unique(lambda, "apply") , List(value))),
-          Assign(initRef, '{true}.asTerm)
+          Assign(ref, Apply(Select.unique(lambda, "apply"), List(value))),
+          Assign(initRef, '{ true }.asTerm)
         )
       case extracted: ReaderField.Extracted =>
         List(
@@ -893,14 +966,14 @@ trait ConfigurationMacroUtils:
           Assign(initRef, '{ true }.asTerm)
         )
 
-    def initIterator(value: Term): List[Statement] = iteratorRef.map { ref =>
-      List(
-        Assign(ref, value),
-        Assign(initRef, '{ true }.asTerm)
-      )
-    }.getOrElse(Nil)
-
-
+    def initIterator(value: Term): List[Statement] = iteratorRef
+      .map { ref =>
+        List(
+          Assign(ref, value),
+          Assign(initRef, '{ true }.asTerm)
+        )
+      }
+      .getOrElse(Nil)
 
     def update(
         index: Int,
@@ -911,13 +984,15 @@ trait ConfigurationMacroUtils:
         field.copy(
           idx = index,
           default = default,
-          name = fieldStyle.fold(field.name)(FieldStyle.applyStyle(field.name, _))
+          name =
+            fieldStyle.fold(field.name)(FieldStyle.applyStyle(field.name, _))
         )
       case field: ReaderField.Extracted =>
         field.copy(
           idx = index,
           default = default,
-          name = fieldStyle.fold(field.name)(FieldStyle.applyStyle(field.name, _))
+          name =
+            fieldStyle.fold(field.name)(FieldStyle.applyStyle(field.name, _))
         )
   }
 
@@ -940,7 +1015,10 @@ trait ConfigurationMacroUtils:
         idx: Int = 0,
         default: Option[Expr[Any]] = None
     ) extends ReaderField:
-      def extract(fields: Map[String, Ref], fieldName: Expr[FieldName]): List[Statement] =
+      def extract(
+          fields: Map[String, Ref],
+          fieldName: Expr[FieldName]
+      ): List[Statement] =
         val term = extractors match
           case (depName, _) :: Nil =>
             Apply(Select.unique(lambda, "apply"), List(fields(depName)))
@@ -948,17 +1026,27 @@ trait ConfigurationMacroUtils:
             val value = extractors
               .map((name, _) => fields(name))
               .foldRight[Term]('{ EmptyTuple }.asTerm) { (el, acc) =>
-                Select.unique(acc, "*:")
+                Select
+                  .unique(acc, "*:")
                   .appliedToTypes(List(el.tpe, acc.tpe))
                   .appliedToArgs(List(el))
               }
             Select.unique(lambda, "apply").appliedToArgs(List(value))
-            
+
         iteratorRef match
           case Some(iteratorRef) =>
-            val reader = Typed(term, TypeTree.of[JsonReader[Any]]).asExprOf[JsonReader[Any]]
-            val it = '{if ${initRef.asExprOf[Boolean]} then ${iteratorRef.asExprOf[TokenIterator]} else QueueIterator(List(TokenNode.NullValueNode))}
-            val value = '{${reader}.read(${it})(${fieldName}.appendFieldName(${ Expr(name) }))}
+            val reader = Typed(term, TypeTree.of[JsonReader[Any]])
+              .asExprOf[JsonReader[Any]]
+            val it = '{
+              if ${ initRef.asExprOf[Boolean] } then
+                ${ iteratorRef.asExprOf[TokenIterator] }
+              else QueueIterator(List(TokenNode.NullValueNode))
+            }
+            val value = '{
+              ${ reader }.read(${ it })(${ fieldName }.appendFieldName(${
+                Expr(name)
+              }))
+            }
             init(value.asTerm)
           case None =>
             init(term)
@@ -1008,49 +1096,90 @@ trait ConfigurationMacroUtils:
         case _ => None
 
   @deprecated
-  def legacyFieldStyleToFieldStyle(x: Expr[tethys.derivation.builder.FieldStyle]): Option[FieldStyle] =
+  def legacyFieldStyleToFieldStyle(
+      x: Expr[tethys.derivation.builder.FieldStyle]
+  ): Option[FieldStyle] =
     x match
-      case '{ tethys.derivation.builder.FieldStyle.UpperCase } => Some(FieldStyle.UpperCase)
-      case '{ tethys.derivation.builder.FieldStyle.uppercase } => Some(FieldStyle.UpperCase)
-      case '{ tethys.derivation.builder.FieldStyle.LowerCase } => Some(FieldStyle.LowerCase)
-      case '{ tethys.derivation.builder.FieldStyle.lowercase } => Some(FieldStyle.LowerCase)
-      case '{ tethys.derivation.builder.FieldStyle.Capitalize } => Some(FieldStyle.Capitalize)
-      case '{ tethys.derivation.builder.FieldStyle.capitalize } => Some(FieldStyle.Capitalize)
-      case '{ tethys.derivation.builder.FieldStyle.Uncapitalize } => Some(FieldStyle.Uncapitalize)
-      case '{ tethys.derivation.builder.FieldStyle.uncapitalize } => Some(FieldStyle.Uncapitalize)
-      case '{ tethys.derivation.builder.FieldStyle.KebabCase } => Some(FieldStyle.KebabCase)
-      case '{ tethys.derivation.builder.FieldStyle.kebabCase } => Some(FieldStyle.KebabCase)
-      case '{ tethys.derivation.builder.FieldStyle.LowerKebabCase } => Some(FieldStyle.LowerKebabCase)
-      case '{ tethys.derivation.builder.FieldStyle.lowerKebabCase } => Some(FieldStyle.LowerKebabCase)
-      case '{ tethys.derivation.builder.FieldStyle.UpperKebabCase } => Some(FieldStyle.UpperKebabCase)
-      case '{ tethys.derivation.builder.FieldStyle.upperKebabCase } => Some(FieldStyle.UpperKebabCase)
-      case '{ tethys.derivation.builder.FieldStyle.CapitalizedKebabCase } => Some(FieldStyle.CapitalizedKebabCase)
-      case '{ tethys.derivation.builder.FieldStyle.capitalizedKebabCase } => Some(FieldStyle.CapitalizedKebabCase)
-      case '{ tethys.derivation.builder.FieldStyle.SnakeCase } => Some(FieldStyle.SnakeCase)
-      case '{ tethys.derivation.builder.FieldStyle.snakeCase } => Some(FieldStyle.SnakeCase)
-      case '{ tethys.derivation.builder.FieldStyle.LowerSnakeCase } => Some(FieldStyle.LowerSnakeCase)
-      case '{ tethys.derivation.builder.FieldStyle.lowerSnakeCase } => Some(FieldStyle.LowerSnakeCase)
-      case '{ tethys.derivation.builder.FieldStyle.UpperSnakeCase } => Some(FieldStyle.UpperSnakeCase)
-      case '{ tethys.derivation.builder.FieldStyle.upperSnakeCase } => Some(FieldStyle.UpperSnakeCase)
-      case '{ tethys.derivation.builder.FieldStyle.CapitalizedSnakeCase } => Some(FieldStyle.CapitalizedSnakeCase)
-      case '{ tethys.derivation.builder.FieldStyle.capitalizedSnakeCase } => Some(FieldStyle.CapitalizedSnakeCase)
+      case '{ tethys.derivation.builder.FieldStyle.UpperCase } =>
+        Some(FieldStyle.UpperCase)
+      case '{ tethys.derivation.builder.FieldStyle.uppercase } =>
+        Some(FieldStyle.UpperCase)
+      case '{ tethys.derivation.builder.FieldStyle.LowerCase } =>
+        Some(FieldStyle.LowerCase)
+      case '{ tethys.derivation.builder.FieldStyle.lowercase } =>
+        Some(FieldStyle.LowerCase)
+      case '{ tethys.derivation.builder.FieldStyle.Capitalize } =>
+        Some(FieldStyle.Capitalize)
+      case '{ tethys.derivation.builder.FieldStyle.capitalize } =>
+        Some(FieldStyle.Capitalize)
+      case '{ tethys.derivation.builder.FieldStyle.Uncapitalize } =>
+        Some(FieldStyle.Uncapitalize)
+      case '{ tethys.derivation.builder.FieldStyle.uncapitalize } =>
+        Some(FieldStyle.Uncapitalize)
+      case '{ tethys.derivation.builder.FieldStyle.KebabCase } =>
+        Some(FieldStyle.KebabCase)
+      case '{ tethys.derivation.builder.FieldStyle.kebabCase } =>
+        Some(FieldStyle.KebabCase)
+      case '{ tethys.derivation.builder.FieldStyle.LowerKebabCase } =>
+        Some(FieldStyle.LowerKebabCase)
+      case '{ tethys.derivation.builder.FieldStyle.lowerKebabCase } =>
+        Some(FieldStyle.LowerKebabCase)
+      case '{ tethys.derivation.builder.FieldStyle.UpperKebabCase } =>
+        Some(FieldStyle.UpperKebabCase)
+      case '{ tethys.derivation.builder.FieldStyle.upperKebabCase } =>
+        Some(FieldStyle.UpperKebabCase)
+      case '{ tethys.derivation.builder.FieldStyle.CapitalizedKebabCase } =>
+        Some(FieldStyle.CapitalizedKebabCase)
+      case '{ tethys.derivation.builder.FieldStyle.capitalizedKebabCase } =>
+        Some(FieldStyle.CapitalizedKebabCase)
+      case '{ tethys.derivation.builder.FieldStyle.SnakeCase } =>
+        Some(FieldStyle.SnakeCase)
+      case '{ tethys.derivation.builder.FieldStyle.snakeCase } =>
+        Some(FieldStyle.SnakeCase)
+      case '{ tethys.derivation.builder.FieldStyle.LowerSnakeCase } =>
+        Some(FieldStyle.LowerSnakeCase)
+      case '{ tethys.derivation.builder.FieldStyle.lowerSnakeCase } =>
+        Some(FieldStyle.LowerSnakeCase)
+      case '{ tethys.derivation.builder.FieldStyle.UpperSnakeCase } =>
+        Some(FieldStyle.UpperSnakeCase)
+      case '{ tethys.derivation.builder.FieldStyle.upperSnakeCase } =>
+        Some(FieldStyle.UpperSnakeCase)
+      case '{ tethys.derivation.builder.FieldStyle.CapitalizedSnakeCase } =>
+        Some(FieldStyle.CapitalizedSnakeCase)
+      case '{ tethys.derivation.builder.FieldStyle.capitalizedSnakeCase } =>
+        Some(FieldStyle.CapitalizedSnakeCase)
       case _ => None
 
-
   @deprecated
-  def parseLegacyReaderDerivationConfig[T: Type](config: Expr[ReaderDerivationConfig],
-                                                 mirror: Expr[Mirror.ProductOf[T]]): Expr[ReaderBuilder[T]] =
+  def parseLegacyReaderDerivationConfig[T: Type](
+      config: Expr[ReaderDerivationConfig],
+      mirror: Expr[Mirror.ProductOf[T]]
+  ): Expr[ReaderBuilder[T]] =
     config match
-      case '{ ReaderDerivationConfig.withFieldStyle(${ fieldStyle }: FieldStyle) } =>
+      case '{
+            ReaderDerivationConfig.withFieldStyle(${ fieldStyle }: FieldStyle)
+          } =>
         '{ ReaderBuilder[T](using ${ mirror }).fieldStyle(${ fieldStyle }) }
 
-      case '{ ReaderDerivationConfig.withFieldStyle(${ fieldStyle }: tethys.derivation.builder.FieldStyle) } =>
+      case '{
+            ReaderDerivationConfig.withFieldStyle(${
+              fieldStyle
+            }: tethys.derivation.builder.FieldStyle)
+          } =>
         '{ ReaderBuilder[T](using ${ mirror }).fieldStyle(${ fieldStyle }) }
 
-      case '{ ReaderDerivationConfig.empty.withFieldStyle(${ fieldStyle }: FieldStyle) } =>
+      case '{
+            ReaderDerivationConfig.empty.withFieldStyle(${
+              fieldStyle
+            }: FieldStyle)
+          } =>
         '{ ReaderBuilder[T](using ${ mirror }).fieldStyle(${ fieldStyle }) }
 
-      case '{ ReaderDerivationConfig.empty.withFieldStyle(${ fieldStyle }: tethys.derivation.builder.FieldStyle) } =>
+      case '{
+            ReaderDerivationConfig.empty.withFieldStyle(${
+              fieldStyle
+            }: tethys.derivation.builder.FieldStyle)
+          } =>
         '{ ReaderBuilder[T](using ${ mirror }).fieldStyle(${ fieldStyle }) }
 
       case '{ ReaderDerivationConfig.strict } =>
@@ -1059,57 +1188,135 @@ trait ConfigurationMacroUtils:
       case '{ ReaderDerivationConfig.empty.strict } =>
         '{ ReaderBuilder[T](using ${ mirror }).strict }
 
-      case '{ ReaderDerivationConfig.withFieldStyle(${ fieldStyle }: FieldStyle).strict } =>
-        '{ ReaderBuilder[T](using ${ mirror }).strict.fieldStyle(${ fieldStyle }) }
+      case '{
+            ReaderDerivationConfig
+              .withFieldStyle(${ fieldStyle }: FieldStyle)
+              .strict
+          } =>
+        '{
+          ReaderBuilder[T](using ${ mirror }).strict.fieldStyle(${ fieldStyle })
+        }
 
-      case '{ ReaderDerivationConfig.withFieldStyle(${ fieldStyle }: tethys.derivation.builder.FieldStyle).strict } =>
-        '{ ReaderBuilder[T](using ${ mirror }).strict.fieldStyle(${ fieldStyle }) }
+      case '{
+            ReaderDerivationConfig
+              .withFieldStyle(${
+                fieldStyle
+              }: tethys.derivation.builder.FieldStyle)
+              .strict
+          } =>
+        '{
+          ReaderBuilder[T](using ${ mirror }).strict.fieldStyle(${ fieldStyle })
+        }
 
-      case '{ ReaderDerivationConfig.strict.withFieldStyle(${ fieldStyle }: FieldStyle) } =>
-        '{ ReaderBuilder[T](using ${ mirror }).strict.fieldStyle(${ fieldStyle }) }
+      case '{
+            ReaderDerivationConfig.strict.withFieldStyle(${
+              fieldStyle
+            }: FieldStyle)
+          } =>
+        '{
+          ReaderBuilder[T](using ${ mirror }).strict.fieldStyle(${ fieldStyle })
+        }
 
-      case '{ ReaderDerivationConfig.strict.withFieldStyle(${ fieldStyle }: tethys.derivation.builder.FieldStyle) } =>
-        '{ ReaderBuilder[T](using ${ mirror }).strict.fieldStyle(${ fieldStyle }) }
+      case '{
+            ReaderDerivationConfig.strict.withFieldStyle(${
+              fieldStyle
+            }: tethys.derivation.builder.FieldStyle)
+          } =>
+        '{
+          ReaderBuilder[T](using ${ mirror }).strict.fieldStyle(${ fieldStyle })
+        }
 
-      case '{ ReaderDerivationConfig.empty.withFieldStyle(${ fieldStyle }: FieldStyle).strict } =>
-        '{ ReaderBuilder[T](using ${ mirror }).strict.fieldStyle(${ fieldStyle }) }
+      case '{
+            ReaderDerivationConfig.empty
+              .withFieldStyle(${ fieldStyle }: FieldStyle)
+              .strict
+          } =>
+        '{
+          ReaderBuilder[T](using ${ mirror }).strict.fieldStyle(${ fieldStyle })
+        }
 
-      case '{ ReaderDerivationConfig.empty.withFieldStyle(${ fieldStyle }: tethys.derivation.builder.FieldStyle).strict } =>
-        '{ ReaderBuilder[T](using ${ mirror }).strict.fieldStyle(${ fieldStyle }) }
+      case '{
+            ReaderDerivationConfig.empty
+              .withFieldStyle(${
+                fieldStyle
+              }: tethys.derivation.builder.FieldStyle)
+              .strict
+          } =>
+        '{
+          ReaderBuilder[T](using ${ mirror }).strict.fieldStyle(${ fieldStyle })
+        }
 
-      case '{ ReaderDerivationConfig.empty.strict.withFieldStyle(${ fieldStyle }: FieldStyle) } =>
-        '{ ReaderBuilder[T](using ${ mirror }).strict.fieldStyle(${ fieldStyle }) }
+      case '{
+            ReaderDerivationConfig.empty.strict.withFieldStyle(${
+              fieldStyle
+            }: FieldStyle)
+          } =>
+        '{
+          ReaderBuilder[T](using ${ mirror }).strict.fieldStyle(${ fieldStyle })
+        }
 
-      case '{ ReaderDerivationConfig.empty.strict.withFieldStyle(${ fieldStyle }: tethys.derivation.builder.FieldStyle) } =>
-        '{ ReaderBuilder[T](using ${ mirror }).strict.fieldStyle(${ fieldStyle }) }
+      case '{
+            ReaderDerivationConfig.empty.strict.withFieldStyle(${
+              fieldStyle
+            }: tethys.derivation.builder.FieldStyle)
+          } =>
+        '{
+          ReaderBuilder[T](using ${ mirror }).strict.fieldStyle(${ fieldStyle })
+        }
 
       case other =>
-        report.errorAndAbort(s"Unknown tree: ${other.asTerm.show(using Printer.TreeShortCode)}")
+        report.errorAndAbort(
+          s"Unknown tree: ${other.asTerm.show(using Printer.TreeShortCode)}"
+        )
 
   @deprecated
-  def parseLegacyWriterDerivationConfig[T: Type](config: Expr[WriterDerivationConfig],
-                                                 mirror: Expr[Mirror.ProductOf[T]]): Expr[WriterBuilder[T]] =
+  def parseLegacyWriterDerivationConfig[T: Type](
+      config: Expr[WriterDerivationConfig],
+      mirror: Expr[Mirror.ProductOf[T]]
+  ): Expr[WriterBuilder[T]] =
     config match
-      case '{ WriterDerivationConfig.withFieldStyle(${ fieldStyle }: FieldStyle) } =>
+      case '{
+            WriterDerivationConfig.withFieldStyle(${ fieldStyle }: FieldStyle)
+          } =>
         '{ WriterBuilder[T](using ${ mirror }).fieldStyle(${ fieldStyle }) }
 
-      case '{ WriterDerivationConfig.withFieldStyle(${ fieldStyle }: tethys.derivation.builder.FieldStyle) } =>
+      case '{
+            WriterDerivationConfig.withFieldStyle(${
+              fieldStyle
+            }: tethys.derivation.builder.FieldStyle)
+          } =>
         '{ WriterBuilder[T](using ${ mirror }).fieldStyle(${ fieldStyle }) }
 
-      case '{ WriterDerivationConfig.empty.withFieldStyle(${ fieldStyle }: FieldStyle) } =>
+      case '{
+            WriterDerivationConfig.empty.withFieldStyle(${
+              fieldStyle
+            }: FieldStyle)
+          } =>
         '{ WriterBuilder[T](using ${ mirror }).fieldStyle(${ fieldStyle }) }
 
-      case '{ WriterDerivationConfig.empty.withFieldStyle(${ fieldStyle }: tethys.derivation.builder.FieldStyle) } =>
+      case '{
+            WriterDerivationConfig.empty.withFieldStyle(${
+              fieldStyle
+            }: tethys.derivation.builder.FieldStyle)
+          } =>
         '{ WriterBuilder[T](using ${ mirror }).fieldStyle(${ fieldStyle }) }
 
       case other =>
-        report.errorAndAbort(s"Unknown tree: ${other.asTerm.show(using Printer.TreeShortCode)}")
+        report.errorAndAbort(
+          s"Unknown tree: ${other.asTerm.show(using Printer.TreeShortCode)}"
+        )
 
-  def parseLegacyDiscriminator[T: Type](config: Expr[WriterDerivationConfig]): DiscriminatorConfig =
+  def parseLegacyDiscriminator[T: Type](
+      config: Expr[WriterDerivationConfig]
+  ): DiscriminatorConfig =
     val name: String = config match
-      case '{ WriterDerivationConfig.withDiscriminator($name: String)} => name.valueOrAbort
-      case '{ WriterDerivationConfig.empty.withDiscriminator($name: String)} => name.valueOrAbort
+      case '{ WriterDerivationConfig.withDiscriminator($name: String) } =>
+        name.valueOrAbort
+      case '{ WriterDerivationConfig.empty.withDiscriminator($name: String) } =>
+        name.valueOrAbort
       case other =>
-        report.errorAndAbort(s"Unknown tree: ${other.asTerm.show(using Printer.TreeShortCode)}")
+        report.errorAndAbort(
+          s"Unknown tree: ${other.asTerm.show(using Printer.TreeShortCode)}"
+        )
 
     DiscriminatorConfig(name, TypeRepr.of[String], Nil)

@@ -9,26 +9,36 @@ import tethys.derivation.builder.ReaderDerivationConfig
 
 import scala.collection.mutable
 import scala.deriving.Mirror
-import scala.compiletime.{constValue, constValueTuple, erasedValue, summonFrom, summonInline}
+import scala.compiletime.{
+  constValue,
+  constValueTuple,
+  erasedValue,
+  summonFrom,
+  summonInline
+}
 
-
-private [tethys]
-trait JsonReaderDerivation:
+private[tethys] trait JsonReaderDerivation:
   def const[A](value: A): JsonReader[A] =
     new JsonReader[A]:
       override def read(it: TokenIterator)(implicit fieldName: FieldName): A =
         if !it.currentToken().isObjectStart then
-          ReaderError.wrongJson("Expected object start but found: " + it.currentToken().toString)
+          ReaderError.wrongJson(
+            "Expected object start but found: " + it.currentToken().toString
+          )
         else {
           it.skipExpression()
           value
         }
 
-  inline def derived[A](inline config: ReaderBuilder[A])(using mirror: Mirror.ProductOf[A]): JsonReader[A] =
+  inline def derived[A](inline config: ReaderBuilder[A])(using
+      mirror: Mirror.ProductOf[A]
+  ): JsonReader[A] =
     Derivation.deriveJsonReaderForProduct[A](config)
 
   @deprecated("Use ReaderBuilder instead")
-  inline def derived[A](inline config: ReaderDerivationConfig)(using mirror: Mirror.ProductOf[A]): JsonReader[A] =
+  inline def derived[A](inline config: ReaderDerivationConfig)(using
+      mirror: Mirror.ProductOf[A]
+  ): JsonReader[A] =
     Derivation.deriveJsonReaderForProductLegacy[A](config)
 
   inline def derived[A](using mirror: Mirror.Of[A]): JsonReader[A] =
@@ -37,9 +47,8 @@ trait JsonReaderDerivation:
         Derivation.deriveJsonReaderForProduct[A](
           summonFrom[ReaderBuilder[A]] {
             case config: ReaderBuilder[A] => config
-            case _ => ReaderBuilder[A]
+            case _                        => ReaderBuilder[A]
           }
         )
       case given Mirror.SumOf[A] =>
         Derivation.deriveJsonReaderForSum[A]
-        

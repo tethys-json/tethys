@@ -18,11 +18,11 @@ class Json4sSupportTest extends AnyFlatSpec with Matchers {
   }
 
   it should "parse JDouble" in {
-    token(100.0D).tokensAs[JDouble] shouldBe JDouble(100.0D)
+    token(100.0d).tokensAs[JDouble] shouldBe JDouble(100.0d)
   }
 
   it should "parse JDecimal" in {
-    token(100.0D).tokensAs[JDecimal] shouldBe JDecimal(100.0D)
+    token(100.0d).tokensAs[JDecimal] shouldBe JDecimal(100.0d)
   }
 
   it should "parse JString" in {
@@ -38,19 +38,26 @@ class Json4sSupportTest extends AnyFlatSpec with Matchers {
   }
 
   it should "parse JArray" in {
-    arr(1, 2L, 3).tokensAs[JArray] shouldBe JArray(List(JLong(1), JLong(2), JLong(3)))
+    arr(1, 2L, 3).tokensAs[JArray] shouldBe JArray(
+      List(JLong(1), JLong(2), JLong(3))
+    )
   }
 
   it should "parse JArray of JObject" in {
-    arr(obj("a" -> "b", "c" -> "d")).tokensAs[JValue] shouldBe JArray(List(JObject("a" -> JString("b"), "c" -> JString("d"))))
+    arr(obj("a" -> "b", "c" -> "d")).tokensAs[JValue] shouldBe JArray(
+      List(JObject("a" -> JString("b"), "c" -> JString("d")))
+    )
   }
 
   it should "parse JSet" in {
-    arr(1, 2L, 3).tokensAs[JSet] shouldBe JSet(Set(JLong(1), JLong(2), JLong(3)))
+    arr(1, 2L, 3).tokensAs[JSet] shouldBe JSet(
+      Set(JLong(1), JLong(2), JLong(3))
+    )
   }
 
   it should "parse JObject" in {
-    obj("a" -> arr(1), "b" -> obj("c" -> null)).tokensAs[JObject] shouldBe JObject(
+    obj("a" -> arr(1), "b" -> obj("c" -> null))
+      .tokensAs[JObject] shouldBe JObject(
       "a" -> JArray(List(JLong(1L))),
       "b" -> JObject("c" -> JNull)
     )
@@ -66,11 +73,11 @@ class Json4sSupportTest extends AnyFlatSpec with Matchers {
   }
 
   it should "write JDouble" in {
-    JDouble(100.0D).asTokenList shouldBe token(100.0D)
+    JDouble(100.0d).asTokenList shouldBe token(100.0d)
   }
 
   it should "write JDecimal" in {
-    JDecimal(100.0D).asTokenList shouldBe token(BigDecimal(100.0D))
+    JDecimal(100.0d).asTokenList shouldBe token(BigDecimal(100.0d))
   }
 
   it should "write JString" in {
@@ -86,7 +93,11 @@ class Json4sSupportTest extends AnyFlatSpec with Matchers {
   }
 
   it should "write JArray" in {
-    JArray(List(JLong(1), JLong(2), JLong(3))).asTokenList shouldBe arr(1L, 2L, 3L)
+    JArray(List(JLong(1), JLong(2), JLong(3))).asTokenList shouldBe arr(
+      1L,
+      2L,
+      3L
+    )
   }
 
   it should "write JSet" in {

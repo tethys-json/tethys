@@ -46,7 +46,7 @@ class WriterRenamingSyntaxTest extends AnyFlatSpec with Matchers {
   it should "rename field on update from root" in {
     implicit val writer: JsonWriter[D] = jsonWriter[D] {
       WriterBuilder[D].update(_.a).withRename("b").fromRoot(_.a * 2)
-      
+
     }
 
     D(1).asTokenList shouldBe obj(
