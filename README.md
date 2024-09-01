@@ -210,9 +210,9 @@ json.jsonAs[Session] == Right(session)
 session.asJson == json
 ```
 
-## Sealed traits and enums
+### Sealed traits and enums
 To derive **JsonReader** you **must** provide a discriminator.
-This can be done via **selector** annotation
+This can be done via **selector** annotation.    
 Discriminator for **JsonWriter** is optional.
 
 If you don't need readers/writers for subtypes, you can omit them,
@@ -388,7 +388,7 @@ case object Direction extends Enum[Direction]
 ### migration notes
 When migrating to **scala 3** you should use **0.28.1** version.
 
-Scala 3 derivation API in **1.0.0** has a lot of deprecations and is not fully compatible with **0.28.1**, including:
+Scala 3 derivation API in **0.29.0** has a lot of deprecations and is not fully compatible in compile time with **0.28.4**, including:
 
 1. **WriterDescription** and **ReaderDescription** are deprecated along with **describe** macro.
    You can use **WriterBuilder** and **ReaderBuilder** directly instead
@@ -407,7 +407,7 @@ Scala 3 derivation API in **1.0.0** has a lot of deprecations and is not fully c
      .extract(_.i).from(_.d).and[Double]("e")((d, e) => (d + e).toInt)
 ```
 
-3. **0.28.1 scala 3 enum support** will not compile to prevent runtime effects during migration
+3. **0.28.4 scala 3 enum support** will not compile to prevent runtime effects during migration
 
 
 4. `updatePartial` for **WriterBuilder** is deprecated. You can use ```update``` instead
@@ -417,7 +417,7 @@ Scala 3 derivation API in **1.0.0** has a lot of deprecations and is not fully c
     * WriterBuilder
     * ReaderBuilder
 
-6. **auto** derivation is removed
+6. **auto** derivation is deprecated and not compile for recursive types. Use derives on toplevel type instead
 
 
 ### Quick start
