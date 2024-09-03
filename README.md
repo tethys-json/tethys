@@ -15,7 +15,13 @@ It's advantages:
     * Configurable recursive semiauto derivation
     * Discriminator support for sum types derivation
 
-    
+Read more about library usage bellow:
+- [Scala 3](https://github.com/tethys-json/tethys?tab=readme-ov-file#scala-3)
+- [Scala 2](https://github.com/tethys-json/tethys?tab=readme-ov-file#scala-2)
+
+
+# Scala 3
+
 ## Quick start
 
 ```scala
@@ -383,15 +389,14 @@ case object Direction extends Enum[Direction]
 
 ```
 
-## scala 2
+### Migration notes
 
-### migration notes
-When migrating to **scala 3** you should use **0.28.1** version.
+When migrating to **scala 3** you should use **0.29.0** version.
 
 Scala 3 derivation API in **0.29.0** has a lot of deprecations and is not fully compatible in compile time with **0.28.4**, including:
 
 1. **WriterDescription** and **ReaderDescription** are deprecated along with **describe** macro.
-   You can use **WriterBuilder** and **ReaderBuilder** directly instead
+   Use **WriterBuilder** and **ReaderBuilder** directly instead
 
 
 2. **DependentField** model for **ReaderBuilder** has changed.
@@ -407,20 +412,21 @@ Scala 3 derivation API in **0.29.0** has a lot of deprecations and is not fully 
      .extract(_.i).from(_.d).and[Double]("e")((d, e) => (d + e).toInt)
 ```
 
-3. **0.28.4 scala 3 enum support** will not compile to prevent runtime effects during migration
+3. **0.28.4 scala 3 enum support** was changed. [See more](https://github.com/tethys-json/tethys?tab=readme-ov-file#basic-enums)
 
 
-4. `updatePartial` for **WriterBuilder** is deprecated. You can use ```update``` instead
+4. `updatePartial` for **WriterBuilder** is deprecated. Use ```update``` instead
 
-5. all derivation api is moved directly into core module in **tethys** package, including
+5. all derivation api were moved directly into core module in **tethys** package, including
     * FieldStyle
     * WriterBuilder
     * ReaderBuilder
 
-6. **auto** derivation is deprecated and not compile for recursive types. Use derives on toplevel type instead
+6. **auto** derivation is deprecated. Use derives on toplevel type instead
 
+# Scala 2
 
-### Quick start
+## Quick start
 Add dependencies to your `build.sbt`
 
 ```scala
