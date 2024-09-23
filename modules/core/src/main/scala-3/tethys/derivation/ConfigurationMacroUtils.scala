@@ -1148,6 +1148,18 @@ trait ConfigurationMacroUtils:
         Some(FieldStyle.CapitalizedSnakeCase)
       case '{ tethys.derivation.builder.FieldStyle.capitalizedSnakeCase } =>
         Some(FieldStyle.CapitalizedSnakeCase)
+      case '{ tethys.derivation.builder.FieldStyle.snakecase } =>
+        Some(FieldStyle.SnakeCase)
+      case '{ tethys.derivation.builder.FieldStyle.kebabcase } =>
+        Some(FieldStyle.KebabCase)
+      case '{ tethys.derivation.builder.FieldStyle.lowerSnakecase } =>
+        Some(FieldStyle.LowerSnakeCase)
+      case '{ tethys.derivation.builder.FieldStyle.lowerKebabcase } =>
+        Some(FieldStyle.LowerKebabCase)
+      case '{ tethys.derivation.builder.FieldStyle.upperSnakecase } =>
+        Some(FieldStyle.UpperSnakeCase)
+      case '{ tethys.derivation.builder.FieldStyle.upperKebabcase } =>
+        Some(FieldStyle.UpperKebabCase)
       case _ => None
 
   @deprecated
