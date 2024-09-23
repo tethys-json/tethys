@@ -13,7 +13,7 @@ enum FieldStyle {
   case capitalize, uncapitalize, lowercase, uppercase
   case kebabCase, lowerKebabCase, upperKebabCase, capitalizedKebabCase
   case snakeCase, lowerSnakeCase, upperSnakeCase, capitalizedSnakeCase
-  
+
   case kebabcase, lowerKebabcase, upperKebabcase
   case snakecase, lowerSnakecase, upperSnakecase
 }

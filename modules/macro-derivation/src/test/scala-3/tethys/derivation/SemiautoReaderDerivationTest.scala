@@ -437,7 +437,9 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
 
   it should "derive reader for fieldStyle from description 3" in {
     given JsonReader[CamelCaseNames] = JsonReader.derived[CamelCaseNames] {
-      ReaderDerivationConfig.empty.withFieldStyle(tethys.derivation.builder.FieldStyle.lowerSnakecase)
+      ReaderDerivationConfig.empty.withFieldStyle(
+        tethys.derivation.builder.FieldStyle.lowerSnakecase
+      )
     }
 
     read[CamelCaseNames](
