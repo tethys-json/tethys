@@ -752,17 +752,19 @@ trait ConfigurationMacroUtils:
       case '[t *: ts]    => TypeRepr.of[t] :: typeReprsOf[ts]
 
   def getAllChildren(tpe: TypeRepr): List[TypeRepr] =
-    tpe.asType match
-      case '[t] =>
-        Expr.summon[scala.deriving.Mirror.Of[t]] match
-          case Some('{
-                $m: scala.deriving.Mirror.SumOf[t] {
-                  type MirroredElemTypes = subs
-                }
-              }) =>
-            typeReprsOf[subs].flatMap(getAllChildren)
-          case _ =>
-            List(tpe)
+    def loop(tpe: TypeRepr): List[TypeRepr] =
+      tpe.asType match
+        case '[t] =>
+          Expr.summon[scala.deriving.Mirror.Of[t]] match
+            case Some('{
+                  $m: scala.deriving.Mirror.SumOf[t] {
+                    type MirroredElemTypes = subs
+                  }
+                }) =>
+              typeReprsOf[subs].flatMap(loop)
+            case _ =>
+              List(tpe)
+    loop(tpe).distinct
 
   case class SelectedField(name: String, selector: Term)
 
