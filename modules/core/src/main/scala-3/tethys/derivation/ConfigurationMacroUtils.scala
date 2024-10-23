@@ -689,7 +689,7 @@ trait ConfigurationMacroUtils:
             )
           )
 
-        val discriminators: List[Term] = getAllChildren(tpe).map {
+        val discriminators: List[Term] = getAllChildren(tpe).distinct.map {
           case tpe: TypeRef =>
             Select(stub(tpe), symbol)
           case tpe: TermRef =>

@@ -149,7 +149,7 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
   ): Expr[JsonObjectWriter[T]] =
     val tpe = TypeRepr.of[T]
     val parsedConfig = parseSumConfig[T]
-    val types = getAllChildren(tpe)
+    val types = getAllChildren(tpe).distinct
     val (missingWriters, refs) = deriveMissingWritersForSum(types)
     val mirror = '{ summonInline[Mirror.SumOf[T]] }
     val writer = Block(
@@ -492,7 +492,7 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
   def deriveJsonReaderForSum[T: Type]: Expr[JsonReader[T]] =
     val tpe = TypeRepr.of[T]
     val parsed = parseSumConfig[T]
-    val children = getAllChildren(tpe)
+    val children = getAllChildren(tpe).distinct
     parsed.discriminator match
       case Some(DiscriminatorConfig(label, tpe, discriminators)) =>
         tpe.asType match
