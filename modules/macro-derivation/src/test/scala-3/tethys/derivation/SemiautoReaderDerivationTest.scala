@@ -435,6 +435,26 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
     )
   }
 
+  it should "derive reader for fieldStyle from description 3" in {
+    given JsonReader[CamelCaseNames] = JsonReader.derived[CamelCaseNames] {
+      ReaderDerivationConfig.empty.withFieldStyle(
+        tethys.derivation.builder.FieldStyle.lowerSnakecase
+      )
+    }
+
+    read[CamelCaseNames](
+      obj(
+        "some_param" -> 1,
+        "id_param" -> 2,
+        "simple" -> 3
+      )
+    ) shouldBe CamelCaseNames(
+      someParam = 1,
+      IDParam = 2,
+      simple = 3
+    )
+  }
+
   it should "derive strict reader" in {
     implicit val reader: JsonReader[CamelCaseNames] =
       jsonReader[CamelCaseNames](

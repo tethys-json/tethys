@@ -21,6 +21,17 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
 
 
   behavior of "semiauto derivation"
+
+  it should "build message correctly" in {
+    case class Foo(bar: Int, baz: String, faz: Boolean)
+
+    implicit val reader: JsonReader[Foo] = tethys.derivation.semiauto.jsonReader
+
+    util.Try(read[Foo](obj("bar" -> 1))) should matchPattern {
+      case util.Failure(ex) if ex.getMessage == """Illegal json at '[ROOT]': Can not extract fields from json: 'baz', 'faz'""" =>
+    }
+  }
+
   it should "derive readers for simple case class hierarchy" in {
     implicit val dReader: JsonReader[D] = jsonReader[D]
     implicit val cReader: JsonReader[C] = jsonReader[C]

@@ -1,10 +1,6 @@
-lazy val scala212 = "2.12.19"
-lazy val scala213 = "2.13.14"
-/* FIXME
-Return to use a stable version when 'scala.quoted.Quotes.reflectModuleSymbol.newClass'
-and 'scala.quoted.Quotes.reflectModule.ClassDef.apply' are no longer experimental methods
- */
-lazy val scala3 = "3.3.0"
+lazy val scala212 = "2.12.20"
+lazy val scala213 = "2.13.15"
+lazy val scala3 = "3.3.4"
 
 ThisBuild / scalaVersion := scala3
 
@@ -223,7 +219,7 @@ lazy val enumeratum = project
     libraryDependencies ++= {
       CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, y)) =>
-          Seq("com.beachape" %% "enumeratum" % "1.7.3")
+          Seq("com.beachape" %% "enumeratum" % "1.7.5")
         case _ => Seq.empty
       }
     }

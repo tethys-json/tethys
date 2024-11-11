@@ -20,6 +20,15 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     res
   }
 
+  it should "build message correctly" in {
+    case class Foo(bar: Int, baz: String, faz: Boolean) derives JsonReader
+
+    util.Try(read[Foo](obj("bar" -> 1))) should matchPattern {
+      case util.Failure(ex)
+          if ex.getMessage == """Illegal json at '[ROOT]': Can not extract fields from json: 'baz', 'faz'""" =>
+    }
+  }
+
   it should "compile and correctly write and read product" in {
     case class Person(
         id: Int,

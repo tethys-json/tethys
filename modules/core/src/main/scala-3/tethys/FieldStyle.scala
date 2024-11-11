@@ -10,7 +10,7 @@ enum FieldStyle {
   case SnakeCase, LowerSnakeCase, UpperSnakeCase, CapitalizedSnakeCase
 }
 
-private[tethys] object FieldStyle:
+object FieldStyle:
   private val regexp1: Pattern = Pattern.compile("([A-Z]+)([A-Z][a-z])")
   private val regexp2: Pattern = Pattern.compile("([a-z\\d])([A-Z])")
   private val replacement: String = "$1_$2"
@@ -22,7 +22,7 @@ private[tethys] object FieldStyle:
   private val lowercase: String => String = _.toLowerCase()
   private val uppercase: String => String = _.toUpperCase()
 
-  def applyStyle(string: String, style: FieldStyle): String =
+  private[tethys] def applyStyle(string: String, style: FieldStyle): String =
     style match
       case FieldStyle.Capitalize   => capitalize(string)
       case FieldStyle.Uncapitalize => uncapitalize(string)
