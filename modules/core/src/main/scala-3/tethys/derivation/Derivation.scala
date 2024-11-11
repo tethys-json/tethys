@@ -398,7 +398,7 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
               }
               ReaderError.wrongJson(
                 "Can not extract fields from json: " + uninitializedFields
-                  .mkString(", ")
+                  .mkString("'", "', '", "'")
               )(${ fieldName })
           }
 
