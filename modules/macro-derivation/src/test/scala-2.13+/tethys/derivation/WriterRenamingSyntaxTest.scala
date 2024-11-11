@@ -27,7 +27,8 @@ class WriterRenamingSyntaxTest extends AnyFlatSpec with Matchers {
     implicit val writer: JsonWriter[D] = jsonWriter[D] {
       describe {
         WriterBuilder[D]
-          .update(_.a).withRename("b")(_.toString)
+          .update(_.a)
+          .withRename("b")(_.toString)
       }
     }
 
@@ -40,7 +41,8 @@ class WriterRenamingSyntaxTest extends AnyFlatSpec with Matchers {
     def freeVariableRenaming(name: String): JsonWriter[D] = jsonWriter[D] {
       describe {
         WriterBuilder[D]
-          .update(_.a).withRename(name)(_.toString)
+          .update(_.a)
+          .withRename(name)(_.toString)
       }
     }
 
@@ -57,7 +59,9 @@ class WriterRenamingSyntaxTest extends AnyFlatSpec with Matchers {
     implicit val writer: JsonWriter[D] = jsonWriter[D] {
       describe {
         WriterBuilder[D]
-          .update(_.a).withRename("b").fromRoot(d => d.a * 2)
+          .update(_.a)
+          .withRename("b")
+          .fromRoot(d => d.a * 2)
       }
     }
 
