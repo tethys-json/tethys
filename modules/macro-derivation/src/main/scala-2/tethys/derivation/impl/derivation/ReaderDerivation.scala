@@ -459,7 +459,7 @@ trait ReaderDerivation
          if($predicate) {
            val $uninitializedFields = new scala.collection.mutable.ArrayBuffer[String](${xs.size})
            ..$fields
-           $readerErrorCompanion.wrongJson("Can not extract fields from json" + $uninitializedFields.mkString("'", "', '", "'"))
+           $readerErrorCompanion.wrongJson("Can not extract fields from json: " + $uninitializedFields.mkString("'", "', '", "'"))
          }
        """
     }

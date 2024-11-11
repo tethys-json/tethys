@@ -752,17 +752,19 @@ trait ConfigurationMacroUtils:
       case '[t *: ts]    => TypeRepr.of[t] :: typeReprsOf[ts]
 
   def getAllChildren(tpe: TypeRepr): List[TypeRepr] =
-    tpe.asType match
-      case '[t] =>
-        Expr.summon[scala.deriving.Mirror.Of[t]] match
-          case Some('{
-                $m: scala.deriving.Mirror.SumOf[t] {
-                  type MirroredElemTypes = subs
-                }
-              }) =>
-            typeReprsOf[subs].flatMap(getAllChildren)
-          case _ =>
-            List(tpe)
+    def loop(tpe: TypeRepr): List[TypeRepr] =
+      tpe.asType match
+        case '[t] =>
+          Expr.summon[scala.deriving.Mirror.Of[t]] match
+            case Some('{
+                  $m: scala.deriving.Mirror.SumOf[t] {
+                    type MirroredElemTypes = subs
+                  }
+                }) =>
+              typeReprsOf[subs].flatMap(loop)
+            case _ =>
+              List(tpe)
+    loop(tpe).distinct
 
   case class SelectedField(name: String, selector: Term)
 
@@ -1148,6 +1150,18 @@ trait ConfigurationMacroUtils:
         Some(FieldStyle.CapitalizedSnakeCase)
       case '{ tethys.derivation.builder.FieldStyle.capitalizedSnakeCase } =>
         Some(FieldStyle.CapitalizedSnakeCase)
+      case '{ tethys.derivation.builder.FieldStyle.snakecase } =>
+        Some(FieldStyle.SnakeCase)
+      case '{ tethys.derivation.builder.FieldStyle.kebabcase } =>
+        Some(FieldStyle.KebabCase)
+      case '{ tethys.derivation.builder.FieldStyle.lowerSnakecase } =>
+        Some(FieldStyle.LowerSnakeCase)
+      case '{ tethys.derivation.builder.FieldStyle.lowerKebabcase } =>
+        Some(FieldStyle.LowerKebabCase)
+      case '{ tethys.derivation.builder.FieldStyle.upperSnakecase } =>
+        Some(FieldStyle.UpperSnakeCase)
+      case '{ tethys.derivation.builder.FieldStyle.upperKebabcase } =>
+        Some(FieldStyle.UpperKebabCase)
       case _ => None
 
   @deprecated
