@@ -815,7 +815,7 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
 
   it should "apply configuration for multiple case classes" in {
 
-    inline given JsonConfiguration[Any] = JsonConfiguration[Any]
+    inline given JsonConfiguration = JsonConfiguration.default
       .fieldStyle(FieldStyle.LowerSnakeCase)
 
     case class First(firstField: String) derives JsonWriter, JsonReader
@@ -834,7 +834,7 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "apply configuration when derive product recursively" in {
-    inline given JsonConfiguration[Any] = JsonConfiguration[Any]
+    inline given JsonConfiguration = JsonConfiguration.default
       .fieldStyle(FieldStyle.LowerSnakeCase)
 
     case class Inner(innerField: String)
@@ -848,7 +848,7 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "apply configuration when derive sum recursively" in {
-    inline given JsonConfiguration[Any] = JsonConfiguration[Any]
+    inline given JsonConfiguration = JsonConfiguration.default
       .fieldStyle(FieldStyle.LowerSnakeCase)
     
     enum Choice(@selector val select: Int) derives JsonReader, JsonWriter:

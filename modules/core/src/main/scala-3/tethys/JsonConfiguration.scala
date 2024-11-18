@@ -1,12 +1,12 @@
 package tethys
 
-trait JsonConfiguration[-A]:
-  def fieldStyle(fieldStyle: FieldStyle): JsonConfiguration[A]
+trait JsonConfiguration:
+  def fieldStyle(fieldStyle: FieldStyle): JsonConfiguration
 
-  def strict: JsonConfiguration[A]
+  def strict: JsonConfiguration
 
 
 object JsonConfiguration:
   @scala.annotation.compileTimeOnly("JsonConfiguration should be declared as inline given")
-  def apply[A]: JsonConfiguration[A] = throw IllegalAccessException()
+  def default: JsonConfiguration = throw IllegalAccessException()
 
