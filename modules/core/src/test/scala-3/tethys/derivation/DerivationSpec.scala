@@ -813,4 +813,62 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     ) shouldBe SubChild(3)
   }
 
+  it should "apply configuration for multiple case classes" in {
+
+    inline given JsonConfiguration[Any] = JsonConfiguration[Any]
+      .fieldStyle(FieldStyle.LowerSnakeCase)
+
+    case class First(firstField: String) derives JsonWriter, JsonReader
+    case class Second(secondField: String) derives JsonWriter, JsonReader
+
+    val first = First("abc")
+    val second = Second("bcd")
+    val firstJson = obj("first_field" -> "abc")
+    val secondJson = obj("second_field" -> "bcd")
+
+    first.asTokenList shouldBe firstJson
+    second.asTokenList shouldBe secondJson
+
+    read[First](firstJson) shouldBe first
+    read[Second](secondJson) shouldBe second
+  }
+
+  it should "apply configuration when derive product recursively" in {
+    inline given JsonConfiguration[Any] = JsonConfiguration[Any]
+      .fieldStyle(FieldStyle.LowerSnakeCase)
+
+    case class Inner(innerField: String)
+    case class Outer(outerField: Inner) derives JsonWriter, JsonReader
+
+    val model = Outer(Inner("foo"))
+    val json = obj("outer_field" -> obj("inner_field" -> "foo"))
+    
+    model.asTokenList shouldBe json
+    read[Outer](json) shouldBe model
+  }
+
+  it should "apply configuration when derive sum recursively" in {
+    inline given JsonConfiguration[Any] = JsonConfiguration[Any]
+      .fieldStyle(FieldStyle.LowerSnakeCase)
+    
+    enum Choice(@selector val select: Int) derives JsonReader, JsonWriter:
+      case First(firstField: Int) extends Choice(0)
+      case Second(secondField: String) extends Choice(1)
+    
+
+    val first = Choice.First(1)
+    val second = Choice.Second("foo")
+    val firstJson = obj("select" -> 0, "first_field" -> 1)
+    val secondJson = obj("select" -> 1, "second_field" -> "foo")
+
+    first.asTokenList shouldBe firstJson
+    second.asTokenList shouldBe secondJson
+    
+    read[Choice](firstJson) shouldBe first
+    read[Choice](secondJson) shouldBe second
+  }
+  
+  
+  
+
 }
