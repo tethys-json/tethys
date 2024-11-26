@@ -36,6 +36,11 @@ trait ConfigurationMacroUtils:
       case failure: ImplicitSearchFailure =>
         None
 
+  private val FieldStyleAlreadyConfigured = "FieldStyle is already configured"
+
+  private def showUnknownConfigTree(tree: String): String =
+    s"Unknown tree. Config must be an inlined given. \nTree: $tree"
+
   private def mergeWriterMacroConfigs(
       writerBuilderConfig: WriterBuilderMacroConfig,
       jsonConfig: WriterBuilderMacroConfig
@@ -113,7 +118,7 @@ trait ConfigurationMacroUtils:
             case None =>
               loop(rest, acc.copy(fieldStyle = Some(fieldStyle.valueOrAbort)))
             case Some(_) =>
-              report.errorAndAbort("FieldStyle has been setup already")
+              report.errorAndAbort(FieldStyleAlreadyConfigured)
 
         case other =>
           other.asTerm match
@@ -121,8 +126,9 @@ trait ConfigurationMacroUtils:
               loop(term.asExprOf[JsonConfiguration])
             case _ =>
               report.errorAndAbort(
-                s"Unknown tree. Config must be an inlined given. \nTree: ${other.asTerm
-                    .show(using Printer.TreeStructure)}"
+                showUnknownConfigTree(
+                  other.asTerm.show(using Printer.TreeStructure)
+                )
               )
 
     loop(traverseTree(config.asTerm).asExprOf[JsonConfiguration])
@@ -423,8 +429,9 @@ trait ConfigurationMacroUtils:
               loop(term.asExprOf[WriterBuilder[T]])
             case _ =>
               report.errorAndAbort(
-                s"Unknown tree. Config must be an inlined given.\nTree: ${other.asTerm
-                    .show(using Printer.TreeStructure)}"
+                showUnknownConfigTree(
+                  other.asTerm.show(using Printer.TreeStructure)
+                )
               )
 
     loop(traverseTree(config.asTerm).asExprOf[WriterBuilder[T]])._1
@@ -512,7 +519,7 @@ trait ConfigurationMacroUtils:
             case None =>
               loop(rest, acc.copy(fieldStyle = Some(fieldStyle.valueOrAbort)))
             case Some(_) =>
-              report.errorAndAbort("FieldStyle has been setup already")
+              report.errorAndAbort(FieldStyleAlreadyConfigured)
 
         case other =>
           other.asTerm match
@@ -520,8 +527,9 @@ trait ConfigurationMacroUtils:
               loop(term.asExprOf[JsonConfiguration])
             case _ =>
               report.errorAndAbort(
-                s"Unknown tree. Config must be an inlined given. \nTree: ${other.asTerm
-                    .show(using Printer.TreeStructure)}"
+                showUnknownConfigTree(
+                  other.asTerm.show(using Printer.TreeStructure)
+                )
               )
     loop(traverseTree(jsonConfig.asTerm).asExprOf[JsonConfiguration])
 
@@ -769,8 +777,9 @@ trait ConfigurationMacroUtils:
                 )
               case other =>
                 report.errorAndAbort(
-                  s"Unknown tree. Config must be an inlined given.\nTree: ${other
-                      .show(using Printer.TreeStructure)}"
+                  showUnknownConfigTree(
+                    other.show(using Printer.TreeStructure)
+                  )
                 )
 
           loopInner(other.asTerm)
