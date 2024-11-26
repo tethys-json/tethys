@@ -5,8 +5,8 @@ trait JsonConfiguration:
 
   def strict: JsonConfiguration
 
-
 object JsonConfiguration:
-  @scala.annotation.compileTimeOnly("JsonConfiguration should be declared as inline given")
+  @scala.annotation.compileTimeOnly(
+    "JsonConfiguration should be declared as inline given"
+  )
   def default: JsonConfiguration = throw IllegalAccessException()
-

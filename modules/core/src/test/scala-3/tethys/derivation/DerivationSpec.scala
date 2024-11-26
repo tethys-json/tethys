@@ -842,7 +842,7 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
 
     val model = Outer(Inner("foo"))
     val json = obj("outer_field" -> obj("inner_field" -> "foo"))
-    
+
     model.asTokenList shouldBe json
     read[Outer](json) shouldBe model
   }
@@ -850,11 +850,10 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
   it should "apply configuration when derive sum recursively" in {
     inline given JsonConfiguration = JsonConfiguration.default
       .fieldStyle(FieldStyle.LowerSnakeCase)
-    
+
     enum Choice(@selector val select: Int) derives JsonReader, JsonWriter:
       case First(firstField: Int) extends Choice(0)
       case Second(secondField: String) extends Choice(1)
-    
 
     val first = Choice.First(1)
     val second = Choice.Second("foo")
@@ -863,12 +862,49 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
 
     first.asTokenList shouldBe firstJson
     second.asTokenList shouldBe secondJson
-    
+
     read[Choice](firstJson) shouldBe first
     read[Choice](secondJson) shouldBe second
   }
-  
-  
-  
+
+  it should "select Writer/Reader configuration over JsonConfiguration as more specific" in {
+
+    inline given WriterBuilder[Outer] =
+      WriterBuilder[Outer].fieldStyle(FieldStyle.UpperCase)
+
+    inline given ReaderBuilder[Outer] =
+      ReaderBuilder[Outer].fieldStyle(FieldStyle.UpperCase)
+
+    inline given JsonConfiguration =
+      JsonConfiguration.default.fieldStyle(FieldStyle.LowerSnakeCase)
+
+    case class Inner(innerField: String)
+    case class Outer(outerField: Inner) derives JsonWriter, JsonReader
+
+    val model = Outer(Inner("foo"))
+    val json = obj("OUTERFIELD" -> obj("inner_field" -> "foo"))
+
+    model.asTokenList shouldBe json
+    read[Outer](json) shouldBe model
+
+  }
+
+  it should "respect strict JsonConfiguration setting" in {
+
+    inline given JsonReader[SimpleType] = JsonReader.derived[SimpleType]
+
+    inline given JsonConfiguration =
+      JsonConfiguration.default.strict
+
+    val json =
+      obj("i" -> 5, "s" -> "foo", "d" -> 5.5, "anotherField" -> "bar")
+
+    (the[ReaderError] thrownBy {
+      read[SimpleType](
+        json
+      )
+    }).getMessage shouldBe "Illegal json at '[ROOT]': unexpected field 'anotherField', expected one of 'i', 's', 'd'"
+
+  }
 
 }
