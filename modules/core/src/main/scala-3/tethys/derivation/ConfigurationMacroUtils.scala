@@ -48,8 +48,9 @@ trait ConfigurationMacroUtils:
       readerBuilderConfig: ReaderBuilderMacroConfig,
       jsonConfig: ReaderBuilderMacroConfig
   ): ReaderBuilderMacroConfig =
-    readerBuilderConfig.copy(fieldStyle =
-      readerBuilderConfig.fieldStyle.orElse(jsonConfig.fieldStyle)
+    readerBuilderConfig.copy(
+      fieldStyle = readerBuilderConfig.fieldStyle.orElse(jsonConfig.fieldStyle),
+      isStrict = readerBuilderConfig.isStrict.orElse(jsonConfig.isStrict)
     )
 
   def prepareWriterProductFields[T: Type](
@@ -483,7 +484,7 @@ trait ConfigurationMacroUtils:
       .distinctBy(_.name)
     val allFields = fields ::: additionalFields
     checkLoops(allFields)
-    (sortDependencies(allFields), mergedConfig.isStrict)
+    (sortDependencies(allFields), mergedConfig.isStrict.getOrElse(false))
 
   private def parseReaderMacroJsonConfig(
       jsonConfig: Expr[JsonConfiguration]
@@ -502,7 +503,7 @@ trait ConfigurationMacroUtils:
         case '{
               ($rest: JsonConfiguration).strict
             } =>
-          acc.copy(isStrict = true)
+          acc.copy(isStrict = Some(true))
 
         case '{
               ($rest: JsonConfiguration).fieldStyle($fieldStyle: FieldStyle)
@@ -686,7 +687,7 @@ trait ConfigurationMacroUtils:
         case '{ ($rest: ReaderBuilder[T]).strict } =>
           loop(
             config = rest,
-            acc = acc.copy(isStrict = true)
+            acc = acc.copy(isStrict = Some(true))
           )
         case other =>
           @tailrec
@@ -1158,7 +1159,7 @@ trait ConfigurationMacroUtils:
   case class ReaderBuilderMacroConfig(
       extracted: Map[String, ReaderField] = Map.empty,
       fieldStyle: Option[FieldStyle] = None,
-      isStrict: IsStrict = false
+      isStrict: Option[IsStrict] = None
   ):
     def withExtracted(field: ReaderField): ReaderBuilderMacroConfig =
       copy(extracted = extracted.updated(field.name, field))
