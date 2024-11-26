@@ -244,10 +244,12 @@ account.asJson == json
 
 ## Configuration
 
-1. You can configure only case class derivation
-2. To configure **JsonReader** use **ReaderBuilder**
-3. To configure **JsonWriter** use **WriterBuilder**
-4. Configuration can be provided:
+You can configure only case class derivation
+
+### Configuration via **ReaderBuilder** and **WriterBuilder**
+1. To configure **JsonReader** use **ReaderBuilder**
+2. To configure **JsonWriter** use **WriterBuilder**
+3. Configuration can be provided:
    * **directly to derived method**
    ```scala 3
       given JsonWriter[UserAccount.Customer] = 
@@ -262,7 +264,7 @@ account.asJson == json
           WriterBuilder[UserAccount.Customer]
    ```
    P.S. There are empty **WriterBuilder** in the examples to simplify demonstration of two approaches. You shouldn't use empty one
-5. **WriterBuilder** features
+4. **WriterBuilder** features
 ```scala 3
 case class Foo(a: Int, b: String, c: Any, d: Boolean, e: Double)
 
@@ -288,7 +290,7 @@ inline given WriterBuilder[Foo] =
         case other => other.toString
      }
 ```
-6. **ReaderBuilder** features
+5. **ReaderBuilder** features
 ```scala 3
 
 inline given ReaderBuilder[Foo] =
@@ -305,8 +307,34 @@ inline given ReaderBuilder[Foo] =
        case 2 => JsonReader[Int]
        case _ => JsonReader[Option[Boolean]]
     }
+
+    // ensure that json contains only fields that JsonReader knows about, otherwise throw ReaderError
+    .strict
 ```
 
+### Configuration via **JsonConfiguration**
+1. To configure both **JsonWriter** and **JsonReader** you can use **JsonConfiguration**
+2. **JsonConfiguration** can be provided as an inline given to derives
+   ```scala 3
+      object Customer:
+        inline given JsonConfiguration =
+          JsonConfiguration.default
+   ```
+3. **JsonConfiguration** features
+```scala 3
+
+inline given JsonConfiguration =
+  JsonConfiguration
+    // default config, entrypoint for configuration
+    .default
+
+    // choose field style
+    .fieldStyle(FieldStyle.UpperSnakeCase)
+
+    // ensure that json contains only fields that JsonReader knows about, otherwise throw ReaderError
+    // applicable only for JsonReader
+    .strict
+```
 
 ## integrations
 In some cases, you may need to work with raw AST,
