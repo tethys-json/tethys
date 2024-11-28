@@ -244,12 +244,12 @@ account.asJson == json
 
 ## Configuration
 
-You can configure only case class derivation
 
 ### Configuration via **ReaderBuilder** and **WriterBuilder**
-1. To configure **JsonReader** use **ReaderBuilder**
-2. To configure **JsonWriter** use **WriterBuilder**
-3. Configuration can be provided:
+1. You can configure only case class derivation
+2. To configure **JsonReader** use **ReaderBuilder**
+3. To configure **JsonWriter** use **WriterBuilder**
+4. Configuration can be provided:
    * **directly to derived method**
    ```scala 3
       given JsonWriter[UserAccount.Customer] = 
@@ -264,7 +264,7 @@ You can configure only case class derivation
           WriterBuilder[UserAccount.Customer]
    ```
    P.S. There are empty **WriterBuilder** in the examples to simplify demonstration of two approaches. You shouldn't use empty one
-4. **WriterBuilder** features
+5. **WriterBuilder** features
 ```scala 3
 case class Foo(a: Int, b: String, c: Any, d: Boolean, e: Double)
 
@@ -290,7 +290,7 @@ inline given WriterBuilder[Foo] =
         case other => other.toString
      }
 ```
-5. **ReaderBuilder** features
+6. **ReaderBuilder** features
 ```scala 3
 
 inline given ReaderBuilder[Foo] =
@@ -315,12 +315,80 @@ inline given ReaderBuilder[Foo] =
 ### Configuration via **JsonConfiguration**
 1. To configure both **JsonWriter** and **JsonReader** you can use **JsonConfiguration**
 2. **JsonConfiguration** can be provided as an inline given to derives
-   ```scala 3
-      object Customer:
-        inline given JsonConfiguration =
-          JsonConfiguration.default
-   ```
-3. **JsonConfiguration** features
+```scala 3
+inline given JsonConfiguration = JsonConfiguration.default
+```
+3. **JsonConfiguration** will be applied recursively to all nested readers/writers
+  * Product types
+  ```scala 3
+  import tethys.*
+  import tethys.jackson.*
+
+  inline given JsonConfiguration =
+    JsonConfiguration.default.fieldStyle(FieldStyle.LowerSnakeCase)
+
+  case class Inner(innerField: String)
+  case class Outer(outerField: Inner) derives JsonWriter, JsonReader
+
+  val outer = Outer(Inner("fooBar"))
+  val json = """{"outer_field": {"inner_field": "fooBar"}}"""
+
+  json.jsonAs[Outer] == Right(outer)
+  outer.asJson == json
+
+  ```
+  * Sum types
+  ```scala 3
+  import tethys.*
+  import tethys.jackson.*
+
+  inline given JsonConfiguration =
+    JsonConfiguration.default.fieldStyle(FieldStyle.LowerSnakeCase)
+
+  enum Choice(@selector val select: Int) derives JsonReader, JsonWriter:
+    case First(firstField: Int) extends Choice(0)
+    case Second(secondField: String) extends Choice(1)
+
+  val first = Choice.First(1)
+  val second = Choice.Second("foo")
+  val firstJson = """{"select": 0, "first_field": 1}"""
+  val secondJson = """{"select": 1, "second_field": "foo"}"""
+
+  first.asJson == firstJson
+  second.asJson == secondJson
+
+  firstJson.jsonAs[Choice] == first
+  secondJson.jsonAs[Choice] == second
+  ```
+4. **WriterBuilder** and **ReaderBuilder** settings have higher priority than **JsonConfiguration** settings
+```scala 3
+import tethys.*
+import tethys.jackson.*
+
+case class Customer(
+    id: Long,
+    phoneNumber: String
+) derives JsonWriter, JsonReader
+
+inline given JsonConfiguration =
+  JsonConfiguration.default.fieldStyle(FieldStyle.LowerSnakeCase)
+
+inline given WriterBuilder[Customer] =
+  // has higher priority than JsonConfiguration's fieldStyle
+  WriterBuilder[Customer].fieldStyle(FieldStyle.UpperCase)
+
+inline given ReaderBuilder[Customer] =
+  // has higher priority than JsonConfiguration's fieldStyle
+  ReaderBuilder[Customer].fieldStyle(FieldStyle.UpperCase)
+
+val customer = Customer(id = 5L, phoneNumber = "+123")
+val json = """{"ID": 5, "PHONENUMBER": "+123"}"""
+
+json.jsonAs[Customer] == Right(customer)
+customer.asJson == json
+
+```
+5. **JsonConfiguration** features
 ```scala 3
 
 inline given JsonConfiguration =
