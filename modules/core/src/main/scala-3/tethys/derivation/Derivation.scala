@@ -12,7 +12,8 @@ import tethys.{
   JsonReader,
   JsonWriter,
   ReaderBuilder,
-  WriterBuilder
+  WriterBuilder,
+  JsonConfiguration
 }
 import scala.Tuple2
 import scala.annotation.tailrec
@@ -24,17 +25,25 @@ import scala.deriving.Mirror
 private[tethys] object Derivation:
 
   inline def deriveJsonWriterForProduct[T](
-      inline config: WriterBuilder[T]
+      inline config: WriterBuilder[T],
+      inline jsonConfig: JsonConfiguration
   ): JsonObjectWriter[T] =
-    ${ DerivationMacro.deriveJsonWriterForProduct[T]('{ config }) }
+    ${
+      DerivationMacro
+        .deriveJsonWriterForProduct[T]('{ config }, '{ jsonConfig })
+    }
 
   inline def deriveJsonWriterForSum[T]: JsonObjectWriter[T] =
     ${ DerivationMacro.deriveJsonWriterForSum[T] }
 
   inline def deriveJsonReaderForProduct[T](
-      inline config: ReaderBuilder[T]
+      inline config: ReaderBuilder[T],
+      inline jsonConfig: JsonConfiguration
   ): JsonReader[T] =
-    ${ DerivationMacro.deriveJsonReaderForProduct[T]('{ config }) }
+    ${
+      DerivationMacro
+        .deriveJsonReaderForProduct[T]('{ config }, '{ jsonConfig })
+    }
 
   @deprecated
   inline def deriveJsonReaderForProductLegacy[T](
@@ -64,20 +73,28 @@ private[tethys] object Derivation:
     ${ DerivationMacro.deriveJsonReaderForSum[T] }
 
 object DerivationMacro:
-  def deriveJsonWriterForProduct[T: Type](config: Expr[WriterBuilder[T]])(using
+  def deriveJsonWriterForProduct[T: Type](
+      config: Expr[WriterBuilder[T]],
+      jsonConfig: Expr[JsonConfiguration]
+  )(using
       quotes: Quotes
   ): Expr[JsonObjectWriter[T]] =
-    new DerivationMacro(quotes).deriveJsonWriterForProduct[T](config)
+    new DerivationMacro(quotes)
+      .deriveJsonWriterForProduct[T](config, jsonConfig)
 
   def deriveJsonWriterForSum[T: Type](using
       quotes: Quotes
   ): Expr[JsonObjectWriter[T]] =
     new DerivationMacro(quotes).deriveJsonWriterForSum[T](None)
 
-  def deriveJsonReaderForProduct[T: Type](config: Expr[ReaderBuilder[T]])(using
+  def deriveJsonReaderForProduct[T: Type](
+      config: Expr[ReaderBuilder[T]],
+      jsonConfig: Expr[JsonConfiguration]
+  )(using
       quotes: Quotes
   ): Expr[JsonReader[T]] =
-    new DerivationMacro(quotes).deriveJsonReaderForProduct[T](config)
+    new DerivationMacro(quotes)
+      .deriveJsonReaderForProduct[T](config, jsonConfig)
 
   def deriveJsonReaderForSum[T: Type](using
       quotes: Quotes
@@ -111,9 +128,10 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
   import quotes.reflect.*
 
   def deriveJsonWriterForProduct[T: Type](
-      config: Expr[WriterBuilder[T]]
+      config: Expr[WriterBuilder[T]],
+      jsonConfig: Expr[JsonConfiguration]
   ): Expr[JsonObjectWriter[T]] =
-    val fields = prepareWriterProductFields(config)
+    val fields = prepareWriterProductFields(config, jsonConfig)
     val (missingWriters, refs) =
       deriveMissingWriters(TypeRepr.of[T], fields.map(_.tpe))
     val writer = Block(
@@ -352,10 +370,11 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
     ).asExprOf[Unit]
 
   def deriveJsonReaderForProduct[T: Type](
-      config: Expr[ReaderBuilder[T]]
+      config: Expr[ReaderBuilder[T]],
+      jsonConfig: Expr[JsonConfiguration]
   ): Expr[JsonReader[T]] =
     val tpe = TypeRepr.of[T]
-    val (fields, isStrict) = prepareReaderProductFields[T](config)
+    val (fields, isStrict) = prepareReaderProductFields[T](config, jsonConfig)
     val existingLabels = fields.map(_.name).toSet
     val fieldsWithoutReader = fields.collect {
       case field: ReaderField.Extracted if field.reader => field.name
@@ -626,7 +645,8 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
       mirror: Expr[Mirror.ProductOf[T]]
   ): Expr[JsonReader[T]] =
     deriveJsonReaderForProduct(
-      parseLegacyReaderDerivationConfig(config, mirror)
+      parseLegacyReaderDerivationConfig(config, mirror),
+      '{ JsonConfiguration.default }
     )
 
   @deprecated
@@ -635,7 +655,8 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
       mirror: Expr[Mirror.ProductOf[T]]
   ): Expr[JsonObjectWriter[T]] =
     deriveJsonWriterForProduct(
-      parseLegacyWriterDerivationConfig(config, mirror)
+      parseLegacyWriterDerivationConfig(config, mirror),
+      '{ JsonConfiguration.default }
     )
 
   @deprecated

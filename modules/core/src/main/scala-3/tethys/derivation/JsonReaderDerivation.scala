@@ -5,6 +5,7 @@ import tethys.readers.tokens.{QueueIterator, TokenIterator}
 import tethys.readers.{FieldName, ReaderError}
 import tethys.JsonReader
 import tethys.ReaderBuilder
+import tethys.JsonConfiguration
 import tethys.derivation.builder.ReaderDerivationConfig
 
 import scala.collection.mutable
@@ -33,7 +34,7 @@ private[tethys] trait JsonReaderDerivation:
   inline def derived[A](inline config: ReaderBuilder[A])(using
       mirror: Mirror.ProductOf[A]
   ): JsonReader[A] =
-    Derivation.deriveJsonReaderForProduct[A](config)
+    Derivation.deriveJsonReaderForProduct[A](config, JsonConfiguration.default)
 
   @deprecated("Use ReaderBuilder instead")
   inline def derived[A](inline config: ReaderDerivationConfig)(using
@@ -48,6 +49,10 @@ private[tethys] trait JsonReaderDerivation:
           summonFrom[ReaderBuilder[A]] {
             case config: ReaderBuilder[A] => config
             case _                        => ReaderBuilder[A]
+          },
+          summonFrom[JsonConfiguration] {
+            case config: JsonConfiguration => config
+            case _                         => JsonConfiguration.default
           }
         )
       case given Mirror.SumOf[A] =>
