@@ -311,6 +311,9 @@ inline given ReaderBuilder[Foo] =
        case 2 => JsonReader[Int]
        case _ => JsonReader[Option[Boolean]]
     }
+
+    // rename field
+    .extract(_.f).withRename("newFieldName")
 ```
 
 

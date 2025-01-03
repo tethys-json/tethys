@@ -822,4 +822,21 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     ) shouldBe SubChild(3)
   }
 
+  it should "derive reader for extract with renamed field" in {
+
+    inline given JsonReader[SimpleType] = JsonReader.derived[SimpleType] {
+      ReaderBuilder[SimpleType]
+        .extract(_.s)
+        .withRename("renamed")
+    }
+
+    read[SimpleType](
+      obj(
+        "renamed" -> "str",
+        "d" -> 1.0,
+        "i" -> 0
+      )
+    ) shouldBe SimpleType(0, "str", 1.0)
+
+  }
 }

@@ -36,6 +36,11 @@ trait ConfigurationMacroUtils:
       case failure: ImplicitSearchFailure =>
         None
 
+  private def exitFieldAlreadyUpdated(name: String) =
+    report.errorAndAbort(
+      s"Ambigious updates found. Update for field '$name' already configured"
+    )
+
   def prepareWriterProductFields[T: Type](
       config: Expr[WriterBuilder[T]]
   ): List[WriterField] =
@@ -71,11 +76,6 @@ trait ConfigurationMacroUtils:
       config: Expr[WriterBuilder[T]]
   ): WriterBuilderMacroConfig =
     val fields = TypeRepr.of[T].typeSymbol.caseFields.map(_.name)
-
-    def exitFieldAlreadyUpdated(name: String) =
-      report.errorAndAbort(
-        s"Ambigious updates found. Update for field '$name' already configured"
-      )
 
     @tailrec
     def loop(
@@ -376,6 +376,7 @@ trait ConfigurationMacroUtils:
     val macroConfig = parseReaderBuilderMacroConfig[T](config)
     val tpe = TypeRepr.of[T]
     val defaults = collectDefaults[T]
+    val updates = macroConfig.updates.map(it => it.name -> it).toMap
     val fields = tpe.typeSymbol.caseFields.zipWithIndex
       .map { case (symbol, idx) =>
         val default = defaults.get(idx).map(_.asExprOf[Any])
@@ -392,15 +393,15 @@ trait ConfigurationMacroUtils:
                   )
                   .map(_.asExprOf[Any])
 
-            field.update(idx, updatedDefault, macroConfig.fieldStyle)
+            field.update(idx, updatedDefault, macroConfig.fieldStyle, updates)
 
           case Some(field) =>
-            field.update(idx, default, macroConfig.fieldStyle)
+            field.update(idx, default, macroConfig.fieldStyle, updates)
 
           case None =>
             ReaderField
               .Basic(symbol.name, tpe.memberType(symbol), None)
-              .update(idx, default, macroConfig.fieldStyle)
+              .update(idx, default, macroConfig.fieldStyle, updates)
       }
     val existingFieldNames = fields.map(_.name).toSet
     val additionalFields = fields
@@ -537,6 +538,34 @@ trait ConfigurationMacroUtils:
               )
             } =>
           acc
+        case '{
+              ($rest: ReaderBuilder[T])
+                .extract[t](${ SelectedField(field) })
+                .withRename($newName)
+            } =>
+          if acc.updates.map(_.name).contains(field.name) then
+            exitFieldAlreadyUpdated(field.name)
+
+          if acc.extracted.contains(field.name) then
+            exitExtractionAlreadyDefined(field.name)
+
+          loop(
+            config = rest,
+            acc = acc
+              .withUpdate(
+                ReaderFieldUpdate(
+                  name = field.name,
+                  newName = Some(newName.valueOrAbort)
+                )
+              )
+              .withExtracted(
+                ReaderField.Basic(
+                  name = field.name,
+                  tpe = TypeRepr.of[t],
+                  extractor = None
+                )
+              )
+          )
         case '{
               ($rest: ReaderBuilder[T])
                 .extract[t](${ SelectedField(field) })
@@ -855,6 +884,11 @@ trait ConfigurationMacroUtils:
       to: TypeRepr
   )
 
+  case class ReaderFieldUpdate(
+      name: String,
+      newName: Option[String]
+  )
+
   sealed trait ReaderField {
     def name: String
     def tpe: TypeRepr
@@ -980,22 +1014,28 @@ trait ConfigurationMacroUtils:
     def update(
         index: Int,
         default: Option[Expr[Any]],
-        fieldStyle: Option[FieldStyle]
-    ): ReaderField = this match
-      case field: ReaderField.Basic =>
-        field.copy(
-          idx = index,
-          default = default,
-          name =
-            fieldStyle.fold(field.name)(FieldStyle.applyStyle(field.name, _))
-        )
-      case field: ReaderField.Extracted =>
-        field.copy(
-          idx = index,
-          default = default,
-          name =
-            fieldStyle.fold(field.name)(FieldStyle.applyStyle(field.name, _))
-        )
+        fieldStyle: Option[FieldStyle],
+        fieldUpdates: Map[String, ReaderFieldUpdate]
+    ): ReaderField = {
+      val maybeUpdate = fieldUpdates.get(this.name)
+      val maybeNewName = maybeUpdate.flatMap(_.newName)
+      val fieldName = maybeNewName.getOrElse(
+        fieldStyle.fold(name)(FieldStyle.applyStyle(name, _))
+      )
+      this match
+        case field: ReaderField.Basic =>
+          field.copy(
+            idx = index,
+            default = default,
+            name = fieldName
+          )
+        case field: ReaderField.Extracted =>
+          field.copy(
+            idx = index,
+            default = default,
+            name = fieldName
+          )
+    }
   }
 
   object ReaderField:
@@ -1056,10 +1096,14 @@ trait ConfigurationMacroUtils:
   case class ReaderBuilderMacroConfig(
       extracted: Map[String, ReaderField] = Map.empty,
       fieldStyle: Option[FieldStyle] = None,
-      isStrict: IsStrict = false
+      isStrict: IsStrict = false,
+      updates: List[ReaderFieldUpdate] = Nil
   ):
     def withExtracted(field: ReaderField): ReaderBuilderMacroConfig =
       copy(extracted = extracted.updated(field.name, field))
+
+    def withUpdate(update: ReaderFieldUpdate): ReaderBuilderMacroConfig =
+      copy(updates = update :: updates)
 
   type IsStrict = Boolean
 

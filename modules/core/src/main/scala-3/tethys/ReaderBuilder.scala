@@ -5,7 +5,7 @@ import tethys.{FieldStyle, JsonReader}
 sealed trait ReaderBuilder[A]:
   def extract[Field](
       field: A => Field
-  ): ReaderBuilder.DependentFieldAs[A, Field]
+  ): ReaderBuilder.DependentFieldExtract[A, Field]
 
   def extractReader[Field](
       field: A => Field
@@ -31,8 +31,10 @@ object ReaderBuilder:
   sealed trait AsSyntax[A, B, C]:
     def apply(fun: B => C): ReaderBuilder[A]
 
-  sealed trait DependentFieldAs[A, B] extends DependentField0[A, B]:
+  sealed trait DependentFieldExtract[A, B] extends DependentField0[A, B]:
     def as[C]: ReaderBuilder.AsSyntax[A, C, B]
+
+    def withRename(newName: String): ReaderBuilder[A]
 
   sealed trait DependentField0[A, Field]:
     def apply(fun: () => Field): ReaderBuilder[A]
