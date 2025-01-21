@@ -119,7 +119,7 @@ lazy val cats = project
   .settings(
     name := "tethys-cats",
     libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-core" % "2.12.0"
+      "org.typelevel" %% "cats-core" % "2.13.0"
     )
   )
   .dependsOn(core)
