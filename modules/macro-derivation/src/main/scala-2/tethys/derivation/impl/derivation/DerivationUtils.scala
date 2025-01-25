@@ -22,18 +22,20 @@ trait DerivationUtils extends LoggingUtils {
         sym.typeParams.map { param =>
           val paramTpe = param.asType.toType
           val index = subst.indexWhere(_ =:= paramTpe)
-          if(index != -1) baseArgs(index)
-          else fail(s"$sym contains additional type parameter that can't be derived in compile time")
+          if (index != -1) baseArgs(index)
+          else
+            fail(
+              s"$sym contains additional type parameter that can't be derived in compile time"
+            )
         }
       }
 
       appliedType(sym, substituteArgs)
     }
 
-    tpes.foldLeft(List.empty[Type]) {
-      case (acc, t) =>
-        if(!acc.exists(_ =:= t)) t :: acc
-        else acc
+    tpes.foldLeft(List.empty[Type]) { case (acc, t) =>
+      if (!acc.exists(_ =:= t)) t :: acc
+      else acc
     }
   }
 
@@ -41,7 +43,8 @@ trait DerivationUtils extends LoggingUtils {
     classSym.knownDirectSubclasses.toList.flatMap { child0 =>
       val child = child0.asClass
       child.typeSignature // Workaround for <https://issues.scala-lang.org/browse/SI-7755>
-      if (child.isSealed && (child.isAbstract || child.isTrait)) collectSubclasses(child)
+      if (child.isSealed && (child.isAbstract || child.isTrait))
+        collectSubclasses(child)
       else List(child)
     }
   }
