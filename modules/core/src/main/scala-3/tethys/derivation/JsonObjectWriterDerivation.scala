@@ -3,7 +3,7 @@ package tethys.derivation
 import tethys.derivation.builder.WriterDerivationConfig
 
 import scala.deriving.Mirror
-import tethys.{JsonObjectWriter, JsonWriter, WriterBuilder}
+import tethys.{JsonObjectWriter, JsonWriter, WriterBuilder, JsonConfiguration}
 import tethys.writers.tokens.TokenWriter
 
 import scala.deriving.Mirror
@@ -19,7 +19,7 @@ private[tethys] trait JsonObjectWriterDerivation:
   inline def derived[A](inline config: WriterBuilder[A])(using
       mirror: Mirror.ProductOf[A]
   ) =
-    Derivation.deriveJsonWriterForProduct[A](config)
+    Derivation.deriveJsonWriterForProduct[A](config, JsonConfiguration.default)
 
   @deprecated("Use WriterBuilder instead")
   inline def derived[A](inline config: WriterDerivationConfig)(using
@@ -40,6 +40,12 @@ private[tethys] trait JsonObjectWriterDerivation:
             case config: WriterBuilder[A] =>
               config
             case _ => WriterBuilder[A]
+          },
+          summonFrom[JsonConfiguration] {
+            case jsonConfig: JsonConfiguration =>
+              jsonConfig
+            case _ => JsonConfiguration.default
+
           }
         )
 

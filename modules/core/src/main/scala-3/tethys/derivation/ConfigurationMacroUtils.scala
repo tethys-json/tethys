@@ -36,16 +36,41 @@ trait ConfigurationMacroUtils:
       case failure: ImplicitSearchFailure =>
         None
 
+  private val FieldStyleAlreadyConfigured = "FieldStyle is already configured"
+
+  private def showUnknownConfigTree(tree: String): String =
+    s"Unknown tree. Config must be an inlined given. \nTree: $tree"
+
+  private def mergeWriterMacroConfigs(
+      writerBuilderConfig: WriterBuilderMacroConfig,
+      jsonConfig: WriterBuilderMacroConfig
+  ): WriterBuilderMacroConfig =
+    writerBuilderConfig.copy(fieldStyle =
+      writerBuilderConfig.fieldStyle.orElse(jsonConfig.fieldStyle)
+    )
+
+  private def mergeReaderMacroConfigs(
+      readerBuilderConfig: ReaderBuilderMacroConfig,
+      jsonConfig: ReaderBuilderMacroConfig
+  ): ReaderBuilderMacroConfig =
+    readerBuilderConfig.copy(
+      fieldStyle = readerBuilderConfig.fieldStyle.orElse(jsonConfig.fieldStyle),
+      isStrict = readerBuilderConfig.isStrict.orElse(jsonConfig.isStrict)
+    )
+
   def prepareWriterProductFields[T: Type](
-      config: Expr[WriterBuilder[T]]
+      config: Expr[WriterBuilder[T]],
+      jsonConfig: Expr[JsonConfiguration]
   ): List[WriterField] =
-    val macroConfig = parseWriterBuilderMacroConfig[T](config)
-    val updates = macroConfig.update.map(it => it.name -> it).toMap
+    val writerConfig = parseWriterBuilderMacroConfig[T](config)
+    val parsedJsonConfig = parseWriterMacroJsonConfig(jsonConfig)
+    val mergedConfig = mergeWriterMacroConfigs(writerConfig, parsedJsonConfig)
+    val updates = mergedConfig.update.map(it => it.name -> it).toMap
     val tpe = TypeRepr.of[T]
     tpe.typeSymbol.caseFields.zipWithIndex
-      .filterNot((symbol, _) => macroConfig.delete(symbol.name))
+      .filterNot((symbol, _) => mergedConfig.delete(symbol.name))
       .collect { (symbol, idx) =>
-        val name = macroConfig.fieldStyle.fold(symbol.name)(
+        val name = mergedConfig.fieldStyle.fold(symbol.name)(
           FieldStyle.applyStyle(symbol.name, _)
         )
         updates.get(symbol.name) match
@@ -65,7 +90,49 @@ trait ConfigurationMacroUtils:
               tpe = tpe.memberType(symbol),
               newName = None
             )
-      } ::: macroConfig.add
+      } ::: mergedConfig.add
+
+  private def parseWriterMacroJsonConfig(
+      config: Expr[JsonConfiguration]
+  ): WriterBuilderMacroConfig = {
+    @tailrec
+    def loop(
+        config: Expr[JsonConfiguration],
+        acc: WriterBuilderMacroConfig = WriterBuilderMacroConfig()
+    ): WriterBuilderMacroConfig =
+      config match
+        case '{
+              JsonConfiguration.default
+            } =>
+          acc
+
+        case '{
+              ($rest: JsonConfiguration).strict
+            } =>
+          loop(rest, acc)
+
+        case '{
+              ($rest: JsonConfiguration).fieldStyle(${ fieldStyle }: FieldStyle)
+            } =>
+          acc.fieldStyle match
+            case None =>
+              loop(rest, acc.copy(fieldStyle = Some(fieldStyle.valueOrAbort)))
+            case Some(_) =>
+              report.errorAndAbort(FieldStyleAlreadyConfigured)
+
+        case other =>
+          other.asTerm match
+            case Inlined(_, _, term) =>
+              loop(term.asExprOf[JsonConfiguration])
+            case _ =>
+              report.errorAndAbort(
+                showUnknownConfigTree(
+                  other.asTerm.show(using Printer.TreeStructure)
+                )
+              )
+
+    loop(traverseTree(config.asTerm).asExprOf[JsonConfiguration])
+  }
 
   private def parseWriterBuilderMacroConfig[T: Type](
       config: Expr[WriterBuilder[T]]
@@ -362,8 +429,9 @@ trait ConfigurationMacroUtils:
               loop(term.asExprOf[WriterBuilder[T]])
             case _ =>
               report.errorAndAbort(
-                s"Unknown tree. Config must be an inlined given.\nTree: ${other.asTerm
-                    .show(using Printer.TreeStructure)}"
+                showUnknownConfigTree(
+                  other.asTerm.show(using Printer.TreeStructure)
+                )
               )
 
     loop(traverseTree(config.asTerm).asExprOf[WriterBuilder[T]])._1
@@ -371,15 +439,18 @@ trait ConfigurationMacroUtils:
   end parseWriterBuilderMacroConfig
 
   def prepareReaderProductFields[T: Type](
-      config: Expr[ReaderBuilder[T]]
+      config: Expr[ReaderBuilder[T]],
+      jsonConfig: Expr[JsonConfiguration]
   ): (List[ReaderField], IsStrict) =
-    val macroConfig = parseReaderBuilderMacroConfig[T](config)
+    val readerConfig = parseReaderBuilderMacroConfig[T](config)
+    val parsedJsonConfig = parseReaderMacroJsonConfig(jsonConfig)
+    val mergedConfig = mergeReaderMacroConfigs(readerConfig, parsedJsonConfig)
     val tpe = TypeRepr.of[T]
     val defaults = collectDefaults[T]
     val fields = tpe.typeSymbol.caseFields.zipWithIndex
       .map { case (symbol, idx) =>
         val default = defaults.get(idx).map(_.asExprOf[Any])
-        macroConfig.extracted.get(symbol.name) match
+        mergedConfig.extracted.get(symbol.name) match
           case Some(field: ReaderField.Basic) =>
             val updatedDefault = field.extractor match
               case None => default
@@ -392,15 +463,15 @@ trait ConfigurationMacroUtils:
                   )
                   .map(_.asExprOf[Any])
 
-            field.update(idx, updatedDefault, macroConfig.fieldStyle)
+            field.update(idx, updatedDefault, mergedConfig.fieldStyle)
 
           case Some(field) =>
-            field.update(idx, default, macroConfig.fieldStyle)
+            field.update(idx, default, mergedConfig.fieldStyle)
 
           case None =>
             ReaderField
               .Basic(symbol.name, tpe.memberType(symbol), None)
-              .update(idx, default, macroConfig.fieldStyle)
+              .update(idx, default, mergedConfig.fieldStyle)
       }
     val existingFieldNames = fields.map(_.name).toSet
     val additionalFields = fields
@@ -420,7 +491,47 @@ trait ConfigurationMacroUtils:
       .distinctBy(_.name)
     val allFields = fields ::: additionalFields
     checkLoops(allFields)
-    (sortDependencies(allFields), macroConfig.isStrict)
+    (sortDependencies(allFields), mergedConfig.isStrict.getOrElse(false))
+
+  private def parseReaderMacroJsonConfig(
+      jsonConfig: Expr[JsonConfiguration]
+  ): ReaderBuilderMacroConfig =
+    @tailrec
+    def loop(
+        config: Expr[JsonConfiguration],
+        acc: ReaderBuilderMacroConfig = ReaderBuilderMacroConfig()
+    ): ReaderBuilderMacroConfig =
+      config match
+        case '{
+              JsonConfiguration.default
+            } =>
+          acc
+
+        case '{
+              ($rest: JsonConfiguration).strict
+            } =>
+          acc.copy(isStrict = Some(true))
+
+        case '{
+              ($rest: JsonConfiguration).fieldStyle($fieldStyle: FieldStyle)
+            } =>
+          acc.fieldStyle match
+            case None =>
+              loop(rest, acc.copy(fieldStyle = Some(fieldStyle.valueOrAbort)))
+            case Some(_) =>
+              report.errorAndAbort(FieldStyleAlreadyConfigured)
+
+        case other =>
+          other.asTerm match
+            case Inlined(_, _, term) =>
+              loop(term.asExprOf[JsonConfiguration])
+            case _ =>
+              report.errorAndAbort(
+                showUnknownConfigTree(
+                  other.asTerm.show(using Printer.TreeStructure)
+                )
+              )
+    loop(traverseTree(jsonConfig.asTerm).asExprOf[JsonConfiguration])
 
   private def sortDependencies(fields: List[ReaderField]): List[ReaderField] =
     val known = fields.map(_.name).toSet
@@ -526,6 +637,7 @@ trait ConfigurationMacroUtils:
         s"Field '$name' exists in your model, use selector or .extract(_.$name).as[...] instead"
       )
 
+    @tailrec
     def loop(
         config: Expr[ReaderBuilder[T]],
         acc: ReaderBuilderMacroConfig = ReaderBuilderMacroConfig(Map.empty)
@@ -583,9 +695,10 @@ trait ConfigurationMacroUtils:
         case '{ ($rest: ReaderBuilder[T]).strict } =>
           loop(
             config = rest,
-            acc = acc.copy(isStrict = true)
+            acc = acc.copy(isStrict = Some(true))
           )
         case other =>
+          @tailrec
           def loopInner(
               term: Term,
               extractors: List[(String, TypeRepr)] = Nil,
@@ -664,8 +777,9 @@ trait ConfigurationMacroUtils:
                 )
               case other =>
                 report.errorAndAbort(
-                  s"Unknown tree. Config must be an inlined given.\nTree: ${other
-                      .show(using Printer.TreeStructure)}"
+                  showUnknownConfigTree(
+                    other.show(using Printer.TreeStructure)
+                  )
                 )
 
           loopInner(other.asTerm)
@@ -1056,7 +1170,7 @@ trait ConfigurationMacroUtils:
   case class ReaderBuilderMacroConfig(
       extracted: Map[String, ReaderField] = Map.empty,
       fieldStyle: Option[FieldStyle] = None,
-      isStrict: IsStrict = false
+      isStrict: Option[IsStrict] = None
   ):
     def withExtracted(field: ReaderField): ReaderBuilderMacroConfig =
       copy(extracted = extracted.updated(field.name, field))
