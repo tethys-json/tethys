@@ -49,8 +49,11 @@ trait TokenWriter {
 
   @throws[UnsupportedOperationException]
   def writeRawJson(json: String): this.type
+}
 
-  def close(): Unit
-
-  def flush(): Unit
+object TokenWriter {
+  trait Flushing {
+    def flush(): Unit
+    def close(): Unit
+  }
 }

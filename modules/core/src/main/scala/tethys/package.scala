@@ -1,4 +1,4 @@
-import java.io.{Reader, StringReader, StringWriter, Writer}
+import java.io.{Reader, StringReader}
 
 import tethys.readers.{FieldName, ReaderError}
 import tethys.readers.tokens.{TokenIterator, TokenIteratorProducer}
@@ -18,11 +18,8 @@ package object tethys {
     def asJson(implicit
         jsonWriter: JsonWriter[A],
         tokenWriterProducer: TokenWriterProducer
-    ): String = {
-      val stringWriter = new StringWriter()
-      writeJson(tokenWriterProducer.forWriter(stringWriter))
-      stringWriter.toString
-    }
+    ): String =
+      tokenWriterProducer.withTokenWriter(jsonWriter.write(a, _))
 
     def asJsonWith(
         jsonWriter: JsonWriter[A]
@@ -31,19 +28,13 @@ package object tethys {
     }
 
     def writeJson(
-        tokenWriter: TokenWriter
+        tokenWriter: TokenWriter with TokenWriter.Flushing
     )(implicit jsonWriter: JsonWriter[A]): Unit = {
       try jsonWriter.write(a, tokenWriter)
       finally {
         tokenWriter.flush()
       }
     }
-  }
-
-  implicit class WriterOps(val w: Writer) extends AnyVal {
-    def toTokenWriter(implicit
-        tokenWriterProducer: TokenWriterProducer
-    ): TokenWriter = tokenWriterProducer.forWriter(w)
   }
 
   implicit class StringReaderOps(val json: String) extends AnyVal {

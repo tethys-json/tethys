@@ -1,7 +1,5 @@
 package tethys.jackson
 
-import java.io.StringWriter
-
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 import tethys._
@@ -9,13 +7,12 @@ import tethys.writers.tokens.TokenWriter
 
 class JacksonTokenWriterTest extends AnyFlatSpec with Matchers {
 
-  def iterate(fun: (TokenWriter) => Unit): String = {
-    val sw = new StringWriter()
-    val tokenWriter = sw.toTokenWriter
-    fun(tokenWriter)
-    tokenWriter.close()
-    sw.toString
-  }
+  def iterate(fun: TokenWriter => Unit): String =
+    implicitly[JacksonTokenWriterProducer]
+      .withTokenWriter { tokenWriter =>
+        fun(tokenWriter)
+        tokenWriter.close()
+      }
 
   behavior of "JacksonTokenWriter"
 

@@ -1,7 +1,6 @@
 package tethys.writers.tokens
 
-import java.io.Writer
-
 trait TokenWriterProducer {
-  def forWriter(writer: Writer): TokenWriter
+  type ExactTokenWriter <: TokenWriter
+  def withTokenWriter(writer: ExactTokenWriter => Unit): String
 }

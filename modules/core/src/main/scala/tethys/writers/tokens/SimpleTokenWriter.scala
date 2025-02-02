@@ -7,7 +7,7 @@ import tethys.readers.tokens.TokenIteratorProducer
 
 import scala.collection.mutable
 
-class SimpleTokenWriter extends TokenWriter {
+class SimpleTokenWriter extends TokenWriter with TokenWriter.Flushing {
   val tokens: mutable.ArrayBuffer[TokenNode] = mutable.ArrayBuffer.empty
 
   override def writeArrayStart(): SimpleTokenWriter.this.type = append(

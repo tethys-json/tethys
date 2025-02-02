@@ -20,12 +20,7 @@ object RawJson {
   ): JsonReader[RawJson] = new JsonReader[RawJson] {
     override def read(
         it: TokenIterator
-    )(implicit fieldName: FieldName): RawJson = {
-      val stringWriter = new StringWriter()
-      val tokenWriter: TokenWriter = tokenWriterProducer.forWriter(stringWriter)
-      JsonStreaming.streamValue(it, tokenWriter)
-      tokenWriter.flush()
-      RawJson(stringWriter.toString)
-    }
+    )(implicit fieldName: FieldName): RawJson =
+      RawJson(tokenWriterProducer.withTokenWriter(JsonStreaming.streamValue(it, _)))
   }
 }
