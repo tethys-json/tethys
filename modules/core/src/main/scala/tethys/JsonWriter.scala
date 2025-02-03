@@ -1,9 +1,7 @@
 package tethys
 
 import tethys.writers.instances.{AllJsonWriters, SimpleJsonObjectWriter}
-import tethys.writers.tokens.TokenWriter
-
-import scala.language.higherKinds
+import tethys.writers.tokens.{TokenWriter, TokenWriterProducer}
 
 trait JsonWriter[@specialized(specializations) A] {
   self =>

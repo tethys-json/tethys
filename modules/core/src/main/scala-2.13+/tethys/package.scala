@@ -1,8 +1,12 @@
 import java.io.{Reader, StringReader}
-
 import tethys.readers.{FieldName, ReaderError}
 import tethys.readers.tokens.{TokenIterator, TokenIteratorProducer}
-import tethys.writers.tokens.{TokenWriter, TokenWriterProducer}
+import tethys.writers.tokens.{
+  DefaultTokenWriter,
+  TokenWriterConfig,
+  TokenWriter,
+  TokenWriterProducer
+}
 
 import scala.Specializable.Group
 
@@ -18,22 +22,28 @@ package object tethys {
     def asJson(implicit
         jsonWriter: JsonWriter[A],
         tokenWriterProducer: TokenWriterProducer
-    ): String =
-      tokenWriterProducer.withTokenWriter(jsonWriter.write(a, _))
+    ): String = {
+      val tokenWriter = tokenWriterProducer.produce()
+      try jsonWriter.write(a, tokenWriter)
+      finally tokenWriter.flush()
+      tokenWriter.result()
+    }
 
     def asJsonWith(
         jsonWriter: JsonWriter[A]
     )(implicit tokenWriterProducer: TokenWriterProducer): String = {
-      asJson(jsonWriter, tokenWriterProducer)
+      val tokenWriter = tokenWriterProducer.produce()
+      try jsonWriter.write(a, tokenWriter)
+      finally tokenWriter.flush()
+      tokenWriter.result()
     }
 
     def writeJson(
-        tokenWriter: TokenWriter with TokenWriter.Flushing
+        tokenWriter: TokenWriter
     )(implicit jsonWriter: JsonWriter[A]): Unit = {
       try jsonWriter.write(a, tokenWriter)
-      finally {
+      finally
         tokenWriter.flush()
-      }
     }
   }
 
@@ -83,4 +93,18 @@ package object tethys {
       ReaderError.catchNonFatal(jsonReader.read(tokenIterator))
     }
   }
+
+  implicit val defaultTokenWriterProducer: TokenWriterProducer =
+    new TokenWriterProducer {
+      type ExactTokenWriter = DefaultTokenWriter
+
+      private val writerPool: ThreadLocal[DefaultTokenWriter] =
+        new ThreadLocal[DefaultTokenWriter] {
+          override def initialValue(): DefaultTokenWriter =
+            new DefaultTokenWriter(config = TokenWriterConfig.Default)
+        }
+
+      override def produce(): TokenWriter = writerPool.get()
+    }
+
 }

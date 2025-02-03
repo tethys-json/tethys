@@ -7,12 +7,12 @@ import tethys.writers.tokens.TokenWriter
 
 class JacksonTokenWriterTest extends AnyFlatSpec with Matchers {
 
-  def iterate(fun: TokenWriter => Unit): String =
-    implicitly[JacksonTokenWriterProducer]
-      .withTokenWriter { tokenWriter =>
-        fun(tokenWriter)
-        tokenWriter.close()
-      }
+  def iterate(fun: TokenWriter => Unit): String = {
+    val writer = implicitly[JacksonTokenWriterProducer].produce()
+    fun(writer)
+    writer.flush()
+    writer.result()
+  }
 
   behavior of "JacksonTokenWriter"
 
@@ -98,5 +98,4 @@ class JacksonTokenWriterTest extends AnyFlatSpec with Matchers {
         .writeObjectEnd()
     } shouldBe """{"a":1,"b":["s",false,true,{"a":null}],"c":{"some" : "raw json"}}"""
   }
-
 }

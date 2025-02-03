@@ -15,22 +15,19 @@ package object jackson {
   }
 
   class JacksonTokenWriterProducer(
-    jsonFactory: JsonFactory,
-    configure: JsonGenerator => JsonGenerator
+      jsonFactory: JsonFactory,
+      configure: JsonGenerator => JsonGenerator
   ) extends TokenWriterProducer {
-    type ExactTokenWriter = JacksonTokenWriter
-
-    override def withTokenWriter(write: JacksonTokenWriter => Unit): String = {
-      val stringWriter = new java.io.StringWriter()
-      val tw = new JacksonTokenWriter(configure(jsonFactory.createGenerator(stringWriter)))
-      try write(tw) finally tw.flush()
-      stringWriter.toString
-    }
+    override def produce(): TokenWriter =
+      new JacksonTokenWriter(
+        configure(jsonFactory.createGenerator(new java.io.StringWriter()))
+      )
   }
 
   implicit def jacksonTokenWriterProducer(implicit
       jsonFactory: JsonFactory = defaultJsonFactory
-  ): JacksonTokenWriterProducer = new JacksonTokenWriterProducer(jsonFactory, identity)
+  ): JacksonTokenWriterProducer =
+    new JacksonTokenWriterProducer(jsonFactory, identity)
 
   implicit def jacksonTokenIteratorProducer(implicit
       jsonFactory: JsonFactory = defaultJsonFactory

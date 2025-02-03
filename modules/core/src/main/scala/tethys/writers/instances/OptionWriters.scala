@@ -4,7 +4,7 @@ import tethys.JsonWriter
 import tethys.writers.tokens.TokenWriter
 
 private[tethys] trait OptionWriters extends MapWriters {
-  implicit lazy val noneWriter: JsonWriter[None.type] =
+  implicit val noneWriter: JsonWriter[None.type] =
     new JsonWriter[None.type] {
       override def write(
           name: String,

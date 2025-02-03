@@ -1,7 +1,5 @@
 package tethys.commons
 
-import java.io.StringWriter
-
 import tethys.readers.FieldName
 import tethys.readers.tokens.TokenIterator
 import tethys.writers.tokens.{TokenWriter, TokenWriterProducer}
@@ -20,7 +18,11 @@ object RawJson {
   ): JsonReader[RawJson] = new JsonReader[RawJson] {
     override def read(
         it: TokenIterator
-    )(implicit fieldName: FieldName): RawJson =
-      RawJson(tokenWriterProducer.withTokenWriter(JsonStreaming.streamValue(it, _)))
+    )(implicit fieldName: FieldName): RawJson = {
+      val tokenWriter = tokenWriterProducer.produce()
+      try JsonStreaming.streamValue(it, tokenWriter)
+      finally tokenWriter.flush()
+      RawJson(tokenWriter.result())
+    }
   }
 }
