@@ -255,6 +255,8 @@ lazy val benchmarks = project
       "io.circe" %% "circe-jackson210" % "0.14.0",
       "dev.zio" %% "zio-json" % "0.7.1",
       "com.typesafe.play" %% "play-json" % "2.10.5",
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % "2.33.1",
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.33.1",
       "org.knowm.xchart" % "xchart" % "3.8.2" exclude ("de.erichseifert.vectorgraphics2d", "VectorGraphics2D") withSources ()
     ),
     scalacOptions ++= {

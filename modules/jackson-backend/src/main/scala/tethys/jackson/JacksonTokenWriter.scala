@@ -2,6 +2,7 @@ package tethys.jackson
 
 import com.fasterxml.jackson.core.JsonGenerator
 import tethys.writers.tokens.TokenWriter
+import java.nio.charset.Charset
 
 class JacksonTokenWriter(jsonGenerator: JsonGenerator) extends TokenWriter {
   override def writeArrayStart(): JacksonTokenWriter.this.type = {
@@ -74,7 +75,10 @@ class JacksonTokenWriter(jsonGenerator: JsonGenerator) extends TokenWriter {
     this
   }
 
-  override def writeRawJson(json: String): JacksonTokenWriter.this.type = {
+  override def writeRawJson(
+      json: String,
+      charset: Charset
+  ): JacksonTokenWriter.this.type = {
     jsonGenerator.writeRawValue(json)
     this
   }
@@ -87,9 +91,13 @@ class JacksonTokenWriter(jsonGenerator: JsonGenerator) extends TokenWriter {
   override def writeNull(): JacksonTokenWriter.this.type = {
     jsonGenerator.writeNull()
     this
+
   }
 
   override def close(): Unit = jsonGenerator.close()
 
   override def flush(): Unit = jsonGenerator.flush()
+
+  override def result(charset: Charset): String =
+    jsonGenerator.getOutputTarget.toString
 }

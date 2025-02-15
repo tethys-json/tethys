@@ -5,6 +5,8 @@ import tethys.commons.TokenNode._
 import tethys.readers.FieldName
 import tethys.readers.tokens.TokenIteratorProducer
 
+import java.nio.charset.Charset
+import java.util.UUID
 import scala.collection.mutable
 
 class SimpleTokenWriter extends TokenWriter {
@@ -71,14 +73,17 @@ class SimpleTokenWriter extends TokenWriter {
 
   override def writeNull(): SimpleTokenWriter.this.type = append(NullValueNode)
 
-  override def writeRawJson(json: String): SimpleTokenWriter.this.type =
+  override def writeRawJson(
+      json: String,
+      charset: Charset
+  ): SimpleTokenWriter.this.type =
     throw new UnsupportedOperationException("SimpleTokenWriter.writeRawJson")
 
   override def close(): Unit = ()
 
   override def flush(): Unit = ()
 
-  private def append(node: TokenNode): this.type = {
+  private def append(node: TokenNode): SimpleTokenWriter.this.type = {
     tokens += node
     this
   }
@@ -87,12 +92,15 @@ class SimpleTokenWriter extends TokenWriter {
       producer: TokenIteratorProducer
   ): SimpleTokenWriter = new SimpleTokenWriter {
     import tethys._
-    override def writeRawJson(json: String): this.type = {
+    override def writeRawJson(json: String, charset: Charset): this.type = {
       val tokenIterator = json.toTokenIterator.fold(throw _, identity)
       JsonStreaming.streamValue(tokenIterator, this)(FieldName())
       this
     }
   }
+
+  override def result(charset: Charset): String =
+    throw new UnsupportedOperationException("SimpleTokenWriter.outString")
 }
 
 object SimpleTokenWriter {

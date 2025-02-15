@@ -2,7 +2,7 @@ package tethys
 
 import java.io.{Reader, Writer}
 
-import com.fasterxml.jackson.core.JsonFactory
+import com.fasterxml.jackson.core.{JsonFactory, JsonGenerator}
 import tethys.readers.{FieldName, ReaderError}
 import tethys.readers.tokens.{TokenIterator, TokenIteratorProducer}
 import tethys.writers.tokens.{TokenWriter, TokenWriterProducer}
@@ -14,13 +14,20 @@ package object jackson {
     f
   }
 
+  class JacksonTokenWriterProducer(
+      jsonFactory: JsonFactory,
+      configure: JsonGenerator => JsonGenerator
+  ) extends TokenWriterProducer {
+    override def produce(): TokenWriter =
+      new JacksonTokenWriter(
+        configure(jsonFactory.createGenerator(new java.io.StringWriter()))
+      )
+  }
+
   implicit def jacksonTokenWriterProducer(implicit
       jsonFactory: JsonFactory = defaultJsonFactory
-  ): TokenWriterProducer = new TokenWriterProducer {
-    override def forWriter(writer: Writer): TokenWriter = {
-      new JacksonTokenWriter(jsonFactory.createGenerator(writer))
-    }
-  }
+  ): JacksonTokenWriterProducer =
+    new JacksonTokenWriterProducer(jsonFactory, identity)
 
   implicit def jacksonTokenIteratorProducer(implicit
       jsonFactory: JsonFactory = defaultJsonFactory

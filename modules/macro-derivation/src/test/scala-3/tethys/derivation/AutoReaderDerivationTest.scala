@@ -7,7 +7,7 @@ import tethys.commons.{Token, TokenNode}
 import tethys.commons.TokenNode._
 import tethys.derivation.auto._
 import tethys.readers.tokens.QueueIterator
-import tethys.TokenIteratorOps
+import tethys._
 
 class AutoReaderDerivationTest extends AnyFlatSpec with Matchers {
 

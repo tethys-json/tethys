@@ -148,7 +148,7 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
                         .get(field.tpe)
                         .fold(lookup[JsonWriter[f]])(_.asExprOf[JsonWriter[f]])
                       '{
-                        ${ writer }.write(
+                        $writer.write(
                           ${ field.label },
                           ${ field.value('{ value }.asTerm).asExprOf[f] },
                           tokenWriter
