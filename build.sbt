@@ -1,6 +1,6 @@
 lazy val scala212 = "2.12.20"
-lazy val scala213 = "2.13.15"
-lazy val scala3 = "3.3.4"
+lazy val scala213 = "2.13.16"
+lazy val scala3 = "3.3.5"
 
 ThisBuild / scalaVersion := scala3
 
@@ -119,7 +119,7 @@ lazy val cats = project
   .settings(
     name := "tethys-cats",
     libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-core" % "2.12.0"
+      "org.typelevel" %% "cats-core" % "2.13.0"
     )
   )
   .dependsOn(core)
@@ -234,7 +234,7 @@ lazy val refined = project
   .settings(
     name := "tethys-refined",
     libraryDependencies ++= Seq(
-      "eu.timepit" %% "refined" % "0.10.2"
+      "eu.timepit" %% "refined" % "0.10.3"
     )
   )
   .dependsOn(core)
