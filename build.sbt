@@ -77,26 +77,16 @@ lazy val core = project
     name := "tethys1-core"
   )
 
-lazy val cats = project
-  .in(modules / "cats")
-  .settings(commonSettings)
-  .settings(testSettings)
-  .settings(
-    name := "tethys1-cats",
-    libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-core" % "2.13.0"
-    )
-  )
-  .dependsOn(core)
+lazy val jackson = modules / "backend" / "jackson"
 
 lazy val jacksonSettings = Seq(
-  Compile / unmanagedSourceDirectories += modules / "jackson-backend" / "src" / "main",
-  Test / unmanagedSourceDirectories += modules / "jackson-backend" / "src" / "test",
-  Test / unmanagedResourceDirectories += modules / "jackson-backend" / "src" / "test" / "resources"
+  Compile / unmanagedSourceDirectories += jackson / "jackson-backend" / "src" / "main",
+  Test / unmanagedSourceDirectories += jackson / "jackson-backend" / "src" / "test",
+  Test / unmanagedResourceDirectories += jackson / "jackson-backend" / "src" / "test" / "resources"
 )
 
 lazy val `jackson-211` = project
-  .in(modules / "jackson-211")
+  .in(jackson / "jackson-211")
   .settings(commonSettings)
   .settings(jacksonSettings)
   .settings(testSettings)
@@ -109,7 +99,7 @@ lazy val `jackson-211` = project
   .dependsOn(core)
 
 lazy val `jackson-212` = project
-  .in(modules / "jackson-212")
+  .in(jackson / "jackson-212")
   .settings(commonSettings)
   .settings(jacksonSettings)
   .settings(testSettings)
@@ -122,7 +112,7 @@ lazy val `jackson-212` = project
   .dependsOn(core)
 
 lazy val `jackson-213` = project
-  .in(modules / "jackson-213")
+  .in(jackson / "jackson-213")
   .settings(commonSettings)
   .settings(jacksonSettings)
   .settings(testSettings)
@@ -134,8 +124,10 @@ lazy val `jackson-213` = project
   )
   .dependsOn(core)
 
+lazy val ast = modules / "ast"
+
 lazy val circe = project
-  .in(modules / "circe")
+  .in(ast / "circe")
   .settings(commonSettings)
   .settings(testSettings)
   .settings(
@@ -144,10 +136,10 @@ lazy val circe = project
       "io.circe" %% "circe-core" % "0.14.10"
     )
   )
-  .dependsOn(core, `jackson-212` % Test)
+  .dependsOn(core, `jackson-213` % "compile->test;test->test")
 
 lazy val json4s = project
-  .in(modules / "json4s")
+  .in(ast / "json4s")
   .settings(commonSettings)
   .settings(testSettings)
   .settings(
@@ -158,8 +150,22 @@ lazy val json4s = project
   )
   .dependsOn(core)
 
+lazy val integrations = modules / "integrations"
+
+lazy val cats = project
+  .in(integrations / "cats")
+  .settings(commonSettings)
+  .settings(testSettings)
+  .settings(
+    name := "tethys1-cats",
+    libraryDependencies ++= Seq(
+      "org.typelevel" %% "cats-core" % "2.12.0"
+    )
+  )
+  .dependsOn(core)
+
 lazy val enumeratum = project
-  .in(modules / "enumeratum")
+  .in(integrations / "enumeratum")
   .settings(commonSettings)
   .settings(testSettings)
   .settings(
@@ -171,7 +177,7 @@ lazy val enumeratum = project
   .dependsOn(core)
 
 lazy val refined = project
-  .in(modules / "refined")
+  .in(integrations / "refined")
   .settings(commonSettings)
   .settings(testSettings)
   .settings(
