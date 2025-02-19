@@ -175,11 +175,10 @@ trait ConfigurationMacroUtils:
                 style
               }: tethys.derivation.builder.FieldStyle)
             } =>
-          val fieldStyle = legacyFieldStyleToFieldStyle(style).getOrElse {
+          val fieldStyle = legacyFieldStyleToFieldStyle(style).getOrElse:
             report.errorAndAbort(
               s"Can't extract fieldStyle from ${style.asTerm.show(using Printer.TreeShortCode)}"
             )
-          }
           (acc.copy(fieldStyle = Some(fieldStyle)), updatedFields)
 
         case '{
@@ -476,7 +475,7 @@ trait ConfigurationMacroUtils:
     val existingFieldNames = fields.map(_.name).toSet
     val additionalFields = fields
       .collect { case field: ReaderField.Extracted =>
-        field.extractors.collect {
+        field.extractors.collect:
           case (name, tpe) if !existingFieldNames(name) =>
             ReaderField.Basic(
               name,
@@ -485,7 +484,6 @@ trait ConfigurationMacroUtils:
               -1,
               Option.when(tpe.isOption)('{ None })
             )
-        }
       }
       .flatten
       .distinctBy(_.name)
@@ -535,10 +533,9 @@ trait ConfigurationMacroUtils:
 
   private def sortDependencies(fields: List[ReaderField]): List[ReaderField] =
     val known = fields.map(_.name).toSet
-    val (basic, allExtracted) = fields.partitionMap {
+    val (basic, allExtracted) = fields.partitionMap:
       case field: ReaderField.Basic     => Left(field)
       case field: ReaderField.Extracted => Right(field)
-    }
     @scala.annotation.tailrec
     def loop(
         extracted: List[ReaderField.Extracted],
@@ -565,9 +562,8 @@ trait ConfigurationMacroUtils:
     def loop(dependencies: Map[String, Set[String]], n: Int): Unit =
       if n == dependencies.size then ()
       else
-        val looped = dependencies.collect {
+        val looped = dependencies.collect:
           case (name, extractors) if extractors.contains(name) => name
-        }
         if looped.nonEmpty then
           report.errorAndAbort(
             s"Found loop in your configuration, fields ${looped.mkString("[", ", ", "]")}"
@@ -599,7 +595,7 @@ trait ConfigurationMacroUtils:
           .declaredMethod(defaultMethodName)
           .headOption
           .map { defaultMethod =>
-            val callDefault = {
+            val callDefault =
               val base = Ident(tpe.typeSymbol.companionModule.termRef).select(
                 defaultMethod
               )
@@ -608,12 +604,10 @@ trait ConfigurationMacroUtils:
               tParams match
                 case Some(tParams) => TypeApply(base, tParams.map(TypeTree.ref))
                 case _             => base
-            }
 
-            defaultMethod.tree match {
+            defaultMethod.tree match
               case tree: DefDef => tree.rhs.getOrElse(callDefault)
               case _            => callDefault
-            }
           }
           .orElse(
             Option.when(tpe.memberType(field) <:< TypeRepr.of[Option[Any]])('{
@@ -683,11 +677,10 @@ trait ConfigurationMacroUtils:
                 style
               }: tethys.derivation.builder.FieldStyle)
             } =>
-          val fieldStyle = legacyFieldStyleToFieldStyle(style).getOrElse {
+          val fieldStyle = legacyFieldStyleToFieldStyle(style).getOrElse:
             report.errorAndAbort(
               s"Can't extract fieldStyle from ${style.asTerm.show(using Printer.TreeShortCode)}"
             )
-          }
           loop(
             config = rest,
             acc = acc.copy(fieldStyle = Some(fieldStyle))
@@ -803,14 +796,13 @@ trait ConfigurationMacroUtils:
             )
           )
 
-        val discriminators: List[Term] = getAllChildren(tpe).map {
+        val discriminators: List[Term] = getAllChildren(tpe).map:
           case tpe: TypeRef =>
             Select(stub(tpe), symbol)
           case tpe: TermRef =>
             Select(Ref(tpe.termSymbol), symbol)
           case tpe =>
             report.errorAndAbort(s"Unknown tpe: $tpe")
-        }
         SumMacroConfig(
           Some(
             DiscriminatorConfig(
@@ -891,7 +883,7 @@ trait ConfigurationMacroUtils:
           None
     def unapply(expr: Expr[Any]): Option[SelectedField] = unapply(expr.asTerm)
 
-  sealed trait WriterField {
+  sealed trait WriterField:
     def name: String
 
     def nameWithStyle: String
@@ -922,7 +914,6 @@ trait ConfigurationMacroUtils:
             }.asTerm
 
     def label: Expr[String]
-  }
 
   end WriterField
 
@@ -969,7 +960,7 @@ trait ConfigurationMacroUtils:
       to: TypeRepr
   )
 
-  sealed trait ReaderField {
+  sealed trait ReaderField:
     def name: String
     def tpe: TypeRepr
     def reader: Boolean
@@ -1016,7 +1007,7 @@ trait ConfigurationMacroUtils:
             )
           }
 
-    lazy val (initialize, ref, initRef, iteratorRef) = {
+    lazy val (initialize, ref, initRef, iteratorRef) =
       val flags =
         default.fold(Flags.Deferred | Flags.Mutable)(_ => Flags.Mutable)
       val symbol = Symbol.newVal(
@@ -1052,7 +1043,6 @@ trait ConfigurationMacroUtils:
         Ref(initStat.symbol),
         iteratorRef
       )
-    }
 
     def idx: Int
     def default: Option[Expr[Any]]
@@ -1110,7 +1100,6 @@ trait ConfigurationMacroUtils:
           name =
             fieldStyle.fold(field.name)(FieldStyle.applyStyle(field.name, _))
         )
-  }
 
   object ReaderField:
     case class Basic(

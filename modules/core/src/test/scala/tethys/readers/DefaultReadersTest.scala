@@ -1,12 +1,12 @@
 package tethys.readers
 
-import org.scalatest.matchers.should.Matchers.{value => _, _}
+import org.scalatest.matchers.should.Matchers.{value as _, *}
 import org.scalatest.flatspec.AnyFlatSpec
 import tethys.JsonReader
 import tethys.commons.{Token, TokenNode}
-import tethys.commons.TokenNode._
+import tethys.commons.TokenNode.*
 import tethys.readers.DefaultReadersTest.TestDefinition
-import tethys.readers.tokens._
+import tethys.readers.tokens.*
 import tethys.TokenIteratorOps
 
 import scala.reflect.ClassTag
@@ -31,8 +31,8 @@ class DefaultReadersTest extends AnyFlatSpec {
     TestDefinition(result, jsonReader, name)
   }
 
-  private val cases: List[(TestDefinition[_], List[TokenNode])] =
-    List[(TestDefinition[_], List[TokenNode])](
+  private val cases: List[(TestDefinition[?], List[TokenNode])] =
+    List[(TestDefinition[?], List[TokenNode])](
       test("1") -> value("1"),
       test('1') -> value("1"),
       test(1) -> value(1),

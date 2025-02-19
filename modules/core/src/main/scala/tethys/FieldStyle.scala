@@ -2,13 +2,12 @@ package tethys
 
 import java.util.regex.Pattern
 
-enum FieldStyle {
+enum FieldStyle:
   case Capitalize, Uncapitalize, LowerCase, UpperCase
 
   case KebabCase, LowerKebabCase, UpperKebabCase, CapitalizedKebabCase
 
   case SnakeCase, LowerSnakeCase, UpperSnakeCase, CapitalizedSnakeCase
-}
 
 object FieldStyle:
   private val regexp1: Pattern = Pattern.compile("([A-Z]+)([A-Z][a-z])")

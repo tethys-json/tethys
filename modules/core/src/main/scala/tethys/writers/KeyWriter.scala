@@ -1,11 +1,10 @@
 package tethys.writers
 
 @FunctionalInterface
-trait KeyWriter[A] {
+trait KeyWriter[A]:
   def toKey(value: A): String
-}
 
-object KeyWriter {
+object KeyWriter:
   implicit lazy val stringKeyWriter: KeyWriter[String] = identity
 
   implicit lazy val uuidKeyWriter: KeyWriter[java.util.UUID] = _.toString
@@ -28,4 +27,3 @@ object KeyWriter {
 
   implicit lazy val zonedDateTimeKeyWriter: KeyWriter[java.time.ZonedDateTime] =
     _.format(java.time.format.DateTimeFormatter.ISO_ZONED_DATE_TIME)
-}

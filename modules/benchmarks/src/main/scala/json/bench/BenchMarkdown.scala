@@ -4,8 +4,8 @@ import java.nio.file.{Files, Paths}
 
 import org.knowm.xchart.BitmapEncoder.BitmapFormat
 import org.knowm.xchart.{BitmapEncoder, CategoryChart, CategoryChartBuilder}
-import tethys._
-import tethys.jackson._
+import tethys.*
+import tethys.jackson.*
 import tethys.readers.FieldName
 import tethys.readers.tokens.TokenIterator
 
@@ -151,7 +151,7 @@ object BenchMarkdown {
       .toList
       .sortBy(_._1)(processorsOrdering)
       .foreach { case (name, bs) =>
-        import scala.collection.JavaConverters._
+        import scala.collection.JavaConverters.*
 
         val data = bs.map { b =>
           val size = b.params(sizeColumn)

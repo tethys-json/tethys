@@ -3,7 +3,7 @@ package tethys.cats.writers
 import cats.data.*
 import tethys.JsonWriter
 
-trait CatsWriters {
+trait CatsWriters:
   implicit def writerForNev[T: JsonWriter]: JsonWriter[NonEmptyVector[T]] =
     JsonWriter[Vector[T]].contramap(_.toVector)
 
@@ -18,4 +18,3 @@ trait CatsWriters {
 
   implicit def writerForNec[T: JsonWriter]: JsonWriter[NonEmptyChain[T]] =
     JsonWriter[Chain[T]].contramap(_.toChain)
-}

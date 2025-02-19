@@ -1,6 +1,6 @@
 package json.bench.handwritten
 
-import com.fasterxml.jackson.core._
+import com.fasterxml.jackson.core.*
 import com.fasterxml.jackson.core.io.{IOContext, SegmentedStringWriter}
 import com.fasterxml.jackson.core.json.WriterBasedJsonGenerator
 import com.fasterxml.jackson.core.util.BufferRecycler

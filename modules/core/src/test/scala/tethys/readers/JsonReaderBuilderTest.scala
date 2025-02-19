@@ -4,8 +4,8 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 import tethys.JsonReader
 import tethys.commons.{Token, TokenNode}
-import tethys.commons.TokenNode._
-import tethys.readers.JsonReaderBuilderTest._
+import tethys.commons.TokenNode.*
+import tethys.readers.JsonReaderBuilderTest.*
 import tethys.readers.tokens.QueueIterator
 import tethys.TokenIteratorOps
 
@@ -187,7 +187,7 @@ class JsonReaderBuilderTest extends AnyFlatSpec with Matchers {
         "f23" -> 23,
         "f24" -> 24
       )
-    )(reader) shouldBe ((1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+    )(using reader) shouldBe ((1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
       17, 18, 19, 20, 21, 22), 23, 24)
   }
 }

@@ -7,22 +7,20 @@ import tethys.derivation.builder.WriterDescription.BuilderOperation
 case class WriterDerivationConfig(
     fieldStyle: Option[FieldStyle],
     discriminator: Option[String] = None
-) {
+):
   def withFieldStyle(fieldStyle: FieldStyle): WriterDerivationConfig = this
   def withFieldStyle(
       fieldStyle: tethys.derivation.builder.FieldStyle
   ): WriterDerivationConfig = this
   def withDiscriminator(discriminator: String): WriterDerivationConfig = this
-}
 
-object WriterDerivationConfig {
+object WriterDerivationConfig:
   def empty: WriterDerivationConfig = WriterDerivationConfig(None)
   def withFieldStyle(fieldStyle: FieldStyle): WriterDerivationConfig = empty
   def withFieldStyle(
       fieldStyle: tethys.derivation.builder.FieldStyle
   ): WriterDerivationConfig = empty
   def withDiscriminator(discriminator: String): WriterDerivationConfig = empty
-}
 
 @deprecated("Use WriterBuilder[A] instead")
 case class WriterDescription[A](
@@ -30,10 +28,10 @@ case class WriterDescription[A](
     operations: Seq[BuilderOperation[A]]
 )
 
-object WriterDescription {
+object WriterDescription:
   trait BuilderOperation[A]
 
-  object BuilderOperation {
+  object BuilderOperation:
     case class Remove[T](field: String) extends BuilderOperation[T]
     case class Update[T, From, To](
         field: String,
@@ -57,5 +55,3 @@ object WriterDescription {
     ) extends BuilderOperation[T]
     case class Add[T, To](field: String, fun: T => To)
         extends BuilderOperation[T]
-  }
-}

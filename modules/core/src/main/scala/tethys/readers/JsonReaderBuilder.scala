@@ -3,50 +3,46 @@ package tethys.readers
 import tethys.JsonReader
 import tethys.readers.instances.{SelectingJsonReader, SimpleJsonReader}
 
-object JsonReaderBuilder {
+object JsonReaderBuilder:
   def addField[B](name: String, jsonReader: JsonReader[B])(implicit
       readerDefaultValue: JsonReaderDefaultValue[B]
-  ): JsonReaderBuilder1[B] = {
+  ): JsonReaderBuilder1[B] =
     new JsonReaderBuilder1[B](
       0,
       name,
       readerDefaultValue.defaultValue,
       jsonReader
     )
-  }
 
   def addField[B](name: String)(implicit
       readerDefaultValue: JsonReaderDefaultValue[B],
       jsonReader: JsonReader[B]
-  ): JsonReaderBuilder1[B] = {
+  ): JsonReaderBuilder1[B] =
     new JsonReaderBuilder1[B](
       0,
       name,
       readerDefaultValue.defaultValue,
       jsonReader
     )
-  }
 
-  trait SingleJsonValueReader[A1] {
+  trait SingleJsonValueReader[A1]:
     private[JsonReaderBuilder] def fields(
-        arr: Array[SimpleJsonReader.FieldDefinition[_]]
+        arr: Array[SimpleJsonReader.FieldDefinition[?]]
     ): Unit
 
     private[JsonReaderBuilder] def value(extracted: Array[Any]): A1
-  }
 
   final class JsonReaderBuilder1[A1] private[JsonReaderBuilder] (
       pos: Int,
       name: String,
       defaultValue: Any,
       jsonReader: JsonReader[A1]
-  ) extends SingleJsonValueReader[A1] {
+  ) extends SingleJsonValueReader[A1]:
     private[JsonReaderBuilder] def fields(
-        arr: Array[SimpleJsonReader.FieldDefinition[_]]
-    ): Unit = {
+        arr: Array[SimpleJsonReader.FieldDefinition[?]]
+    ): Unit =
       arr(pos) =
         SimpleJsonReader.FieldDefinition[A1](name, defaultValue, jsonReader)
-    }
 
     private[JsonReaderBuilder] def value(extracted: Array[Any]): A1 = extracted(
       pos
@@ -54,14 +50,13 @@ object JsonReaderBuilder {
 
     def addField[B](name: String, jsonReader: JsonReader[B])(implicit
         readerDefaultValue: JsonReaderDefaultValue[B]
-    ): JsonReaderBuilder2[A1, B] = {
+    ): JsonReaderBuilder2[A1, B] =
       addField[B](name)(readerDefaultValue, jsonReader)
-    }
 
     def addField[B](name: String)(implicit
         readerDefaultValue: JsonReaderDefaultValue[B],
         jsonReader: JsonReader[B]
-    ): JsonReaderBuilder2[A1, B] = {
+    ): JsonReaderBuilder2[A1, B] =
       new JsonReaderBuilder2[A1, B](
         this,
         pos + 1,
@@ -69,33 +64,27 @@ object JsonReaderBuilder {
         readerDefaultValue.defaultValue,
         jsonReader
       )
-    }
 
-    def buildReader[Res](fun: A1 => Res): JsonReader[Res] = {
+    def buildReader[Res](fun: A1 => Res): JsonReader[Res] =
       buildReader(strict = false, fun)
-    }
 
-    def buildStrictReader[Res](fun: A1 => Res): JsonReader[Res] = {
+    def buildStrictReader[Res](fun: A1 => Res): JsonReader[Res] =
       buildReader(strict = true, fun)
-    }
 
     private def buildReader[Res](
         strict: Boolean,
         fun: A1 => Res
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       new SimpleJsonReader[Res](fieldsArray, arr => fun(value(arr)), strict)
-    }
 
-    def selectReader[Res](fun: A1 => JsonReader[_ <: Res]): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+    def selectReader[Res](fun: A1 => JsonReader[? <: Res]): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       val simpleJsonReader =
         new SimpleJsonReader[A1](fieldsArray, arr => value(arr), strict = false)
       new SelectingJsonReader[A1, Res](simpleJsonReader)(fun)
-    }
-  }
 
   final class JsonReaderBuilder2[A1, A2] private[JsonReaderBuilder] (
       prev: SingleJsonValueReader[A1],
@@ -103,29 +92,27 @@ object JsonReaderBuilder {
       name: String,
       defaultValue: Any,
       jsonReader: JsonReader[A2]
-  ) {
+  ):
 
     private[JsonReaderBuilder] def fields(
-        arr: Array[SimpleJsonReader.FieldDefinition[_]]
-    ): Unit = {
+        arr: Array[SimpleJsonReader.FieldDefinition[?]]
+    ): Unit =
       prev.fields(arr)
       arr(pos) =
         SimpleJsonReader.FieldDefinition[A2](name, defaultValue, jsonReader)
-    }
 
     private[JsonReaderBuilder] def value(extracted: Array[Any]): (A1, A2) =
       (prev.value(extracted), extracted(pos).asInstanceOf[A2])
 
     def addField[B](name: String, jsonReader: JsonReader[B])(implicit
         readerDefaultValue: JsonReaderDefaultValue[B]
-    ): JsonReaderBuilder3[A1, A2, B] = {
+    ): JsonReaderBuilder3[A1, A2, B] =
       addField[B](name)(readerDefaultValue, jsonReader)
-    }
 
     def addField[B](name: String)(implicit
         readerDefaultValue: JsonReaderDefaultValue[B],
         jsonReader: JsonReader[B]
-    ): JsonReaderBuilder3[A1, A2, B] = {
+    ): JsonReaderBuilder3[A1, A2, B] =
       new JsonReaderBuilder3[A1, A2, B](
         this,
         pos + 1,
@@ -133,33 +120,29 @@ object JsonReaderBuilder {
         readerDefaultValue.defaultValue,
         jsonReader
       )
-    }
 
-    def buildReader[Res](fun: (A1, A2) => Res): JsonReader[Res] = {
+    def buildReader[Res](fun: (A1, A2) => Res): JsonReader[Res] =
       buildReader(strict = false, fun)
-    }
 
-    def buildStrictReader[Res](fun: (A1, A2) => Res): JsonReader[Res] = {
+    def buildStrictReader[Res](fun: (A1, A2) => Res): JsonReader[Res] =
       buildReader(strict = true, fun)
-    }
 
     private def buildReader[Res](
         strict: Boolean,
         fun: (A1, A2) => Res
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       new SimpleJsonReader[Res](
         fieldsArray,
         arr => fun.tupled(value(arr)),
         strict
       )
-    }
 
     def selectReader[Res](
-        fun: ((A1, A2)) => JsonReader[_ <: Res]
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+        fun: ((A1, A2)) => JsonReader[? <: Res]
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       val simpleJsonReader = new SimpleJsonReader[(A1, A2)](
         fieldsArray,
@@ -167,8 +150,6 @@ object JsonReaderBuilder {
         strict = false
       )
       new SelectingJsonReader[(A1, A2), Res](simpleJsonReader)(fun)
-    }
-  }
 
   final class JsonReaderBuilder3[A1, A2, A3] private[JsonReaderBuilder] (
       prev: JsonReaderBuilder2[A1, A2],
@@ -176,31 +157,28 @@ object JsonReaderBuilder {
       name: String,
       defaultValue: Any,
       jsonReader: JsonReader[A3]
-  ) {
+  ):
 
     private[JsonReaderBuilder] def fields(
-        arr: Array[SimpleJsonReader.FieldDefinition[_]]
-    ): Unit = {
+        arr: Array[SimpleJsonReader.FieldDefinition[?]]
+    ): Unit =
       prev.fields(arr)
       arr(pos) =
         SimpleJsonReader.FieldDefinition[A3](name, defaultValue, jsonReader)
-    }
 
     private[JsonReaderBuilder] def value(extracted: Array[Any]): (A1, A2, A3) =
-      prev.value(extracted) match {
+      prev.value(extracted) match
         case (a1, a2) => (a1, a2, extracted(pos).asInstanceOf[A3])
-      }
 
     def addField[B](name: String, jsonReader: JsonReader[B])(implicit
         readerDefaultValue: JsonReaderDefaultValue[B]
-    ): JsonReaderBuilder4[A1, A2, A3, B] = {
+    ): JsonReaderBuilder4[A1, A2, A3, B] =
       addField[B](name)(readerDefaultValue, jsonReader)
-    }
 
     def addField[B](name: String)(implicit
         readerDefaultValue: JsonReaderDefaultValue[B],
         jsonReader: JsonReader[B]
-    ): JsonReaderBuilder4[A1, A2, A3, B] = {
+    ): JsonReaderBuilder4[A1, A2, A3, B] =
       new JsonReaderBuilder4[A1, A2, A3, B](
         this,
         pos + 1,
@@ -208,33 +186,29 @@ object JsonReaderBuilder {
         readerDefaultValue.defaultValue,
         jsonReader
       )
-    }
 
-    def buildReader[Res](fun: (A1, A2, A3) => Res): JsonReader[Res] = {
+    def buildReader[Res](fun: (A1, A2, A3) => Res): JsonReader[Res] =
       buildReader(strict = false, fun)
-    }
 
-    def buildStrictReader[Res](fun: (A1, A2, A3) => Res): JsonReader[Res] = {
+    def buildStrictReader[Res](fun: (A1, A2, A3) => Res): JsonReader[Res] =
       buildReader(strict = true, fun)
-    }
 
     private def buildReader[Res](
         strict: Boolean,
         fun: (A1, A2, A3) => Res
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       new SimpleJsonReader[Res](
         fieldsArray,
         arr => fun.tupled(value(arr)),
         strict
       )
-    }
 
     def selectReader[Res](
-        fun: ((A1, A2, A3)) => JsonReader[_ <: Res]
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+        fun: ((A1, A2, A3)) => JsonReader[? <: Res]
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       val simpleJsonReader = new SimpleJsonReader[(A1, A2, A3)](
         fieldsArray,
@@ -242,8 +216,6 @@ object JsonReaderBuilder {
         strict = false
       )
       new SelectingJsonReader[(A1, A2, A3), Res](simpleJsonReader)(fun)
-    }
-  }
 
   final class JsonReaderBuilder4[A1, A2, A3, A4] private[JsonReaderBuilder] (
       prev: JsonReaderBuilder3[A1, A2, A3],
@@ -251,32 +223,29 @@ object JsonReaderBuilder {
       name: String,
       defaultValue: Any,
       jsonReader: JsonReader[A4]
-  ) {
+  ):
 
     private[JsonReaderBuilder] def fields(
-        arr: Array[SimpleJsonReader.FieldDefinition[_]]
-    ): Unit = {
+        arr: Array[SimpleJsonReader.FieldDefinition[?]]
+    ): Unit =
       prev.fields(arr)
       arr(pos) =
         SimpleJsonReader.FieldDefinition[A4](name, defaultValue, jsonReader)
-    }
 
     private[JsonReaderBuilder] def value(
         extracted: Array[Any]
-    ): (A1, A2, A3, A4) = prev.value(extracted) match {
+    ): (A1, A2, A3, A4) = prev.value(extracted) match
       case (a1, a2, a3) => (a1, a2, a3, extracted(pos).asInstanceOf[A4])
-    }
 
     def addField[B](name: String, jsonReader: JsonReader[B])(implicit
         readerDefaultValue: JsonReaderDefaultValue[B]
-    ): JsonReaderBuilder5[A1, A2, A3, A4, B] = {
+    ): JsonReaderBuilder5[A1, A2, A3, A4, B] =
       addField[B](name)(readerDefaultValue, jsonReader)
-    }
 
     def addField[B](name: String)(implicit
         readerDefaultValue: JsonReaderDefaultValue[B],
         jsonReader: JsonReader[B]
-    ): JsonReaderBuilder5[A1, A2, A3, A4, B] = {
+    ): JsonReaderBuilder5[A1, A2, A3, A4, B] =
       new JsonReaderBuilder5[A1, A2, A3, A4, B](
         this,
         pos + 1,
@@ -284,35 +253,31 @@ object JsonReaderBuilder {
         readerDefaultValue.defaultValue,
         jsonReader
       )
-    }
 
-    def buildReader[Res](fun: (A1, A2, A3, A4) => Res): JsonReader[Res] = {
+    def buildReader[Res](fun: (A1, A2, A3, A4) => Res): JsonReader[Res] =
       buildReader(strict = false, fun)
-    }
 
     def buildStrictReader[Res](
         fun: (A1, A2, A3, A4) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = true, fun)
-    }
 
     private def buildReader[Res](
         strict: Boolean,
         fun: (A1, A2, A3, A4) => Res
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       new SimpleJsonReader[Res](
         fieldsArray,
         arr => fun.tupled(value(arr)),
         strict
       )
-    }
 
     def selectReader[Res](
-        fun: ((A1, A2, A3, A4)) => JsonReader[_ <: Res]
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+        fun: ((A1, A2, A3, A4)) => JsonReader[? <: Res]
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       val simpleJsonReader = new SimpleJsonReader[(A1, A2, A3, A4)](
         fieldsArray,
@@ -320,8 +285,6 @@ object JsonReaderBuilder {
         strict = false
       )
       new SelectingJsonReader[(A1, A2, A3, A4), Res](simpleJsonReader)(fun)
-    }
-  }
 
   final class JsonReaderBuilder5[
       A1,
@@ -335,32 +298,29 @@ object JsonReaderBuilder {
       name: String,
       defaultValue: Any,
       jsonReader: JsonReader[A5]
-  ) {
+  ):
 
     private[JsonReaderBuilder] def fields(
-        arr: Array[SimpleJsonReader.FieldDefinition[_]]
-    ): Unit = {
+        arr: Array[SimpleJsonReader.FieldDefinition[?]]
+    ): Unit =
       prev.fields(arr)
       arr(pos) =
         SimpleJsonReader.FieldDefinition[A5](name, defaultValue, jsonReader)
-    }
 
     private[JsonReaderBuilder] def value(
         extracted: Array[Any]
-    ): (A1, A2, A3, A4, A5) = prev.value(extracted) match {
+    ): (A1, A2, A3, A4, A5) = prev.value(extracted) match
       case (a1, a2, a3, a4) => (a1, a2, a3, a4, extracted(pos).asInstanceOf[A5])
-    }
 
     def addField[B](name: String, jsonReader: JsonReader[B])(implicit
         readerDefaultValue: JsonReaderDefaultValue[B]
-    ): JsonReaderBuilder6[A1, A2, A3, A4, A5, B] = {
+    ): JsonReaderBuilder6[A1, A2, A3, A4, A5, B] =
       addField[B](name)(readerDefaultValue, jsonReader)
-    }
 
     def addField[B](name: String)(implicit
         readerDefaultValue: JsonReaderDefaultValue[B],
         jsonReader: JsonReader[B]
-    ): JsonReaderBuilder6[A1, A2, A3, A4, A5, B] = {
+    ): JsonReaderBuilder6[A1, A2, A3, A4, A5, B] =
       new JsonReaderBuilder6[A1, A2, A3, A4, A5, B](
         this,
         pos + 1,
@@ -368,35 +328,31 @@ object JsonReaderBuilder {
         readerDefaultValue.defaultValue,
         jsonReader
       )
-    }
 
-    def buildReader[Res](fun: (A1, A2, A3, A4, A5) => Res): JsonReader[Res] = {
+    def buildReader[Res](fun: (A1, A2, A3, A4, A5) => Res): JsonReader[Res] =
       buildReader(strict = false, fun)
-    }
 
     def buildStrictReader[Res](
         fun: (A1, A2, A3, A4, A5) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = true, fun)
-    }
 
     private def buildReader[Res](
         strict: Boolean,
         fun: (A1, A2, A3, A4, A5) => Res
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       new SimpleJsonReader[Res](
         fieldsArray,
         arr => fun.tupled(value(arr)),
         strict
       )
-    }
 
     def selectReader[Res](
-        fun: ((A1, A2, A3, A4, A5)) => JsonReader[_ <: Res]
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+        fun: ((A1, A2, A3, A4, A5)) => JsonReader[? <: Res]
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       val simpleJsonReader = new SimpleJsonReader[(A1, A2, A3, A4, A5)](
         fieldsArray,
@@ -404,8 +360,6 @@ object JsonReaderBuilder {
         strict = false
       )
       new SelectingJsonReader[(A1, A2, A3, A4, A5), Res](simpleJsonReader)(fun)
-    }
-  }
 
   final class JsonReaderBuilder6[
       A1,
@@ -420,33 +374,30 @@ object JsonReaderBuilder {
       name: String,
       defaultValue: Any,
       jsonReader: JsonReader[A6]
-  ) {
+  ):
 
     private[JsonReaderBuilder] def fields(
-        arr: Array[SimpleJsonReader.FieldDefinition[_]]
-    ): Unit = {
+        arr: Array[SimpleJsonReader.FieldDefinition[?]]
+    ): Unit =
       prev.fields(arr)
       arr(pos) =
         SimpleJsonReader.FieldDefinition[A6](name, defaultValue, jsonReader)
-    }
 
     private[JsonReaderBuilder] def value(
         extracted: Array[Any]
-    ): (A1, A2, A3, A4, A5, A6) = prev.value(extracted) match {
+    ): (A1, A2, A3, A4, A5, A6) = prev.value(extracted) match
       case (a1, a2, a3, a4, a5) =>
         (a1, a2, a3, a4, a5, extracted(pos).asInstanceOf[A6])
-    }
 
     def addField[B](name: String, jsonReader: JsonReader[B])(implicit
         readerDefaultValue: JsonReaderDefaultValue[B]
-    ): JsonReaderBuilder7[A1, A2, A3, A4, A5, A6, B] = {
+    ): JsonReaderBuilder7[A1, A2, A3, A4, A5, A6, B] =
       addField[B](name)(readerDefaultValue, jsonReader)
-    }
 
     def addField[B](name: String)(implicit
         readerDefaultValue: JsonReaderDefaultValue[B],
         jsonReader: JsonReader[B]
-    ): JsonReaderBuilder7[A1, A2, A3, A4, A5, A6, B] = {
+    ): JsonReaderBuilder7[A1, A2, A3, A4, A5, A6, B] =
       new JsonReaderBuilder7[A1, A2, A3, A4, A5, A6, B](
         this,
         pos + 1,
@@ -454,37 +405,33 @@ object JsonReaderBuilder {
         readerDefaultValue.defaultValue,
         jsonReader
       )
-    }
 
     def buildReader[Res](
         fun: (A1, A2, A3, A4, A5, A6) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = false, fun)
-    }
 
     def buildStrictReader[Res](
         fun: (A1, A2, A3, A4, A5, A6) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = true, fun)
-    }
 
     private def buildReader[Res](
         strict: Boolean,
         fun: (A1, A2, A3, A4, A5, A6) => Res
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       new SimpleJsonReader[Res](
         fieldsArray,
         arr => fun.tupled(value(arr)),
         strict
       )
-    }
 
     def selectReader[Res](
-        fun: ((A1, A2, A3, A4, A5, A6)) => JsonReader[_ <: Res]
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+        fun: ((A1, A2, A3, A4, A5, A6)) => JsonReader[? <: Res]
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       val simpleJsonReader = new SimpleJsonReader[(A1, A2, A3, A4, A5, A6)](
         fieldsArray,
@@ -494,8 +441,6 @@ object JsonReaderBuilder {
       new SelectingJsonReader[(A1, A2, A3, A4, A5, A6), Res](simpleJsonReader)(
         fun
       )
-    }
-  }
 
   final class JsonReaderBuilder7[
       A1,
@@ -511,33 +456,30 @@ object JsonReaderBuilder {
       name: String,
       defaultValue: Any,
       jsonReader: JsonReader[A7]
-  ) {
+  ):
 
     private[JsonReaderBuilder] def fields(
-        arr: Array[SimpleJsonReader.FieldDefinition[_]]
-    ): Unit = {
+        arr: Array[SimpleJsonReader.FieldDefinition[?]]
+    ): Unit =
       prev.fields(arr)
       arr(pos) =
         SimpleJsonReader.FieldDefinition[A7](name, defaultValue, jsonReader)
-    }
 
     private[JsonReaderBuilder] def value(
         extracted: Array[Any]
-    ): (A1, A2, A3, A4, A5, A6, A7) = prev.value(extracted) match {
+    ): (A1, A2, A3, A4, A5, A6, A7) = prev.value(extracted) match
       case (a1, a2, a3, a4, a5, a6) =>
         (a1, a2, a3, a4, a5, a6, extracted(pos).asInstanceOf[A7])
-    }
 
     def addField[B](name: String, jsonReader: JsonReader[B])(implicit
         readerDefaultValue: JsonReaderDefaultValue[B]
-    ): JsonReaderBuilder8[A1, A2, A3, A4, A5, A6, A7, B] = {
+    ): JsonReaderBuilder8[A1, A2, A3, A4, A5, A6, A7, B] =
       addField[B](name)(readerDefaultValue, jsonReader)
-    }
 
     def addField[B](name: String)(implicit
         readerDefaultValue: JsonReaderDefaultValue[B],
         jsonReader: JsonReader[B]
-    ): JsonReaderBuilder8[A1, A2, A3, A4, A5, A6, A7, B] = {
+    ): JsonReaderBuilder8[A1, A2, A3, A4, A5, A6, A7, B] =
       new JsonReaderBuilder8[A1, A2, A3, A4, A5, A6, A7, B](
         this,
         pos + 1,
@@ -545,37 +487,33 @@ object JsonReaderBuilder {
         readerDefaultValue.defaultValue,
         jsonReader
       )
-    }
 
     def buildReader[Res](
         fun: (A1, A2, A3, A4, A5, A6, A7) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = false, fun)
-    }
 
     def buildStrictReader[Res](
         fun: (A1, A2, A3, A4, A5, A6, A7) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = true, fun)
-    }
 
     private def buildReader[Res](
         strict: Boolean,
         fun: (A1, A2, A3, A4, A5, A6, A7) => Res
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       new SimpleJsonReader[Res](
         fieldsArray,
         arr => fun.tupled(value(arr)),
         strict
       )
-    }
 
     def selectReader[Res](
-        fun: ((A1, A2, A3, A4, A5, A6, A7)) => JsonReader[_ <: Res]
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+        fun: ((A1, A2, A3, A4, A5, A6, A7)) => JsonReader[? <: Res]
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       val simpleJsonReader = new SimpleJsonReader[(A1, A2, A3, A4, A5, A6, A7)](
         fieldsArray,
@@ -585,8 +523,6 @@ object JsonReaderBuilder {
       new SelectingJsonReader[(A1, A2, A3, A4, A5, A6, A7), Res](
         simpleJsonReader
       )(fun)
-    }
-  }
 
   final class JsonReaderBuilder8[
       A1,
@@ -603,33 +539,30 @@ object JsonReaderBuilder {
       name: String,
       defaultValue: Any,
       jsonReader: JsonReader[A8]
-  ) {
+  ):
 
     private[JsonReaderBuilder] def fields(
-        arr: Array[SimpleJsonReader.FieldDefinition[_]]
-    ): Unit = {
+        arr: Array[SimpleJsonReader.FieldDefinition[?]]
+    ): Unit =
       prev.fields(arr)
       arr(pos) =
         SimpleJsonReader.FieldDefinition[A8](name, defaultValue, jsonReader)
-    }
 
     private[JsonReaderBuilder] def value(
         extracted: Array[Any]
-    ): (A1, A2, A3, A4, A5, A6, A7, A8) = prev.value(extracted) match {
+    ): (A1, A2, A3, A4, A5, A6, A7, A8) = prev.value(extracted) match
       case (a1, a2, a3, a4, a5, a6, a7) =>
         (a1, a2, a3, a4, a5, a6, a7, extracted(pos).asInstanceOf[A8])
-    }
 
     def addField[B](name: String, jsonReader: JsonReader[B])(implicit
         readerDefaultValue: JsonReaderDefaultValue[B]
-    ): JsonReaderBuilder9[A1, A2, A3, A4, A5, A6, A7, A8, B] = {
+    ): JsonReaderBuilder9[A1, A2, A3, A4, A5, A6, A7, A8, B] =
       addField[B](name)(readerDefaultValue, jsonReader)
-    }
 
     def addField[B](name: String)(implicit
         readerDefaultValue: JsonReaderDefaultValue[B],
         jsonReader: JsonReader[B]
-    ): JsonReaderBuilder9[A1, A2, A3, A4, A5, A6, A7, A8, B] = {
+    ): JsonReaderBuilder9[A1, A2, A3, A4, A5, A6, A7, A8, B] =
       new JsonReaderBuilder9[A1, A2, A3, A4, A5, A6, A7, A8, B](
         this,
         pos + 1,
@@ -637,37 +570,33 @@ object JsonReaderBuilder {
         readerDefaultValue.defaultValue,
         jsonReader
       )
-    }
 
     def buildReader[Res](
         fun: (A1, A2, A3, A4, A5, A6, A7, A8) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = false, fun)
-    }
 
     def buildStrictReader[Res](
         fun: (A1, A2, A3, A4, A5, A6, A7, A8) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = true, fun)
-    }
 
     private def buildReader[Res](
         strict: Boolean,
         fun: (A1, A2, A3, A4, A5, A6, A7, A8) => Res
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       new SimpleJsonReader[Res](
         fieldsArray,
         arr => fun.tupled(value(arr)),
         strict
       )
-    }
 
     def selectReader[Res](
-        fun: ((A1, A2, A3, A4, A5, A6, A7, A8)) => JsonReader[_ <: Res]
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+        fun: ((A1, A2, A3, A4, A5, A6, A7, A8)) => JsonReader[? <: Res]
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       val simpleJsonReader =
         new SimpleJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8)](
@@ -678,8 +607,6 @@ object JsonReaderBuilder {
       new SelectingJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8), Res](
         simpleJsonReader
       )(fun)
-    }
-  }
 
   final class JsonReaderBuilder9[
       A1,
@@ -697,33 +624,30 @@ object JsonReaderBuilder {
       name: String,
       defaultValue: Any,
       jsonReader: JsonReader[A9]
-  ) {
+  ):
 
     private[JsonReaderBuilder] def fields(
-        arr: Array[SimpleJsonReader.FieldDefinition[_]]
-    ): Unit = {
+        arr: Array[SimpleJsonReader.FieldDefinition[?]]
+    ): Unit =
       prev.fields(arr)
       arr(pos) =
         SimpleJsonReader.FieldDefinition[A9](name, defaultValue, jsonReader)
-    }
 
     private[JsonReaderBuilder] def value(
         extracted: Array[Any]
-    ): (A1, A2, A3, A4, A5, A6, A7, A8, A9) = prev.value(extracted) match {
+    ): (A1, A2, A3, A4, A5, A6, A7, A8, A9) = prev.value(extracted) match
       case (a1, a2, a3, a4, a5, a6, a7, a8) =>
         (a1, a2, a3, a4, a5, a6, a7, a8, extracted(pos).asInstanceOf[A9])
-    }
 
     def addField[B](name: String, jsonReader: JsonReader[B])(implicit
         readerDefaultValue: JsonReaderDefaultValue[B]
-    ): JsonReaderBuilder10[A1, A2, A3, A4, A5, A6, A7, A8, A9, B] = {
+    ): JsonReaderBuilder10[A1, A2, A3, A4, A5, A6, A7, A8, A9, B] =
       addField[B](name)(readerDefaultValue, jsonReader)
-    }
 
     def addField[B](name: String)(implicit
         readerDefaultValue: JsonReaderDefaultValue[B],
         jsonReader: JsonReader[B]
-    ): JsonReaderBuilder10[A1, A2, A3, A4, A5, A6, A7, A8, A9, B] = {
+    ): JsonReaderBuilder10[A1, A2, A3, A4, A5, A6, A7, A8, A9, B] =
       new JsonReaderBuilder10[A1, A2, A3, A4, A5, A6, A7, A8, A9, B](
         this,
         pos + 1,
@@ -731,37 +655,33 @@ object JsonReaderBuilder {
         readerDefaultValue.defaultValue,
         jsonReader
       )
-    }
 
     def buildReader[Res](
         fun: (A1, A2, A3, A4, A5, A6, A7, A8, A9) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = false, fun)
-    }
 
     def buildStrictReader[Res](
         fun: (A1, A2, A3, A4, A5, A6, A7, A8, A9) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = true, fun)
-    }
 
     private def buildReader[Res](
         strict: Boolean,
         fun: (A1, A2, A3, A4, A5, A6, A7, A8, A9) => Res
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       new SimpleJsonReader[Res](
         fieldsArray,
         arr => fun.tupled(value(arr)),
         strict
       )
-    }
 
     def selectReader[Res](
-        fun: ((A1, A2, A3, A4, A5, A6, A7, A8, A9)) => JsonReader[_ <: Res]
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+        fun: ((A1, A2, A3, A4, A5, A6, A7, A8, A9)) => JsonReader[? <: Res]
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       val simpleJsonReader =
         new SimpleJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9)](
@@ -772,8 +692,6 @@ object JsonReaderBuilder {
       new SelectingJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9), Res](
         simpleJsonReader
       )(fun)
-    }
-  }
 
   final class JsonReaderBuilder10[
       A1,
@@ -792,33 +710,30 @@ object JsonReaderBuilder {
       name: String,
       defaultValue: Any,
       jsonReader: JsonReader[A10]
-  ) {
+  ):
 
     private[JsonReaderBuilder] def fields(
-        arr: Array[SimpleJsonReader.FieldDefinition[_]]
-    ): Unit = {
+        arr: Array[SimpleJsonReader.FieldDefinition[?]]
+    ): Unit =
       prev.fields(arr)
       arr(pos) =
         SimpleJsonReader.FieldDefinition[A10](name, defaultValue, jsonReader)
-    }
 
     private[JsonReaderBuilder] def value(
         extracted: Array[Any]
-    ): (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) = prev.value(extracted) match {
+    ): (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) = prev.value(extracted) match
       case (a1, a2, a3, a4, a5, a6, a7, a8, a9) =>
         (a1, a2, a3, a4, a5, a6, a7, a8, a9, extracted(pos).asInstanceOf[A10])
-    }
 
     def addField[B](name: String, jsonReader: JsonReader[B])(implicit
         readerDefaultValue: JsonReaderDefaultValue[B]
-    ): JsonReaderBuilder11[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, B] = {
+    ): JsonReaderBuilder11[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, B] =
       addField[B](name)(readerDefaultValue, jsonReader)
-    }
 
     def addField[B](name: String)(implicit
         readerDefaultValue: JsonReaderDefaultValue[B],
         jsonReader: JsonReader[B]
-    ): JsonReaderBuilder11[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, B] = {
+    ): JsonReaderBuilder11[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, B] =
       new JsonReaderBuilder11[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, B](
         this,
         pos + 1,
@@ -826,37 +741,33 @@ object JsonReaderBuilder {
         readerDefaultValue.defaultValue,
         jsonReader
       )
-    }
 
     def buildReader[Res](
         fun: (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = false, fun)
-    }
 
     def buildStrictReader[Res](
         fun: (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = true, fun)
-    }
 
     private def buildReader[Res](
         strict: Boolean,
         fun: (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) => Res
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       new SimpleJsonReader[Res](
         fieldsArray,
         arr => fun.tupled(value(arr)),
         strict
       )
-    }
 
     def selectReader[Res](
-        fun: ((A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)) => JsonReader[_ <: Res]
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+        fun: ((A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)) => JsonReader[? <: Res]
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       val simpleJsonReader =
         new SimpleJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)](
@@ -867,8 +778,6 @@ object JsonReaderBuilder {
       new SelectingJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10), Res](
         simpleJsonReader
       )(fun)
-    }
-  }
 
   final class JsonReaderBuilder11[
       A1,
@@ -888,20 +797,19 @@ object JsonReaderBuilder {
       name: String,
       defaultValue: Any,
       jsonReader: JsonReader[A11]
-  ) {
+  ):
 
     private[JsonReaderBuilder] def fields(
-        arr: Array[SimpleJsonReader.FieldDefinition[_]]
-    ): Unit = {
+        arr: Array[SimpleJsonReader.FieldDefinition[?]]
+    ): Unit =
       prev.fields(arr)
       arr(pos) =
         SimpleJsonReader.FieldDefinition[A11](name, defaultValue, jsonReader)
-    }
 
     private[JsonReaderBuilder] def value(
         extracted: Array[Any]
     ): (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) =
-      prev.value(extracted) match {
+      prev.value(extracted) match
         case (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) =>
           (
             a1,
@@ -916,18 +824,16 @@ object JsonReaderBuilder {
             a10,
             extracted(pos).asInstanceOf[A11]
           )
-      }
 
     def addField[B](name: String, jsonReader: JsonReader[B])(implicit
         readerDefaultValue: JsonReaderDefaultValue[B]
-    ): JsonReaderBuilder12[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, B] = {
+    ): JsonReaderBuilder12[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, B] =
       addField[B](name)(readerDefaultValue, jsonReader)
-    }
 
     def addField[B](name: String)(implicit
         readerDefaultValue: JsonReaderDefaultValue[B],
         jsonReader: JsonReader[B]
-    ): JsonReaderBuilder12[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, B] = {
+    ): JsonReaderBuilder12[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, B] =
       new JsonReaderBuilder12[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, B](
         this,
         pos + 1,
@@ -935,39 +841,35 @@ object JsonReaderBuilder {
         readerDefaultValue.defaultValue,
         jsonReader
       )
-    }
 
     def buildReader[Res](
         fun: (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = false, fun)
-    }
 
     def buildStrictReader[Res](
         fun: (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = true, fun)
-    }
 
     private def buildReader[Res](
         strict: Boolean,
         fun: (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) => Res
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       new SimpleJsonReader[Res](
         fieldsArray,
         arr => fun.tupled(value(arr)),
         strict
       )
-    }
 
     def selectReader[Res](
         fun: (
             (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)
-        ) => JsonReader[_ <: Res]
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+        ) => JsonReader[? <: Res]
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       val simpleJsonReader =
         new SimpleJsonReader[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)](
@@ -979,8 +881,6 @@ object JsonReaderBuilder {
         (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11),
         Res
       ](simpleJsonReader)(fun)
-    }
-  }
 
   final class JsonReaderBuilder12[
       A1,
@@ -1001,20 +901,19 @@ object JsonReaderBuilder {
       name: String,
       defaultValue: Any,
       jsonReader: JsonReader[A12]
-  ) {
+  ):
 
     private[JsonReaderBuilder] def fields(
-        arr: Array[SimpleJsonReader.FieldDefinition[_]]
-    ): Unit = {
+        arr: Array[SimpleJsonReader.FieldDefinition[?]]
+    ): Unit =
       prev.fields(arr)
       arr(pos) =
         SimpleJsonReader.FieldDefinition[A12](name, defaultValue, jsonReader)
-    }
 
     private[JsonReaderBuilder] def value(
         extracted: Array[Any]
     ): (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) =
-      prev.value(extracted) match {
+      prev.value(extracted) match
         case (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) =>
           (
             a1,
@@ -1030,7 +929,6 @@ object JsonReaderBuilder {
             a11,
             extracted(pos).asInstanceOf[A12]
           )
-      }
 
     def addField[B](name: String, jsonReader: JsonReader[B])(implicit
         readerDefaultValue: JsonReaderDefaultValue[B]
@@ -1048,9 +946,8 @@ object JsonReaderBuilder {
       A11,
       A12,
       B
-    ] = {
+    ] =
       addField[B](name)(readerDefaultValue, jsonReader)
-    }
 
     def addField[B](name: String)(implicit
         readerDefaultValue: JsonReaderDefaultValue[B],
@@ -1069,7 +966,7 @@ object JsonReaderBuilder {
       A11,
       A12,
       B
-    ] = {
+    ] =
       new JsonReaderBuilder13[
         A1,
         A2,
@@ -1085,39 +982,35 @@ object JsonReaderBuilder {
         A12,
         B
       ](this, pos + 1, name, readerDefaultValue.defaultValue, jsonReader)
-    }
 
     def buildReader[Res](
         fun: (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = false, fun)
-    }
 
     def buildStrictReader[Res](
         fun: (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = true, fun)
-    }
 
     private def buildReader[Res](
         strict: Boolean,
         fun: (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) => Res
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       new SimpleJsonReader[Res](
         fieldsArray,
         arr => fun.tupled(value(arr)),
         strict
       )
-    }
 
     def selectReader[Res](
         fun: (
             (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)
-        ) => JsonReader[_ <: Res]
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+        ) => JsonReader[? <: Res]
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       val simpleJsonReader = new SimpleJsonReader[
         (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)
@@ -1126,8 +1019,6 @@ object JsonReaderBuilder {
         (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12),
         Res
       ](simpleJsonReader)(fun)
-    }
-  }
 
   final class JsonReaderBuilder13[
       A1,
@@ -1162,20 +1053,19 @@ object JsonReaderBuilder {
       name: String,
       defaultValue: Any,
       jsonReader: JsonReader[A13]
-  ) {
+  ):
 
     private[JsonReaderBuilder] def fields(
-        arr: Array[SimpleJsonReader.FieldDefinition[_]]
-    ): Unit = {
+        arr: Array[SimpleJsonReader.FieldDefinition[?]]
+    ): Unit =
       prev.fields(arr)
       arr(pos) =
         SimpleJsonReader.FieldDefinition[A13](name, defaultValue, jsonReader)
-    }
 
     private[JsonReaderBuilder] def value(
         extracted: Array[Any]
     ): (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) =
-      prev.value(extracted) match {
+      prev.value(extracted) match
         case (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) =>
           (
             a1,
@@ -1192,7 +1082,6 @@ object JsonReaderBuilder {
             a12,
             extracted(pos).asInstanceOf[A13]
           )
-      }
 
     def addField[B](name: String, jsonReader: JsonReader[B])(implicit
         readerDefaultValue: JsonReaderDefaultValue[B]
@@ -1211,9 +1100,8 @@ object JsonReaderBuilder {
       A12,
       A13,
       B
-    ] = {
+    ] =
       addField[B](name)(readerDefaultValue, jsonReader)
-    }
 
     def addField[B](name: String)(implicit
         readerDefaultValue: JsonReaderDefaultValue[B],
@@ -1233,7 +1121,7 @@ object JsonReaderBuilder {
       A12,
       A13,
       B
-    ] = {
+    ] =
       new JsonReaderBuilder14[
         A1,
         A2,
@@ -1250,39 +1138,35 @@ object JsonReaderBuilder {
         A13,
         B
       ](this, pos + 1, name, readerDefaultValue.defaultValue, jsonReader)
-    }
 
     def buildReader[Res](
         fun: (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = false, fun)
-    }
 
     def buildStrictReader[Res](
         fun: (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = true, fun)
-    }
 
     private def buildReader[Res](
         strict: Boolean,
         fun: (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) => Res
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       new SimpleJsonReader[Res](
         fieldsArray,
         arr => fun.tupled(value(arr)),
         strict
       )
-    }
 
     def selectReader[Res](
         fun: (
             (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13)
-        ) => JsonReader[_ <: Res]
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+        ) => JsonReader[? <: Res]
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       val simpleJsonReader = new SimpleJsonReader[
         (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13)
@@ -1291,8 +1175,6 @@ object JsonReaderBuilder {
         (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13),
         Res
       ](simpleJsonReader)(fun)
-    }
-  }
 
   final class JsonReaderBuilder14[
       A1,
@@ -1329,20 +1211,19 @@ object JsonReaderBuilder {
       name: String,
       defaultValue: Any,
       jsonReader: JsonReader[A14]
-  ) {
+  ):
 
     private[JsonReaderBuilder] def fields(
-        arr: Array[SimpleJsonReader.FieldDefinition[_]]
-    ): Unit = {
+        arr: Array[SimpleJsonReader.FieldDefinition[?]]
+    ): Unit =
       prev.fields(arr)
       arr(pos) =
         SimpleJsonReader.FieldDefinition[A14](name, defaultValue, jsonReader)
-    }
 
     private[JsonReaderBuilder] def value(
         extracted: Array[Any]
     ): (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14) =
-      prev.value(extracted) match {
+      prev.value(extracted) match
         case (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) =>
           (
             a1,
@@ -1360,7 +1241,6 @@ object JsonReaderBuilder {
             a13,
             extracted(pos).asInstanceOf[A14]
           )
-      }
 
     def addField[B](name: String, jsonReader: JsonReader[B])(implicit
         readerDefaultValue: JsonReaderDefaultValue[B]
@@ -1380,9 +1260,8 @@ object JsonReaderBuilder {
       A13,
       A14,
       B
-    ] = {
+    ] =
       addField[B](name)(readerDefaultValue, jsonReader)
-    }
 
     def addField[B](name: String)(implicit
         readerDefaultValue: JsonReaderDefaultValue[B],
@@ -1403,7 +1282,7 @@ object JsonReaderBuilder {
       A13,
       A14,
       B
-    ] = {
+    ] =
       new JsonReaderBuilder15[
         A1,
         A2,
@@ -1421,7 +1300,6 @@ object JsonReaderBuilder {
         A14,
         B
       ](this, pos + 1, name, readerDefaultValue.defaultValue, jsonReader)
-    }
 
     def buildReader[Res](
         fun: (
@@ -1440,9 +1318,8 @@ object JsonReaderBuilder {
             A13,
             A14
         ) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = false, fun)
-    }
 
     def buildStrictReader[Res](
         fun: (
@@ -1461,9 +1338,8 @@ object JsonReaderBuilder {
             A13,
             A14
         ) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = true, fun)
-    }
 
     private def buildReader[Res](
         strict: Boolean,
@@ -1483,22 +1359,21 @@ object JsonReaderBuilder {
             A13,
             A14
         ) => Res
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       new SimpleJsonReader[Res](
         fieldsArray,
         arr => fun.tupled(value(arr)),
         strict
       )
-    }
 
     def selectReader[Res](
         fun: (
             (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14)
-        ) => JsonReader[_ <: Res]
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+        ) => JsonReader[? <: Res]
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       val simpleJsonReader = new SimpleJsonReader[
         (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14)
@@ -1507,8 +1382,6 @@ object JsonReaderBuilder {
         (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14),
         Res
       ](simpleJsonReader)(fun)
-    }
-  }
 
   final class JsonReaderBuilder15[
       A1,
@@ -1547,20 +1420,19 @@ object JsonReaderBuilder {
       name: String,
       defaultValue: Any,
       jsonReader: JsonReader[A15]
-  ) {
+  ):
 
     private[JsonReaderBuilder] def fields(
-        arr: Array[SimpleJsonReader.FieldDefinition[_]]
-    ): Unit = {
+        arr: Array[SimpleJsonReader.FieldDefinition[?]]
+    ): Unit =
       prev.fields(arr)
       arr(pos) =
         SimpleJsonReader.FieldDefinition[A15](name, defaultValue, jsonReader)
-    }
 
     private[JsonReaderBuilder] def value(
         extracted: Array[Any]
     ): (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15) =
-      prev.value(extracted) match {
+      prev.value(extracted) match
         case (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) =>
           (
             a1,
@@ -1579,7 +1451,6 @@ object JsonReaderBuilder {
             a14,
             extracted(pos).asInstanceOf[A15]
           )
-      }
 
     def addField[B](name: String, jsonReader: JsonReader[B])(implicit
         readerDefaultValue: JsonReaderDefaultValue[B]
@@ -1600,9 +1471,8 @@ object JsonReaderBuilder {
       A14,
       A15,
       B
-    ] = {
+    ] =
       addField[B](name)(readerDefaultValue, jsonReader)
-    }
 
     def addField[B](name: String)(implicit
         readerDefaultValue: JsonReaderDefaultValue[B],
@@ -1624,7 +1494,7 @@ object JsonReaderBuilder {
       A14,
       A15,
       B
-    ] = {
+    ] =
       new JsonReaderBuilder16[
         A1,
         A2,
@@ -1643,7 +1513,6 @@ object JsonReaderBuilder {
         A15,
         B
       ](this, pos + 1, name, readerDefaultValue.defaultValue, jsonReader)
-    }
 
     def buildReader[Res](
         fun: (
@@ -1663,9 +1532,8 @@ object JsonReaderBuilder {
             A14,
             A15
         ) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = false, fun)
-    }
 
     def buildStrictReader[Res](
         fun: (
@@ -1685,9 +1553,8 @@ object JsonReaderBuilder {
             A14,
             A15
         ) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = true, fun)
-    }
 
     private def buildReader[Res](
         strict: Boolean,
@@ -1708,22 +1575,21 @@ object JsonReaderBuilder {
             A14,
             A15
         ) => Res
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       new SimpleJsonReader[Res](
         fieldsArray,
         arr => fun.tupled(value(arr)),
         strict
       )
-    }
 
     def selectReader[Res](
         fun: (
             (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15)
-        ) => JsonReader[_ <: Res]
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+        ) => JsonReader[? <: Res]
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       val simpleJsonReader = new SimpleJsonReader[
         (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15)
@@ -1732,8 +1598,6 @@ object JsonReaderBuilder {
         (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15),
         Res
       ](simpleJsonReader)(fun)
-    }
-  }
 
   final class JsonReaderBuilder16[
       A1,
@@ -1774,20 +1638,19 @@ object JsonReaderBuilder {
       name: String,
       defaultValue: Any,
       jsonReader: JsonReader[A16]
-  ) {
+  ):
 
     private[JsonReaderBuilder] def fields(
-        arr: Array[SimpleJsonReader.FieldDefinition[_]]
-    ): Unit = {
+        arr: Array[SimpleJsonReader.FieldDefinition[?]]
+    ): Unit =
       prev.fields(arr)
       arr(pos) =
         SimpleJsonReader.FieldDefinition[A16](name, defaultValue, jsonReader)
-    }
 
     private[JsonReaderBuilder] def value(
         extracted: Array[Any]
     ): (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16) =
-      prev.value(extracted) match {
+      prev.value(extracted) match
         case (
               a1,
               a2,
@@ -1823,7 +1686,6 @@ object JsonReaderBuilder {
             a15,
             extracted(pos).asInstanceOf[A16]
           )
-      }
 
     def addField[B](name: String, jsonReader: JsonReader[B])(implicit
         readerDefaultValue: JsonReaderDefaultValue[B]
@@ -1845,9 +1707,8 @@ object JsonReaderBuilder {
       A15,
       A16,
       B
-    ] = {
+    ] =
       addField[B](name)(readerDefaultValue, jsonReader)
-    }
 
     def addField[B](name: String)(implicit
         readerDefaultValue: JsonReaderDefaultValue[B],
@@ -1870,7 +1731,7 @@ object JsonReaderBuilder {
       A15,
       A16,
       B
-    ] = {
+    ] =
       new JsonReaderBuilder17[
         A1,
         A2,
@@ -1890,7 +1751,6 @@ object JsonReaderBuilder {
         A16,
         B
       ](this, pos + 1, name, readerDefaultValue.defaultValue, jsonReader)
-    }
 
     def buildReader[Res](
         fun: (
@@ -1911,9 +1771,8 @@ object JsonReaderBuilder {
             A15,
             A16
         ) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = false, fun)
-    }
 
     def buildStrictReader[Res](
         fun: (
@@ -1934,9 +1793,8 @@ object JsonReaderBuilder {
             A15,
             A16
         ) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = true, fun)
-    }
 
     private def buildReader[Res](
         strict: Boolean,
@@ -1958,15 +1816,14 @@ object JsonReaderBuilder {
             A15,
             A16
         ) => Res
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       new SimpleJsonReader[Res](
         fieldsArray,
         arr => fun.tupled(value(arr)),
         strict
       )
-    }
 
     def selectReader[Res](
         fun: (
@@ -1988,9 +1845,9 @@ object JsonReaderBuilder {
                 A15,
                 A16
             )
-        ) => JsonReader[_ <: Res]
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+        ) => JsonReader[? <: Res]
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       val simpleJsonReader = new SimpleJsonReader[
         (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16)
@@ -1999,8 +1856,6 @@ object JsonReaderBuilder {
         (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16),
         Res
       ](simpleJsonReader)(fun)
-    }
-  }
 
   final class JsonReaderBuilder17[
       A1,
@@ -2043,15 +1898,14 @@ object JsonReaderBuilder {
       name: String,
       defaultValue: Any,
       jsonReader: JsonReader[A17]
-  ) {
+  ):
 
     private[JsonReaderBuilder] def fields(
-        arr: Array[SimpleJsonReader.FieldDefinition[_]]
-    ): Unit = {
+        arr: Array[SimpleJsonReader.FieldDefinition[?]]
+    ): Unit =
       prev.fields(arr)
       arr(pos) =
         SimpleJsonReader.FieldDefinition[A17](name, defaultValue, jsonReader)
-    }
 
     private[JsonReaderBuilder] def value(extracted: Array[Any]): (
         A1,
@@ -2071,7 +1925,7 @@ object JsonReaderBuilder {
         A15,
         A16,
         A17
-    ) = prev.value(extracted) match {
+    ) = prev.value(extracted) match
       case (
             a1,
             a2,
@@ -2109,7 +1963,6 @@ object JsonReaderBuilder {
           a16,
           extracted(pos).asInstanceOf[A17]
         )
-    }
 
     def addField[B](name: String, jsonReader: JsonReader[B])(implicit
         readerDefaultValue: JsonReaderDefaultValue[B]
@@ -2132,9 +1985,8 @@ object JsonReaderBuilder {
       A16,
       A17,
       B
-    ] = {
+    ] =
       addField[B](name)(readerDefaultValue, jsonReader)
-    }
 
     def addField[B](name: String)(implicit
         readerDefaultValue: JsonReaderDefaultValue[B],
@@ -2158,7 +2010,7 @@ object JsonReaderBuilder {
       A16,
       A17,
       B
-    ] = {
+    ] =
       new JsonReaderBuilder18[
         A1,
         A2,
@@ -2179,7 +2031,6 @@ object JsonReaderBuilder {
         A17,
         B
       ](this, pos + 1, name, readerDefaultValue.defaultValue, jsonReader)
-    }
 
     def buildReader[Res](
         fun: (
@@ -2201,9 +2052,8 @@ object JsonReaderBuilder {
             A16,
             A17
         ) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = false, fun)
-    }
 
     def buildStrictReader[Res](
         fun: (
@@ -2225,9 +2075,8 @@ object JsonReaderBuilder {
             A16,
             A17
         ) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = true, fun)
-    }
 
     private def buildReader[Res](
         strict: Boolean,
@@ -2250,15 +2099,14 @@ object JsonReaderBuilder {
             A16,
             A17
         ) => Res
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       new SimpleJsonReader[Res](
         fieldsArray,
         arr => fun.tupled(value(arr)),
         strict
       )
-    }
 
     def selectReader[Res](
         fun: (
@@ -2281,9 +2129,9 @@ object JsonReaderBuilder {
                 A16,
                 A17
             )
-        ) => JsonReader[_ <: Res]
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+        ) => JsonReader[? <: Res]
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       val simpleJsonReader = new SimpleJsonReader[
         (
@@ -2328,8 +2176,6 @@ object JsonReaderBuilder {
         ),
         Res
       ](simpleJsonReader)(fun)
-    }
-  }
 
   final class JsonReaderBuilder18[
       A1,
@@ -2374,15 +2220,14 @@ object JsonReaderBuilder {
       name: String,
       defaultValue: Any,
       jsonReader: JsonReader[A18]
-  ) {
+  ):
 
     private[JsonReaderBuilder] def fields(
-        arr: Array[SimpleJsonReader.FieldDefinition[_]]
-    ): Unit = {
+        arr: Array[SimpleJsonReader.FieldDefinition[?]]
+    ): Unit =
       prev.fields(arr)
       arr(pos) =
         SimpleJsonReader.FieldDefinition[A18](name, defaultValue, jsonReader)
-    }
 
     private[JsonReaderBuilder] def value(extracted: Array[Any]): (
         A1,
@@ -2403,7 +2248,7 @@ object JsonReaderBuilder {
         A16,
         A17,
         A18
-    ) = prev.value(extracted) match {
+    ) = prev.value(extracted) match
       case (
             a1,
             a2,
@@ -2443,7 +2288,6 @@ object JsonReaderBuilder {
           a17,
           extracted(pos).asInstanceOf[A18]
         )
-    }
 
     def addField[B](name: String, jsonReader: JsonReader[B])(implicit
         readerDefaultValue: JsonReaderDefaultValue[B]
@@ -2467,9 +2311,8 @@ object JsonReaderBuilder {
       A17,
       A18,
       B
-    ] = {
+    ] =
       addField[B](name)(readerDefaultValue, jsonReader)
-    }
 
     def addField[B](name: String)(implicit
         readerDefaultValue: JsonReaderDefaultValue[B],
@@ -2494,7 +2337,7 @@ object JsonReaderBuilder {
       A17,
       A18,
       B
-    ] = {
+    ] =
       new JsonReaderBuilder19[
         A1,
         A2,
@@ -2516,7 +2359,6 @@ object JsonReaderBuilder {
         A18,
         B
       ](this, pos + 1, name, readerDefaultValue.defaultValue, jsonReader)
-    }
 
     def buildReader[Res](
         fun: (
@@ -2539,9 +2381,8 @@ object JsonReaderBuilder {
             A17,
             A18
         ) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = false, fun)
-    }
 
     def buildStrictReader[Res](
         fun: (
@@ -2564,9 +2405,8 @@ object JsonReaderBuilder {
             A17,
             A18
         ) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = true, fun)
-    }
 
     private def buildReader[Res](
         strict: Boolean,
@@ -2590,15 +2430,14 @@ object JsonReaderBuilder {
             A17,
             A18
         ) => Res
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       new SimpleJsonReader[Res](
         fieldsArray,
         arr => fun.tupled(value(arr)),
         strict
       )
-    }
 
     def selectReader[Res](
         fun: (
@@ -2622,9 +2461,9 @@ object JsonReaderBuilder {
                 A17,
                 A18
             )
-        ) => JsonReader[_ <: Res]
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+        ) => JsonReader[? <: Res]
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       val simpleJsonReader = new SimpleJsonReader[
         (
@@ -2671,8 +2510,6 @@ object JsonReaderBuilder {
         ),
         Res
       ](simpleJsonReader)(fun)
-    }
-  }
 
   final class JsonReaderBuilder19[
       A1,
@@ -2719,15 +2556,14 @@ object JsonReaderBuilder {
       name: String,
       defaultValue: Any,
       jsonReader: JsonReader[A19]
-  ) {
+  ):
 
     private[JsonReaderBuilder] def fields(
-        arr: Array[SimpleJsonReader.FieldDefinition[_]]
-    ): Unit = {
+        arr: Array[SimpleJsonReader.FieldDefinition[?]]
+    ): Unit =
       prev.fields(arr)
       arr(pos) =
         SimpleJsonReader.FieldDefinition[A19](name, defaultValue, jsonReader)
-    }
 
     private[JsonReaderBuilder] def value(extracted: Array[Any]): (
         A1,
@@ -2749,7 +2585,7 @@ object JsonReaderBuilder {
         A17,
         A18,
         A19
-    ) = prev.value(extracted) match {
+    ) = prev.value(extracted) match
       case (
             a1,
             a2,
@@ -2791,7 +2627,6 @@ object JsonReaderBuilder {
           a18,
           extracted(pos).asInstanceOf[A19]
         )
-    }
 
     def addField[B](name: String, jsonReader: JsonReader[B])(implicit
         readerDefaultValue: JsonReaderDefaultValue[B]
@@ -2816,9 +2651,8 @@ object JsonReaderBuilder {
       A18,
       A19,
       B
-    ] = {
+    ] =
       addField[B](name)(readerDefaultValue, jsonReader)
-    }
 
     def addField[B](name: String)(implicit
         readerDefaultValue: JsonReaderDefaultValue[B],
@@ -2844,7 +2678,7 @@ object JsonReaderBuilder {
       A18,
       A19,
       B
-    ] = {
+    ] =
       new JsonReaderBuilder20[
         A1,
         A2,
@@ -2867,7 +2701,6 @@ object JsonReaderBuilder {
         A19,
         B
       ](this, pos + 1, name, readerDefaultValue.defaultValue, jsonReader)
-    }
 
     def buildReader[Res](
         fun: (
@@ -2891,9 +2724,8 @@ object JsonReaderBuilder {
             A18,
             A19
         ) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = false, fun)
-    }
 
     def buildStrictReader[Res](
         fun: (
@@ -2917,9 +2749,8 @@ object JsonReaderBuilder {
             A18,
             A19
         ) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = true, fun)
-    }
 
     private def buildReader[Res](
         strict: Boolean,
@@ -2944,15 +2775,14 @@ object JsonReaderBuilder {
             A18,
             A19
         ) => Res
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       new SimpleJsonReader[Res](
         fieldsArray,
         arr => fun.tupled(value(arr)),
         strict
       )
-    }
 
     def selectReader[Res](
         fun: (
@@ -2977,9 +2807,9 @@ object JsonReaderBuilder {
                 A18,
                 A19
             )
-        ) => JsonReader[_ <: Res]
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+        ) => JsonReader[? <: Res]
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       val simpleJsonReader = new SimpleJsonReader[
         (
@@ -3028,8 +2858,6 @@ object JsonReaderBuilder {
         ),
         Res
       ](simpleJsonReader)(fun)
-    }
-  }
 
   final class JsonReaderBuilder20[
       A1,
@@ -3078,15 +2906,14 @@ object JsonReaderBuilder {
       name: String,
       defaultValue: Any,
       jsonReader: JsonReader[A20]
-  ) {
+  ):
 
     private[JsonReaderBuilder] def fields(
-        arr: Array[SimpleJsonReader.FieldDefinition[_]]
-    ): Unit = {
+        arr: Array[SimpleJsonReader.FieldDefinition[?]]
+    ): Unit =
       prev.fields(arr)
       arr(pos) =
         SimpleJsonReader.FieldDefinition[A20](name, defaultValue, jsonReader)
-    }
 
     private[JsonReaderBuilder] def value(extracted: Array[Any]): (
         A1,
@@ -3109,7 +2936,7 @@ object JsonReaderBuilder {
         A18,
         A19,
         A20
-    ) = prev.value(extracted) match {
+    ) = prev.value(extracted) match
       case (
             a1,
             a2,
@@ -3153,7 +2980,6 @@ object JsonReaderBuilder {
           a19,
           extracted(pos).asInstanceOf[A20]
         )
-    }
 
     def addField[B](name: String, jsonReader: JsonReader[B])(implicit
         readerDefaultValue: JsonReaderDefaultValue[B]
@@ -3179,9 +3005,8 @@ object JsonReaderBuilder {
       A19,
       A20,
       B
-    ] = {
+    ] =
       addField[B](name)(readerDefaultValue, jsonReader)
-    }
 
     def addField[B](name: String)(implicit
         readerDefaultValue: JsonReaderDefaultValue[B],
@@ -3208,7 +3033,7 @@ object JsonReaderBuilder {
       A19,
       A20,
       B
-    ] = {
+    ] =
       new JsonReaderBuilder21[
         A1,
         A2,
@@ -3232,7 +3057,6 @@ object JsonReaderBuilder {
         A20,
         B
       ](this, pos + 1, name, readerDefaultValue.defaultValue, jsonReader)
-    }
 
     def buildReader[Res](
         fun: (
@@ -3257,9 +3081,8 @@ object JsonReaderBuilder {
             A19,
             A20
         ) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = false, fun)
-    }
 
     def buildStrictReader[Res](
         fun: (
@@ -3284,9 +3107,8 @@ object JsonReaderBuilder {
             A19,
             A20
         ) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = true, fun)
-    }
 
     private def buildReader[Res](
         strict: Boolean,
@@ -3312,15 +3134,14 @@ object JsonReaderBuilder {
             A19,
             A20
         ) => Res
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       new SimpleJsonReader[Res](
         fieldsArray,
         arr => fun.tupled(value(arr)),
         strict
       )
-    }
 
     def selectReader[Res](
         fun: (
@@ -3346,9 +3167,9 @@ object JsonReaderBuilder {
                 A19,
                 A20
             )
-        ) => JsonReader[_ <: Res]
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+        ) => JsonReader[? <: Res]
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       val simpleJsonReader = new SimpleJsonReader[
         (
@@ -3399,8 +3220,6 @@ object JsonReaderBuilder {
         ),
         Res
       ](simpleJsonReader)(fun)
-    }
-  }
 
   final class JsonReaderBuilder21[
       A1,
@@ -3451,15 +3270,14 @@ object JsonReaderBuilder {
       name: String,
       defaultValue: Any,
       jsonReader: JsonReader[A21]
-  ) {
+  ):
 
     private[JsonReaderBuilder] def fields(
-        arr: Array[SimpleJsonReader.FieldDefinition[_]]
-    ): Unit = {
+        arr: Array[SimpleJsonReader.FieldDefinition[?]]
+    ): Unit =
       prev.fields(arr)
       arr(pos) =
         SimpleJsonReader.FieldDefinition[A21](name, defaultValue, jsonReader)
-    }
 
     private[JsonReaderBuilder] def value(extracted: Array[Any]): (
         A1,
@@ -3483,7 +3301,7 @@ object JsonReaderBuilder {
         A19,
         A20,
         A21
-    ) = prev.value(extracted) match {
+    ) = prev.value(extracted) match
       case (
             a1,
             a2,
@@ -3529,7 +3347,6 @@ object JsonReaderBuilder {
           a20,
           extracted(pos).asInstanceOf[A21]
         )
-    }
 
     def addField[B](name: String, jsonReader: JsonReader[B])(implicit
         readerDefaultValue: JsonReaderDefaultValue[B]
@@ -3556,9 +3373,8 @@ object JsonReaderBuilder {
       A20,
       A21,
       B
-    ] = {
+    ] =
       addField[B](name)(readerDefaultValue, jsonReader)
-    }
 
     def addField[B](name: String)(implicit
         readerDefaultValue: JsonReaderDefaultValue[B],
@@ -3586,7 +3402,7 @@ object JsonReaderBuilder {
       A20,
       A21,
       B
-    ] = {
+    ] =
       new JsonReaderBuilder22[
         A1,
         A2,
@@ -3611,7 +3427,6 @@ object JsonReaderBuilder {
         A21,
         B
       ](this, pos + 1, name, readerDefaultValue.defaultValue, jsonReader)
-    }
 
     def buildReader[Res](
         fun: (
@@ -3637,9 +3452,8 @@ object JsonReaderBuilder {
             A20,
             A21
         ) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = false, fun)
-    }
 
     def buildStrictReader[Res](
         fun: (
@@ -3665,9 +3479,8 @@ object JsonReaderBuilder {
             A20,
             A21
         ) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = true, fun)
-    }
 
     private def buildReader[Res](
         strict: Boolean,
@@ -3694,15 +3507,14 @@ object JsonReaderBuilder {
             A20,
             A21
         ) => Res
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       new SimpleJsonReader[Res](
         fieldsArray,
         arr => fun.tupled(value(arr)),
         strict
       )
-    }
 
     def selectReader[Res](
         fun: (
@@ -3729,9 +3541,9 @@ object JsonReaderBuilder {
                 A20,
                 A21
             )
-        ) => JsonReader[_ <: Res]
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+        ) => JsonReader[? <: Res]
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       val simpleJsonReader = new SimpleJsonReader[
         (
@@ -3784,8 +3596,6 @@ object JsonReaderBuilder {
         ),
         Res
       ](simpleJsonReader)(fun)
-    }
-  }
 
   final class JsonReaderBuilder22[
       A1,
@@ -3838,16 +3648,15 @@ object JsonReaderBuilder {
       name: String,
       defaultValue: Any,
       jsonReader: JsonReader[A22]
-  ) {
+  ):
     self =>
 
     private[JsonReaderBuilder] def fields(
-        arr: Array[SimpleJsonReader.FieldDefinition[_]]
-    ): Unit = {
+        arr: Array[SimpleJsonReader.FieldDefinition[?]]
+    ): Unit =
       prev.fields(arr)
       arr(pos) =
         SimpleJsonReader.FieldDefinition[A22](name, defaultValue, jsonReader)
-    }
 
     private[JsonReaderBuilder] def value(extracted: Array[Any]): (
         A1,
@@ -3872,7 +3681,7 @@ object JsonReaderBuilder {
         A20,
         A21,
         A22
-    ) = prev.value(extracted) match {
+    ) = prev.value(extracted) match
       case (
             a1,
             a2,
@@ -3920,7 +3729,6 @@ object JsonReaderBuilder {
           a21,
           extracted(pos).asInstanceOf[A22]
         )
-    }
 
     def addField[B](name: String, jsonReader: JsonReader[B])(implicit
         readerDefaultValue: JsonReaderDefaultValue[B]
@@ -3950,9 +3758,8 @@ object JsonReaderBuilder {
           A22
       ),
       B
-    ] = {
+    ] =
       addField[B](name)(readerDefaultValue, jsonReader)
-    }
 
     def addField[B](name: String)(implicit
         readerDefaultValue: JsonReaderDefaultValue[B],
@@ -3983,7 +3790,7 @@ object JsonReaderBuilder {
           A22
       ),
       B
-    ] = {
+    ] =
       val singleJsonValueReader: SingleJsonValueReader[
         (
             A1,
@@ -4009,7 +3816,7 @@ object JsonReaderBuilder {
             A21,
             A22
         )
-      ] = {
+      ] =
         new SingleJsonValueReader[
           (
               A1,
@@ -4035,9 +3842,9 @@ object JsonReaderBuilder {
               A21,
               A22
           )
-        ] {
+        ]:
           private[JsonReaderBuilder] override def fields(
-              arr: Array[SimpleJsonReader.FieldDefinition[_]]
+              arr: Array[SimpleJsonReader.FieldDefinition[?]]
           ): Unit = self.fields(arr)
 
           override def value(extracted: Array[Any]): (
@@ -4063,11 +3870,8 @@ object JsonReaderBuilder {
               A20,
               A21,
               A22
-          ) = {
+          ) =
             self.value(extracted)
-          }
-        }
-      }
       new JsonReaderBuilder2[
         (
             A1,
@@ -4101,7 +3905,6 @@ object JsonReaderBuilder {
         readerDefaultValue.defaultValue,
         jsonReader
       )
-    }
 
     def buildReader[Res](
         fun: (
@@ -4128,9 +3931,8 @@ object JsonReaderBuilder {
             A21,
             A22
         ) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = false, fun)
-    }
 
     def buildStrictReader[Res](
         fun: (
@@ -4157,9 +3959,8 @@ object JsonReaderBuilder {
             A21,
             A22
         ) => Res
-    ): JsonReader[Res] = {
+    ): JsonReader[Res] =
       buildReader(strict = true, fun)
-    }
 
     private def buildReader[Res](
         strict: Boolean,
@@ -4187,15 +3988,14 @@ object JsonReaderBuilder {
             A21,
             A22
         ) => Res
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       new SimpleJsonReader[Res](
         fieldsArray,
         arr => fun.tupled(value(arr)),
         strict
       )
-    }
 
     def selectReader[Res](
         fun: (
@@ -4223,9 +4023,9 @@ object JsonReaderBuilder {
                 A21,
                 A22
             )
-        ) => JsonReader[_ <: Res]
-    ): JsonReader[Res] = {
-      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[_]](pos + 1)
+        ) => JsonReader[? <: Res]
+    ): JsonReader[Res] =
+      val fieldsArray = new Array[SimpleJsonReader.FieldDefinition[?]](pos + 1)
       fields(fieldsArray)
       val simpleJsonReader = new SimpleJsonReader[
         (
@@ -4280,7 +4080,4 @@ object JsonReaderBuilder {
         ),
         Res
       ](simpleJsonReader)(fun)
-    }
-  }
 
-}

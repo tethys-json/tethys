@@ -2,8 +2,8 @@ package json.bench.spray
 
 import json.bench.model.Data
 import json.bench.{DataReader, DataWriter}
-import spray.json.DefaultJsonProtocol._
-import spray.json._
+import spray.json.DefaultJsonProtocol.*
+import spray.json.*
 
 object SprayBench {
 

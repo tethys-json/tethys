@@ -1,15 +1,15 @@
 package tethys.jackson
 
-import tethys._
-import tethys.commons.TokenNode._
+import tethys.*
+import tethys.commons.TokenNode.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 
-class JacksonTokenIteratorTest extends AnyFlatSpec with Matchers {
+class JacksonTokenIteratorTest extends AnyFlatSpec with Matchers:
 
   behavior of "JacksonTokenIterator"
 
-  it should "properly iterate over json string" in {
+  it should "properly iterate over json string" in:
     val json = """{"a":1,"b":["s",true,{"a":null},1.0,false]}"""
     val it = json.toTokenIterator.fold(throw _, identity)
     it.currentToken().isObjectStart shouldBe true
@@ -45,9 +45,8 @@ class JacksonTokenIteratorTest extends AnyFlatSpec with Matchers {
     it.nextToken().isObjectEnd shouldBe true
 
     it.nextToken().isEmpty shouldBe true
-  }
 
-  it should "correctly skip next expressions" in {
+  it should "correctly skip next expressions" in:
     val json = """{"a":1,"b":["s",true,{"a":null},1.0,false]}"""
     val it = json.toTokenIterator.fold(throw _, identity)
     it.currentToken().isObjectStart shouldBe true
@@ -62,9 +61,8 @@ class JacksonTokenIteratorTest extends AnyFlatSpec with Matchers {
     it.currentToken().isObjectEnd shouldBe true
 
     it.nextToken().isEmpty shouldBe true
-  }
 
-  it should "correctly collect expressions" in {
+  it should "correctly collect expressions" in:
     val json = """{"a":1,"b":["s",true,{"a":null},1.0,false]}"""
     val it = json.toTokenIterator.fold(throw _, identity)
     it.currentToken().isObjectStart shouldBe true
@@ -108,9 +106,8 @@ class JacksonTokenIteratorTest extends AnyFlatSpec with Matchers {
 
     it.nextToken().isEmpty shouldBe true
 
-  }
 
-  it should "generate proper tokens seq" in {
+  it should "generate proper tokens seq" in:
     val json = """{"a":1,"b":["s",true,{"a":null},1.0,false]}"""
 
     json.jsonAsTokensList shouldBe obj(
@@ -125,5 +122,3 @@ class JacksonTokenIteratorTest extends AnyFlatSpec with Matchers {
         false
       )
     )
-  }
-}

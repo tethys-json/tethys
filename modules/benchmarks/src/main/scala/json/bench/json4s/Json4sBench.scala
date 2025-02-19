@@ -2,7 +2,7 @@ package json.bench.json4s
 
 import json.bench.model.Data
 import json.bench.{DataReader, DataWriter}
-import org.json4s._
+import org.json4s.*
 
 object Json4sBench {
   implicit val format: DefaultFormats.type = DefaultFormats

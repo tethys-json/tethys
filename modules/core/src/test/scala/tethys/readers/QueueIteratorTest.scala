@@ -2,7 +2,7 @@ package tethys.readers
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
-import tethys.commons.TokenNode._
+import tethys.commons.TokenNode.*
 import tethys.readers.tokens.QueueIterator
 
 class QueueIteratorTest extends AnyFlatSpec with Matchers {

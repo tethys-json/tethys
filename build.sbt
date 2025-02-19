@@ -1,4 +1,4 @@
-ThisBuild / scalaVersion := "3.3.4"
+ThisBuild / scalaVersion := "3.3.5"
 
 lazy val commonSettings = Seq(
   organization := "com.tethys-json",

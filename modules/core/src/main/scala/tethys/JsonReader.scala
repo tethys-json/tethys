@@ -6,25 +6,21 @@ import tethys.readers.{FieldName, JsonReaderBuilder}
 
 import scala.language.higherKinds
 
-trait JsonReader[@specialized(specializations) A] {
+trait JsonReader[@specialized(specializations) A]:
   self =>
 
   def read(it: TokenIterator)(implicit fieldName: FieldName): A
 
-  def map[B](fun: A => B): JsonReader[B] = new JsonReader[B] {
+  def map[B](fun: A => B): JsonReader[B] = new JsonReader[B]:
     override def read(it: TokenIterator)(implicit fieldName: FieldName): B =
       fun(self.read(it))
-  }
 
   def mapWithField[B](fun: FieldName => A => B): JsonReader[B] =
-    new JsonReader[B] {
+    new JsonReader[B]:
       override def read(it: TokenIterator)(implicit fieldName: FieldName): B =
         fun(fieldName)(self.read(it))
-    }
-}
 
-object JsonReader extends AllJsonReaders with derivation.JsonReaderDerivation {
+object JsonReader extends AllJsonReaders with derivation.JsonReaderDerivation:
   def apply[A](implicit jsonReader: JsonReader[A]): JsonReader[A] = jsonReader
 
   val builder: JsonReaderBuilder.type = JsonReaderBuilder
-}

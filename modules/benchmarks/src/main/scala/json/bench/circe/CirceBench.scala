@@ -1,8 +1,8 @@
 package json.bench.circe
 
-import io.circe.generic.semiauto._
-import io.circe._
-import io.circe.syntax._
+import io.circe.generic.semiauto.*
+import io.circe.*
+import io.circe.syntax.*
 import json.bench.model.Data
 import json.bench.{DataReader, DataWriter}
 

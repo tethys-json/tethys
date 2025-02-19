@@ -1,13 +1,13 @@
 package tethys.writers.tokens
 
 import tethys.commons.TokenNode
-import tethys.commons.TokenNode._
+import tethys.commons.TokenNode.*
 import tethys.readers.FieldName
 import tethys.readers.tokens.TokenIteratorProducer
 
 import scala.collection.mutable
 
-class SimpleTokenWriter extends TokenWriter {
+class SimpleTokenWriter extends TokenWriter:
   val tokens: mutable.ArrayBuffer[TokenNode] = mutable.ArrayBuffer.empty
 
   override def writeArrayStart(): SimpleTokenWriter.this.type = append(
@@ -78,31 +78,24 @@ class SimpleTokenWriter extends TokenWriter {
 
   override def flush(): Unit = ()
 
-  private def append(node: TokenNode): this.type = {
+  private def append(node: TokenNode): this.type =
     tokens += node
     this
-  }
 
   def withRawJsonSupport(implicit
       producer: TokenIteratorProducer
-  ): SimpleTokenWriter = new SimpleTokenWriter {
-    import tethys._
-    override def writeRawJson(json: String): this.type = {
+  ): SimpleTokenWriter = new SimpleTokenWriter:
+    import tethys.*
+    override def writeRawJson(json: String): this.type =
       val tokenIterator = json.toTokenIterator.fold(throw _, identity)
       JsonStreaming.streamValue(tokenIterator, this)(FieldName())
       this
-    }
-  }
-}
 
-object SimpleTokenWriter {
-  implicit class SimpleTokenWriterOps[A](val a: A) extends AnyVal {
-    import tethys._
+object SimpleTokenWriter:
+  implicit class SimpleTokenWriterOps[A](val a: A) extends AnyVal:
+    import tethys.*
 
-    def asTokenList(implicit jsonWriter: JsonWriter[A]): List[TokenNode] = {
+    def asTokenList(implicit jsonWriter: JsonWriter[A]): List[TokenNode] =
       val tokenWriter = new SimpleTokenWriter
       a.writeJson(tokenWriter)
       tokenWriter.tokens.toList
-    }
-  }
-}

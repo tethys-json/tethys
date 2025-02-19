@@ -4,160 +4,132 @@ import tethys.JsonReader
 import tethys.readers.tokens.TokenIterator
 import tethys.readers.{FieldName, ReaderError}
 
-trait AllJsonReaders extends OptionReaders {
+trait AllJsonReaders extends OptionReaders:
   implicit lazy val booleanReader: JsonReader[Boolean] =
-    new JsonReader[Boolean] {
+    new JsonReader[Boolean]:
       override def read(
           it: TokenIterator
-      )(implicit fieldName: FieldName): Boolean = {
-        if (it.currentToken().isBooleanValue) {
+      )(implicit fieldName: FieldName): Boolean =
+        if it.currentToken().isBooleanValue then
           val res = it.boolean()
           it.next()
           res
-        } else {
+        else
           ReaderError.wrongJson(
             s"Expected boolean value but found: ${it.currentToken()}"
           )
-        }
-      }
-    }
 
-  implicit lazy val stringReader: JsonReader[String] = new JsonReader[String] {
+  implicit lazy val stringReader: JsonReader[String] = new JsonReader[String]:
     override def read(
         it: TokenIterator
-    )(implicit fieldName: FieldName): String = {
-      if (it.currentToken().isStringValue) {
+    )(implicit fieldName: FieldName): String =
+      if it.currentToken().isStringValue then
         val res = it.string()
         it.next()
         res
-      } else {
+      else
         ReaderError.wrongJson(
           s"Expected string value but found: ${it.currentToken()}"
         )
-      }
-    }
-  }
 
-  implicit lazy val charReader: JsonReader[Char] = stringReader.mapWithField {
+  implicit lazy val charReader: JsonReader[Char] = stringReader.mapWithField:
     implicit fieldName =>
       {
         case s if s.length == 1 => s.head
         case s => ReaderError.wrongJson(s"Expected char value but found: $s")
       }
-  }
 
-  implicit lazy val numberReader: JsonReader[Number] = new JsonReader[Number] {
+  implicit lazy val numberReader: JsonReader[Number] = new JsonReader[Number]:
     override def read(
         it: TokenIterator
-    )(implicit fieldName: FieldName): Number = {
-      if (it.currentToken().isNumberValue) {
+    )(implicit fieldName: FieldName): Number =
+      if it.currentToken().isNumberValue then
         val res = it.number()
         it.next()
         res
-      } else {
+      else
         ReaderError.wrongJson(
           s"Expected number value but found: ${it.currentToken()}"
         )
-      }
-    }
-  }
 
-  implicit lazy val byteReader: JsonReader[Byte] = new JsonReader[Byte] {
+  implicit lazy val byteReader: JsonReader[Byte] = new JsonReader[Byte]:
     override def read(
         it: TokenIterator
-    )(implicit fieldName: FieldName): Byte = {
-      if (it.currentToken().isNumberValue) {
+    )(implicit fieldName: FieldName): Byte =
+      if it.currentToken().isNumberValue then
         val res = it.byte()
         it.next()
         res
-      } else {
+      else
         ReaderError.wrongJson(
           s"Expected byte value but found: ${it.currentToken()}"
         )
-      }
-    }
-  }
 
-  implicit lazy val shortReader: JsonReader[Short] = new JsonReader[Short] {
+  implicit lazy val shortReader: JsonReader[Short] = new JsonReader[Short]:
     override def read(
         it: TokenIterator
-    )(implicit fieldName: FieldName): Short = {
-      if (it.currentToken().isNumberValue) {
+    )(implicit fieldName: FieldName): Short =
+      if it.currentToken().isNumberValue then
         val res = it.short()
         it.next()
         res
-      } else {
+      else
         ReaderError.wrongJson(
           s"Expected short value but found: ${it.currentToken()}"
         )
-      }
-    }
-  }
 
-  implicit lazy val intReader: JsonReader[Int] = new JsonReader[Int] {
-    override def read(it: TokenIterator)(implicit fieldName: FieldName): Int = {
-      if (it.currentToken().isNumberValue) {
+  implicit lazy val intReader: JsonReader[Int] = new JsonReader[Int]:
+    override def read(it: TokenIterator)(implicit fieldName: FieldName): Int =
+      if it.currentToken().isNumberValue then
         val res = it.int()
         it.next()
         res
-      } else {
+      else
         ReaderError.wrongJson(
           s"Expected int value but found: ${it.currentToken()}"
         )
-      }
-    }
-  }
 
-  implicit lazy val longReader: JsonReader[Long] = new JsonReader[Long] {
+  implicit lazy val longReader: JsonReader[Long] = new JsonReader[Long]:
     override def read(
         it: TokenIterator
-    )(implicit fieldName: FieldName): Long = {
-      if (it.currentToken().isNumberValue) {
+    )(implicit fieldName: FieldName): Long =
+      if it.currentToken().isNumberValue then
         val res = it.long()
         it.next()
         res
-      } else {
+      else
         ReaderError.wrongJson(
           s"Expected long value but found: ${it.currentToken()}"
         )
-      }
-    }
-  }
 
-  implicit lazy val floatReader: JsonReader[Float] = new JsonReader[Float] {
+  implicit lazy val floatReader: JsonReader[Float] = new JsonReader[Float]:
     override def read(
         it: TokenIterator
-    )(implicit fieldName: FieldName): Float = {
-      if (it.currentToken().isNumberValue) {
+    )(implicit fieldName: FieldName): Float =
+      if it.currentToken().isNumberValue then
         val res = it.float()
         it.next()
         res
-      } else {
+      else
         ReaderError.wrongJson(
           s"Expected float value but found: ${it.currentToken()}"
         )
-      }
-    }
-  }
 
-  implicit lazy val doubleReader: JsonReader[Double] = new JsonReader[Double] {
+  implicit lazy val doubleReader: JsonReader[Double] = new JsonReader[Double]:
     override def read(
         it: TokenIterator
-    )(implicit fieldName: FieldName): Double = {
-      if (it.currentToken().isNumberValue) {
+    )(implicit fieldName: FieldName): Double =
+      if it.currentToken().isNumberValue then
         val res = it.double()
         it.next()
         res
-      } else {
+      else
         ReaderError.wrongJson(
           s"Expected double value but found: ${it.currentToken()}"
         )
-      }
-    }
-  }
 
   implicit lazy val bigDecimalReader: JsonReader[BigDecimal] =
-    numberReader.map {
+    numberReader.map:
       case bd: BigDecimal            => bd
       case bi: BigInt                => BigDecimal(bi)
       case jbd: java.math.BigDecimal => BigDecimal(jbd)
@@ -169,9 +141,8 @@ trait AllJsonReaders extends OptionReaders {
       case jfloat: java.lang.Float   => BigDecimal(jfloat.toDouble)
       case jdouble: java.lang.Double => BigDecimal(jdouble)
       case num                       => BigDecimal(num.doubleValue())
-    }
 
-  implicit lazy val bigIntReader: JsonReader[BigInt] = numberReader.map {
+  implicit lazy val bigIntReader: JsonReader[BigInt] = numberReader.map:
     case bi: BigInt                => bi
     case jbi: java.math.BigInteger => BigInt(jbi)
     case bd: BigDecimal            => bd.toBigInt
@@ -181,7 +152,6 @@ trait AllJsonReaders extends OptionReaders {
     case jshort: java.lang.Short   => BigInt(jshort.longValue())
     case jlong: java.lang.Long     => BigInt(jlong)
     case num                       => BigInt(num.longValue())
-  }
 
   implicit lazy val javaBooleanReader: JsonReader[java.lang.Boolean] =
     booleanReader.map(a => a)
@@ -230,4 +200,3 @@ trait AllJsonReaders extends OptionReaders {
         .parse(_, java.time.format.DateTimeFormatter.ISO_ZONED_DATE_TIME)
     )
 
-}

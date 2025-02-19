@@ -2,7 +2,7 @@ package json.bench.play
 
 import json.bench.model.Data
 import json.bench.{DataReader, DataWriter}
-import play.api.libs.json._
+import play.api.libs.json.*
 
 object PlayBench {
 

@@ -1,7 +1,7 @@
 package json.bench.ziojson
 
-import zio.json._
-import json.bench._
+import zio.json.*
+import json.bench.*
 import json.bench.model.Data
 
 object ZIOJsonBench {

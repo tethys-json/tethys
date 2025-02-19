@@ -22,20 +22,17 @@ trait StringTethysEnum[E <: StringEnumEntry]
   implicit val tethysKeyWriter: KeyWriter[E] = Enumeratum.keyWriter(_.value)
 }
 
-trait IntTethysEnum[E <: IntEnumEntry] extends TethysValueEnum[Int, E] {
+trait IntTethysEnum[E <: IntEnumEntry] extends TethysValueEnum[Int, E]:
   self: ValueEnum[Int, E] =>
   implicit val tethysReader: JsonReader[E] = Enumeratum.valueReader(this)
   implicit val tethysWriter: JsonWriter[E] = Enumeratum.valueWriter(this)
-}
 
-trait LongTethysEnum[E <: LongEnumEntry] extends TethysValueEnum[Long, E] {
+trait LongTethysEnum[E <: LongEnumEntry] extends TethysValueEnum[Long, E]:
   self: ValueEnum[Long, E] =>
   implicit val tethysReader: JsonReader[E] = Enumeratum.valueReader(this)
   implicit val tethysWriter: JsonWriter[E] = Enumeratum.valueWriter(this)
-}
 
-trait ShortTethysEnum[E <: ShortEnumEntry] extends TethysValueEnum[Short, E] {
+trait ShortTethysEnum[E <: ShortEnumEntry] extends TethysValueEnum[Short, E]:
   self: ValueEnum[Short, E] =>
   implicit val tethysReader: JsonReader[E] = Enumeratum.valueReader(this)
   implicit val tethysWriter: JsonWriter[E] = Enumeratum.valueWriter(this)
-}

@@ -1,6 +1,6 @@
 package tethys.writers.tokens
 
-trait TokenWriter {
+trait TokenWriter:
   def writeArrayStart(): this.type
 
   def writeArrayEnd(): this.type
@@ -29,7 +29,7 @@ trait TokenWriter {
 
   def writeNumber(v: BigDecimal): this.type
 
-  def writeRawNumber(n: Number): this.type = n match {
+  def writeRawNumber(n: Number): this.type = n match
     case jbd: java.math.BigDecimal => writeNumber(BigDecimal(jbd))
     case jint: java.lang.Integer   => writeNumber(jint.intValue())
     case jbyte: java.lang.Byte     => writeNumber(jbyte.longValue())
@@ -41,7 +41,6 @@ trait TokenWriter {
     case bd: BigDecimal            => writeNumber(bd)
     case bi: BigInt                => writeNumber(bi)
     case num                       => writeNumber(num.doubleValue())
-  }
 
   def writeBoolean(v: Boolean): this.type
 
@@ -53,4 +52,3 @@ trait TokenWriter {
   def close(): Unit
 
   def flush(): Unit
-}

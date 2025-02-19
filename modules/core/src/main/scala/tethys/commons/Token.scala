@@ -1,6 +1,6 @@
 package tethys.commons
 
-sealed trait Token {
+sealed trait Token:
   def isStringValue: Boolean = false
 
   def isNumberValue: Boolean = false
@@ -24,37 +24,25 @@ sealed trait Token {
   def isStructEnd: Boolean = isObjectEnd || isArrayEnd
 
   def isEmpty: Boolean = false
-}
 
-object Token {
-  case object StringValueToken extends Token {
+object Token:
+  case object StringValueToken extends Token:
     override def isStringValue: Boolean = true
-  }
-  case object NumberValueToken extends Token {
+  case object NumberValueToken extends Token:
     override def isNumberValue: Boolean = true
-  }
-  case object BooleanValueToken extends Token {
+  case object BooleanValueToken extends Token:
     override def isBooleanValue: Boolean = true
-  }
-  case object NullValueToken extends Token {
+  case object NullValueToken extends Token:
     override def isNullValue: Boolean = true
-  }
-  case object FieldNameToken extends Token {
+  case object FieldNameToken extends Token:
     override def isFieldName: Boolean = true
-  }
-  case object ArrayStartToken extends Token {
+  case object ArrayStartToken extends Token:
     override def isArrayStart: Boolean = true
-  }
-  case object ArrayEndToken extends Token {
+  case object ArrayEndToken extends Token:
     override def isArrayEnd: Boolean = true
-  }
-  case object ObjectStartToken extends Token {
+  case object ObjectStartToken extends Token:
     override def isObjectStart: Boolean = true
-  }
-  case object ObjectEndToken extends Token {
+  case object ObjectEndToken extends Token:
     override def isObjectEnd: Boolean = true
-  }
-  case object Empty extends Token {
+  case object Empty extends Token:
     override def isEmpty: Boolean = true
-  }
-}

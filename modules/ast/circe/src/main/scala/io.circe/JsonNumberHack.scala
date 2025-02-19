@@ -2,10 +2,10 @@ package io.circe
 
 import tethys.writers.tokens.TokenWriter
 
-trait JsonNumberHack {
-  protected def writeNumber(number: JsonNumber, writer: TokenWriter): Unit = {
-    if (JsonNumberHack.isHackCompatible) {
-      number match {
+trait JsonNumberHack:
+  protected def writeNumber(number: JsonNumber, writer: TokenWriter): Unit =
+    if JsonNumberHack.isHackCompatible then
+      number match
         case value: JsonDecimal =>
           writer.writeRawJson(value.toString)
         case value: JsonBiggerDecimal =>
@@ -18,17 +18,13 @@ trait JsonNumberHack {
           writer.writeNumber(value.value)
         case value: JsonFloat =>
           writer.writeNumber(value.value)
-      }
-    } else {
+    else
       import io.circe.syntax.*
       writer.writeRawJson(number.asJson.noSpaces)
-    }
-  }
-}
 
-object JsonNumberHack {
+object JsonNumberHack:
   private val isHackCompatible: Boolean =
-    try {
+    try
       val loader = getClass.getClassLoader
       loader.loadClass("io.circe.BiggerDecimalJsonNumber")
       loader.loadClass("io.circe.JsonDecimal")
@@ -38,7 +34,5 @@ object JsonNumberHack {
       loader.loadClass("io.circe.JsonDouble")
       loader.loadClass("io.circe.JsonFloat")
       true
-    } catch {
+    catch
       case _: ClassNotFoundException => false
-    }
-}

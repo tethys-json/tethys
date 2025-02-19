@@ -1,12 +1,12 @@
 package tethys.writers
 
-import org.scalatest.matchers.should.Matchers.{value => _, _}
+import org.scalatest.matchers.should.Matchers.{value as _, *}
 import org.scalatest.flatspec.AnyFlatSpec
 import tethys.{JsonObjectWriter, JsonWriter}
-import tethys.commons.TokenNode._
+import tethys.commons.TokenNode.*
 import tethys.writers.SimpleJsonObjectWriterTest.{CharData, TestData}
 import tethys.writers.instances.SimpleJsonObjectWriter
-import tethys.writers.tokens.SimpleTokenWriter._
+import tethys.writers.tokens.SimpleTokenWriter.*
 
 class SimpleJsonObjectWriterTest extends AnyFlatSpec {
   behavior of "SimpleJsonObjectWriter"

@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import json.bench.model.Data
 import json.bench.tethysjson.TethysBench.TethysJacksonDataProcessor
-import org.openjdk.jmh.annotations.{State, _}
+import org.openjdk.jmh.annotations.{State, *}
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
@@ -20,11 +20,11 @@ class JmhReaderBench {
     "1mb",
     "32mb"
   ))
-  var jsonSize: String = _
+  var jsonSize: String = scala.compiletime.uninitialized
 
   val seed = 10000
 
-  var data: String =_
+  var data: String =scala.compiletime.uninitialized
 
   @Setup(Level.Trial)
   def setup(): Unit = {
@@ -47,7 +47,7 @@ class JmhReaderBench {
     "spray-json",
     "zio-json"
   ))
-  var processorName: String = _
+  var processorName: String = scala.compiletime.uninitialized
 
   @Benchmark
   def bench: Seq[Data] = {

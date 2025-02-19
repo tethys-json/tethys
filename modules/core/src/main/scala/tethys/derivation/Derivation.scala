@@ -271,13 +271,13 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
       .flatMap { tpe =>
         tpe.asType match
           case '[t] =>
-            lookupOpt[JsonWriter[t]].map {
+            lookupOpt[JsonWriter[t]].map:
               _.asTerm match
                 case ident: Ident =>
                   Left(ident)
                 case other =>
                   Right(other)
-            } match
+            match
               case Some(Left(writer)) =>
                 None
 
@@ -377,14 +377,12 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
     val tpe = TypeRepr.of[T]
     val (fields, isStrict) = prepareReaderProductFields[T](config, jsonConfig)
     val existingLabels = fields.map(_.name).toSet
-    val fieldsWithoutReader = fields.collect {
+    val fieldsWithoutReader = fields.collect:
       case field: ReaderField.Extracted if field.reader => field.name
-    }
 
-    val (basicFields, extractedFields) = fields.partitionMap {
+    val (basicFields, extractedFields) = fields.partitionMap:
       case field: ReaderField.Basic     => Left(field)
       case field: ReaderField.Extracted => Right(field)
-    }
 
     val expectedFieldNames =
       basicFields.map(_.name).toSet ++ extractedFields.flatMap(
@@ -448,7 +446,7 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
                   Block(
                     fields.flatMap(_.initialize),
                     '{
-                      while (!it.currentToken().isObjectEnd)
+                      while !it.currentToken().isObjectEnd do
                         val jsonName = it.fieldName()
                         it.nextToken()
                         ${
@@ -585,7 +583,7 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
 
   private def distinct(tpes: List[TypeRepr]) =
     tpes.foldLeft(List.empty[TypeRepr]) { (acc, tpe) =>
-      if (acc.exists(_ =:= tpe)) acc
+      if acc.exists(_ =:= tpe) then acc
       else tpe :: acc
     }
 
@@ -604,13 +602,13 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
       .flatMap { tpe =>
         tpe.asType match
           case '[t] =>
-            lookupOpt[JsonReader[t]].map {
+            lookupOpt[JsonReader[t]].map:
               _.asTerm match
                 case ident: Ident =>
                   Left(ident)
                 case other =>
                   Right(other)
-            } match
+            match
               case Some(Left(_)) =>
                 None
 

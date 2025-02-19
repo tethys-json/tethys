@@ -3,7 +3,7 @@ package json.bench
 import java.util.concurrent.TimeUnit
 
 import json.bench.model.Data
-import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.annotations.*
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
@@ -19,10 +19,10 @@ class JmhWriterBench {
     "1mb",
     "32mb"
   ))
-  var jsonSize: String = _
+  var jsonSize: String = scala.compiletime.uninitialized
 
   val seed = 10000
-  var data: Seq[Data] = _
+  var data: Seq[Data] = scala.compiletime.uninitialized
 
   @Setup(Level.Trial)
   def setup(): Unit = {
@@ -43,7 +43,7 @@ class JmhWriterBench {
     "spray-json",
     "zio-json"
   ))
-  var processorName: String = _
+  var processorName: String = scala.compiletime.uninitialized
 
   @Benchmark
   def bench: String = {

@@ -2,24 +2,22 @@ package tethys.jackson
 
 import com.fasterxml.jackson.core.{JsonParser, JsonTokenId}
 import tethys.commons.Token
-import tethys.commons.Token._
+import tethys.commons.Token.*
 import tethys.readers.tokens.{BaseTokenIterator, TokenIterator}
 
 import scala.annotation.switch
 
 final class JacksonTokenIterator(jsonParser: JsonParser)
-    extends BaseTokenIterator {
-  private[this] var token: Token = fromId(jsonParser.currentTokenId())
+    extends BaseTokenIterator:
+  private var token: Token = fromId(jsonParser.currentTokenId())
   override def currentToken(): Token = token
 
-  override def nextToken(): Token = {
+  override def nextToken(): Token =
     val t = jsonParser.nextToken()
-    token = {
-      if (t == null) Token.Empty
+    token =
+      if t == null then Token.Empty
       else fromId(t.id())
-    }
     token
-  }
 
   override def fieldName(): String = jsonParser.getCurrentName
 
@@ -41,7 +39,7 @@ final class JacksonTokenIterator(jsonParser: JsonParser)
 
   override def boolean(): Boolean = jsonParser.getBooleanValue
 
-  private def fromId(tokenId: Int): Token = (tokenId: @switch) match {
+  private def fromId(tokenId: Int): Token = (tokenId: @switch) match
     case JsonTokenId.ID_START_OBJECT => ObjectStartToken
     case JsonTokenId.ID_END_OBJECT   => ObjectEndToken
     case JsonTokenId.ID_START_ARRAY  => ArrayStartToken
@@ -54,12 +52,8 @@ final class JacksonTokenIterator(jsonParser: JsonParser)
     case JsonTokenId.ID_FALSE        => BooleanValueToken
     case JsonTokenId.ID_NULL         => NullValueToken
     case _                           => Token.Empty
-  }
-}
 
-object JacksonTokenIterator {
-  def fromFreshParser(parser: JsonParser): TokenIterator = {
+object JacksonTokenIterator:
+  def fromFreshParser(parser: JsonParser): TokenIterator =
     parser.nextToken() // move parser to first token
     new JacksonTokenIterator(parser)
-  }
-}

@@ -1,12 +1,12 @@
 package tethys.writers
 
-import org.scalatest.matchers.should.Matchers.{value => _, _}
+import org.scalatest.matchers.should.Matchers.{value as _, *}
 import org.scalatest.flatspec.AnyFlatSpec
 import tethys.JsonWriter
 import tethys.commons.TokenNode
-import tethys.commons.TokenNode._
+import tethys.commons.TokenNode.*
 import tethys.writers.DefaultWritersTest.TestDefinition
-import tethys.writers.tokens.SimpleTokenWriter._
+import tethys.writers.tokens.SimpleTokenWriter.*
 
 import scala.reflect.ClassTag
 
@@ -30,8 +30,8 @@ class DefaultWritersTest extends AnyFlatSpec {
     TestDefinition(value, jsonWriter, name)
   }
 
-  private val cases: List[(TestDefinition[_], List[TokenNode])] =
-    List[(TestDefinition[_], List[TokenNode])](
+  private val cases: List[(TestDefinition[?], List[TokenNode])] =
+    List[(TestDefinition[?], List[TokenNode])](
       test("1") -> value("1"),
       test('1') -> value("1"),
       test(1) -> value(1),

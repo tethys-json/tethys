@@ -11,12 +11,12 @@ sealed trait WriterBuilder[A]:
 
   def rename[B](field: A => B)(rename: String): WriterBuilder[A]
 
-  def update[B](field: A => B): FunApply[A, B] with WithRename[FunApply[A, B]]
+  def update[B](field: A => B): FunApply[A, B] & WithRename[FunApply[A, B]]
 
   @deprecated("Use 'update' instead")
   def updatePartial[B](
       field: A => B
-  ): FunApply[A, B] with WithRename[FunApply[A, B]]
+  ): FunApply[A, B] & WithRename[FunApply[A, B]]
 
   def fieldStyle(style: FieldStyle): WriterBuilder[A]
 

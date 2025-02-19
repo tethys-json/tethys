@@ -16,13 +16,13 @@ class EnumeratumSupportTest
   behavior of "TethysEnum"
 
   it should "work for encode" in {
-    for (entry <- Direction.values) {
+    for entry <- Direction.values do {
       entry.asTokenList shouldBe token(entry.entryName)
     }
   }
 
   it should "work for decode" in {
-    for (entry <- Direction.values) {
+    for entry <- Direction.values do {
       token(entry.entryName).tokensAs[Direction] shouldBe entry
     }
   }

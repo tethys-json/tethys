@@ -3,106 +3,83 @@ package tethys.readers.instances
 import tethys.readers.tokens.TokenIterator
 import tethys.readers.{FieldName, ReaderError}
 
-object PrimitiveReaders {
-  object ByteJsonReader {
-    def read(it: TokenIterator)(implicit fieldName: FieldName): Byte = {
-      if (it.currentToken().isNumberValue) {
+object PrimitiveReaders:
+  object ByteJsonReader:
+    def read(it: TokenIterator)(implicit fieldName: FieldName): Byte =
+      if it.currentToken().isNumberValue then
         val res = it.byte()
         it.nextToken()
         res
-      } else {
+      else
         ReaderError.wrongJson(
           s"Expected byte value but found: ${it.currentToken()}"
         )
-      }
-    }
-  }
 
-  object ShortJsonReader {
-    def read(it: TokenIterator)(implicit fieldName: FieldName): Short = {
-      if (it.currentToken().isNumberValue) {
+  object ShortJsonReader:
+    def read(it: TokenIterator)(implicit fieldName: FieldName): Short =
+      if it.currentToken().isNumberValue then
         val res = it.short()
         it.nextToken()
         res
-      } else {
+      else
         ReaderError.wrongJson(
           s"Expected short value but found: ${it.currentToken()}"
         )
-      }
-    }
-  }
 
-  object IntJsonReader {
-    def read(it: TokenIterator)(implicit fieldName: FieldName): Int = {
-      if (it.currentToken().isNumberValue) {
+  object IntJsonReader:
+    def read(it: TokenIterator)(implicit fieldName: FieldName): Int =
+      if it.currentToken().isNumberValue then
         val res = it.int()
         it.nextToken()
         res
-      } else {
+      else
         error(it)
-      }
-    }
 
-    private def error(it: TokenIterator)(implicit fieldName: FieldName) = {
+    private def error(it: TokenIterator)(implicit fieldName: FieldName) =
       ReaderError.wrongJson(
         s"Expected int value but found: ${it.currentToken()}"
       )
-    }
-  }
 
-  object LongJsonReader {
-    def read(it: TokenIterator)(implicit fieldName: FieldName): Long = {
-      if (it.currentToken().isNumberValue) {
+  object LongJsonReader:
+    def read(it: TokenIterator)(implicit fieldName: FieldName): Long =
+      if it.currentToken().isNumberValue then
         val res = it.long()
         it.nextToken()
         res
-      } else {
+      else
         ReaderError.wrongJson(
           s"Expected long value but found: ${it.currentToken()}"
         )
-      }
-    }
-  }
 
-  object FloatJsonReader {
-    def read(it: TokenIterator)(implicit fieldName: FieldName): Float = {
-      if (it.currentToken().isNumberValue) {
+  object FloatJsonReader:
+    def read(it: TokenIterator)(implicit fieldName: FieldName): Float =
+      if it.currentToken().isNumberValue then
         val res = it.float()
         it.nextToken()
         res
-      } else {
+      else
         ReaderError.wrongJson(
           s"Expected float value but found: ${it.currentToken()}"
         )
-      }
-    }
-  }
 
-  object DoubleJsonReader {
-    def read(it: TokenIterator)(implicit fieldName: FieldName): Double = {
-      if (it.currentToken().isNumberValue) {
+  object DoubleJsonReader:
+    def read(it: TokenIterator)(implicit fieldName: FieldName): Double =
+      if it.currentToken().isNumberValue then
         val res = it.double()
         it.nextToken()
         res
-      } else {
+      else
         ReaderError.wrongJson(
           s"Expected double value but found: ${it.currentToken()}"
         )
-      }
-    }
-  }
 
-  object BooleanJsonReader {
-    def read(it: TokenIterator)(implicit fieldName: FieldName): Boolean = {
-      if (it.currentToken().isBooleanValue) {
+  object BooleanJsonReader:
+    def read(it: TokenIterator)(implicit fieldName: FieldName): Boolean =
+      if it.currentToken().isBooleanValue then
         val res = it.boolean()
         it.nextToken()
         res
-      } else {
+      else
         ReaderError.wrongJson(
           s"Expected boolean value but found: ${it.currentToken()}"
         )
-      }
-    }
-  }
-}

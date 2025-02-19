@@ -8,69 +8,62 @@ import tethys.{JsonObjectWriter, JsonReader, JsonWriter}
 
 import scala.collection.mutable.ArrayBuffer
 
-trait CirceSupport {
+trait CirceSupport:
   implicit lazy val circeJsonObjectWriter: JsonWriter[JsonObject] =
-    new JsonObjectWriter[JsonObject] {
-      def writeValues(value: JsonObject, writer: TokenWriter): Unit = {
+    new JsonObjectWriter[JsonObject]:
+      def writeValues(value: JsonObject, writer: TokenWriter): Unit =
         val folder = new TethysJsonFolder(writer)
         val it = value.toIterable.iterator
-        while (it.hasNext) {
+        while it.hasNext do
           val (k, v) = it.next()
 
           writer.writeFieldName(k)
           v.foldWith(folder)
-        }
-      }
-    }
 
-  implicit lazy val circeJsonWriter: JsonWriter[Json] = new JsonWriter[Json] {
+  implicit lazy val circeJsonWriter: JsonWriter[Json] = new JsonWriter[Json]:
     def write(value: Json, writer: TokenWriter): Unit =
       value.foldWith(new TethysJsonFolder(writer))
-  }
 
   implicit lazy val circeJsonObjectReader: JsonReader[JsonObject] =
-    new JsonReader[JsonObject] {
+    new JsonReader[JsonObject]:
       def read(it: TokenIterator)(implicit fieldName: FieldName): JsonObject =
-        if (!it.currentToken().isObjectStart)
+        if !it.currentToken().isObjectStart then
           ReaderError.wrongJson(
             s"Expected object start but found: ${it.currentToken()}"
           )
-        else {
+        else
           it.next()
 
           var builder = ArrayBuffer.newBuilder[(String, Json)]
-          while (!it.currentToken().isObjectEnd) {
+          while !it.currentToken().isObjectEnd do
             val token = it.currentToken()
-            if (token.isFieldName) {
+            if token.isFieldName then
               val name = it.fieldName()
               val value =
                 circeJsonReader.read(it.next())(fieldName.appendFieldName(name))
 
               builder += ((name, value))
-            } else
+            else
               ReaderError.wrongJson(
                 s"Expect end of object or field name but '$token' found"
               )(fieldName)
-          }
           it.next()
 
           JsonObject.fromIterable(builder.result)
-        }
-    }
 
-  implicit lazy val circeJsonReader: JsonReader[Json] = new JsonReader[Json] {
-    def read(it: TokenIterator)(implicit fieldName: FieldName): Json = {
+  implicit lazy val circeJsonReader: JsonReader[Json] = new JsonReader[Json]:
+    def read(it: TokenIterator)(implicit fieldName: FieldName): Json =
       val token = it.currentToken()
 
-      if (token.isObjectStart)
+      if token.isObjectStart then
         Json.fromJsonObject(circeJsonObjectReader.read(it))
-      else if (token.isArrayStart)
+      else if token.isArrayStart then
         Json.fromValues(JsonReader[Vector[Json]].read(it))
-      else if (token.isStringValue)
+      else if token.isStringValue then
         Json.fromString(JsonReader.stringReader.read(it))
-      else if (token.isBooleanValue)
+      else if token.isBooleanValue then
         Json.fromBoolean(JsonReader.booleanReader.read(it))
-      else if (token.isNumberValue) JsonReader.numberReader.read(it) match {
+      else if token.isNumberValue then JsonReader.numberReader.read(it) match
         case x @ (_: java.lang.Byte | _: java.lang.Short | _: java.lang.Long) =>
           Json.fromLong(x.longValue)
         case x: java.lang.Integer => Json.fromInt(x)
@@ -83,39 +76,31 @@ trait CirceSupport {
         case x: java.math.BigDecimal => Json.fromBigDecimal(x)
         case x: BigDecimal           => Json.fromBigDecimal(x)
         case x                       => Json.fromBigDecimal(x.doubleValue)
-      }
-      else if (token.isNullValue) { it.next(); Json.Null }
+      else if token.isNullValue then { it.next(); Json.Null }
       else ReaderError.wrongJson(s"Unexpected token found: $token")(fieldName)
-    }
-  }
 
-  private[this] class TethysJsonFolder(writer: TokenWriter)
+  private class TethysJsonFolder(writer: TokenWriter)
       extends Json.Folder[Unit]
-      with JsonNumberHack {
+      with JsonNumberHack:
     def onNull: Unit = writer.writeNull()
     def onBoolean(value: Boolean): Unit = writer.writeBoolean(value)
     def onNumber(value: JsonNumber): Unit = writeNumber(value, writer)
     def onString(value: String): Unit = writer.writeString(value)
-    def onArray(value: Vector[Json]): Unit = {
+    def onArray(value: Vector[Json]): Unit =
       writer.writeArrayStart()
 
       val it = value.iterator
-      while (it.hasNext) it.next().foldWith(this)
+      while it.hasNext do it.next().foldWith(this)
 
       writer.writeArrayEnd()
-    }
-    def onObject(value: JsonObject): Unit = {
+    def onObject(value: JsonObject): Unit =
       writer.writeObjectStart()
 
       val it = value.toIterable.iterator
-      while (it.hasNext) {
+      while it.hasNext do
         val (k, v) = it.next()
 
         writer.writeFieldName(k)
         v.foldWith(this)
-      }
 
       writer.writeObjectEnd()
-    }
-  }
-}

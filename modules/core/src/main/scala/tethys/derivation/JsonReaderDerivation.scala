@@ -16,10 +16,9 @@ private[tethys] trait JsonReaderDerivation:
           ReaderError.wrongJson(
             "Expected object start but found: " + it.currentToken().toString
           )
-        else {
+        else
           it.skipExpression()
           value
-        }
 
   inline def derived[A](inline config: ReaderBuilder[A])(using
       mirror: Mirror.ProductOf[A]
