@@ -1,8 +1,4 @@
-lazy val scala212 = "2.12.20"
-lazy val scala213 = "2.13.16"
-lazy val scala3 = "3.3.5"
-
-ThisBuild / scalaVersion := scala3
+ThisBuild / scalaVersion := "3.3.4"
 
 lazy val commonSettings = Seq(
   organization := "com.tethys-json",
@@ -34,36 +30,16 @@ lazy val commonSettings = Seq(
       name = "Erlan Zhaygutov",
       email = "zhaigutov.erlan@gmail.com",
       url = url("https://github.com/MrIrre")
+    ),
+    Developer(
+      id = "goshacodes",
+      name = "Georgii Kovalev",
+      email = "goshacodes@gmail.com",
+      url = url("https://github.com/goshacodes")
     )
   ),
   Test / publishArtifact := false
 )
-
-def crossScalaSettings = {
-  def addDirsByScalaVersion(path: String): Def.Initialize[Seq[sbt.File]] =
-    scalaVersion.zip(baseDirectory) { case (v, base) =>
-      def extraDirs(versionSpecificFolder: String): Seq[sbt.File] =
-        Seq(base / path / versionSpecificFolder)
-
-      CrossVersion.partialVersion(v) match {
-        case Some((2, y)) if y >= 13 =>
-          extraDirs("scala-2.13+")
-        case Some((3, _)) =>
-          extraDirs("scala-3")
-        case _ => Seq.empty
-      }
-    }
-
-  Seq(
-    crossScalaVersions := Seq(scala212, scala213, scala3),
-    Compile / unmanagedSourceDirectories ++= addDirsByScalaVersion(
-      "src/main"
-    ).value,
-    Test / unmanagedSourceDirectories ++= addDirsByScalaVersion(
-      "src/test"
-    ).value
-  )
-}
 
 lazy val testSettings = Seq(
   libraryDependencies ++= Seq(
@@ -81,7 +57,6 @@ lazy val tethys = project
   )
   .aggregate(
     core,
-    `macro-derivation`,
     `jackson-211`,
     `jackson-212`,
     `jackson-213`,
@@ -94,44 +69,23 @@ lazy val tethys = project
 
 lazy val modules = file("modules")
 
-def addScalaReflect(scalaVersion: String): Seq[ModuleID] =
-  CrossVersion.partialVersion(scalaVersion) match {
-    case Some((2, y)) =>
-      Seq("org.scala-lang" % "scala-reflect" % scalaVersion)
-    case _ => Seq.empty
-  }
-
 lazy val core = project
   .in(modules / "core")
-  .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(testSettings)
   .settings(
-    name := "tethys-core",
-    libraryDependencies ++= addScalaReflect(scalaVersion.value)
+    name := "tethys1-core"
   )
 
 lazy val cats = project
   .in(modules / "cats")
-  .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(testSettings)
   .settings(
-    name := "tethys-cats",
+    name := "tethys1-cats",
     libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-core" % "2.13.0"
     )
-  )
-  .dependsOn(core)
-
-lazy val `macro-derivation` = project
-  .in(modules / "macro-derivation")
-  .settings(crossScalaSettings)
-  .settings(commonSettings)
-  .settings(testSettings)
-  .settings(
-    name := "tethys-derivation",
-    libraryDependencies ++= addScalaReflect(scalaVersion.value)
   )
   .dependsOn(core)
 
@@ -143,12 +97,11 @@ lazy val jacksonSettings = Seq(
 
 lazy val `jackson-211` = project
   .in(modules / "jackson-211")
-  .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(jacksonSettings)
   .settings(testSettings)
   .settings(
-    name := "tethys-jackson211",
+    name := "tethys1-jackson211",
     libraryDependencies ++= Seq(
       "com.fasterxml.jackson.core" % "jackson-core" % "2.11.4"
     )
@@ -157,12 +110,11 @@ lazy val `jackson-211` = project
 
 lazy val `jackson-212` = project
   .in(modules / "jackson-212")
-  .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(jacksonSettings)
   .settings(testSettings)
   .settings(
-    name := "tethys-jackson212",
+    name := "tethys1-jackson212",
     libraryDependencies ++= Seq(
       "com.fasterxml.jackson.core" % "jackson-core" % "2.12.7"
     )
@@ -171,12 +123,11 @@ lazy val `jackson-212` = project
 
 lazy val `jackson-213` = project
   .in(modules / "jackson-213")
-  .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(jacksonSettings)
   .settings(testSettings)
   .settings(
-    name := "tethys-jackson213",
+    name := "tethys1-jackson213",
     libraryDependencies ++= Seq(
       "com.fasterxml.jackson.core" % "jackson-core" % "2.13.5"
     )
@@ -185,11 +136,10 @@ lazy val `jackson-213` = project
 
 lazy val circe = project
   .in(modules / "circe")
-  .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(testSettings)
   .settings(
-    name := "tethys-circe",
+    name := "tethys1-circe",
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-core" % "0.14.10"
     )
@@ -198,11 +148,10 @@ lazy val circe = project
 
 lazy val json4s = project
   .in(modules / "json4s")
-  .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(testSettings)
   .settings(
-    name := "tethys-json4s",
+    name := "tethys1-json4s",
     libraryDependencies ++= Seq(
       "org.json4s" %% "json4s-ast" % "4.0.7"
     )
@@ -211,28 +160,22 @@ lazy val json4s = project
 
 lazy val enumeratum = project
   .in(modules / "enumeratum")
-  .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(testSettings)
   .settings(
-    name := "tethys-enumeratum",
-    libraryDependencies ++= {
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, y)) =>
-          Seq("com.beachape" %% "enumeratum" % "1.7.5")
-        case _ => Seq.empty
-      }
-    }
+    name := "tethys1-enumeratum",
+    libraryDependencies ++= Seq(
+      "com.beachape" %% "enumeratum" % "1.7.5"
+    )
   )
   .dependsOn(core)
 
 lazy val refined = project
   .in(modules / "refined")
-  .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(testSettings)
   .settings(
-    name := "tethys-refined",
+    name := "tethys1-refined",
     libraryDependencies ++= Seq(
       "eu.timepit" %% "refined" % "0.10.3"
     )
@@ -241,7 +184,6 @@ lazy val refined = project
 
 lazy val benchmarks = project
   .in(modules / "benchmarks")
-  .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(
     publishTo := None,
@@ -264,5 +206,5 @@ lazy val benchmarks = project
       }
     }
   )
-  .dependsOn(core, `macro-derivation`, `jackson-211`)
+  .dependsOn(core, `jackson-213`)
   .enablePlugins(JmhPlugin)
