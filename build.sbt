@@ -34,6 +34,12 @@ lazy val commonSettings = Seq(
       name = "Erlan Zhaygutov",
       email = "zhaigutov.erlan@gmail.com",
       url = url("https://github.com/MrIrre")
+    ),
+    Developer(
+      id = "goshacodes",
+      name = "Georgii Kovalev",
+      email = "goshacodes@gmail.com",
+      url = url("https://github.com/goshacodes")
     )
   ),
   Test / publishArtifact := false
@@ -82,11 +88,13 @@ lazy val tethys = project
   .aggregate(
     core,
     `macro-derivation`,
-    `jackson-211`,
     `jackson-212`,
     `jackson-213`,
     `jackson-214`,
     `jackson-215`,
+    `jackson-216`,
+    `jackson-217`,
+    `jackson-218`,
     json4s,
     circe,
     refined,
@@ -113,19 +121,6 @@ lazy val core = project
     libraryDependencies ++= addScalaReflect(scalaVersion.value)
   )
 
-lazy val cats = project
-  .in(modules / "cats")
-  .settings(crossScalaSettings)
-  .settings(commonSettings)
-  .settings(testSettings)
-  .settings(
-    name := "tethys-cats",
-    libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-core" % "2.13.0"
-    )
-  )
-  .dependsOn(core)
-
 lazy val `macro-derivation` = project
   .in(modules / "macro-derivation")
   .settings(crossScalaSettings)
@@ -137,84 +132,10 @@ lazy val `macro-derivation` = project
   )
   .dependsOn(core)
 
-lazy val jacksonSettings = Seq(
-  Compile / unmanagedSourceDirectories += modules / "jackson-backend" / "src" / "main",
-  Test / unmanagedSourceDirectories += modules / "jackson-backend" / "src" / "test",
-  Test / unmanagedResourceDirectories += modules / "jackson-backend" / "src" / "test" / "resources"
-)
-
-lazy val `jackson-211` = project
-  .in(modules / "jackson-211")
-  .settings(crossScalaSettings)
-  .settings(commonSettings)
-  .settings(jacksonSettings)
-  .settings(testSettings)
-  .settings(
-    name := "tethys-jackson211",
-    libraryDependencies ++= Seq(
-      "com.fasterxml.jackson.core" % "jackson-core" % "2.11.4"
-    )
-  )
-  .dependsOn(core)
-
-lazy val `jackson-212` = project
-  .in(modules / "jackson-212")
-  .settings(crossScalaSettings)
-  .settings(commonSettings)
-  .settings(jacksonSettings)
-  .settings(testSettings)
-  .settings(
-    name := "tethys-jackson212",
-    libraryDependencies ++= Seq(
-      "com.fasterxml.jackson.core" % "jackson-core" % "2.12.7"
-    )
-  )
-  .dependsOn(core)
-
-lazy val `jackson-213` = project
-  .in(modules / "jackson-213")
-  .settings(crossScalaSettings)
-  .settings(commonSettings)
-  .settings(jacksonSettings)
-  .settings(testSettings)
-  .settings(
-    name := "tethys-jackson213",
-    libraryDependencies ++= Seq(
-      "com.fasterxml.jackson.core" % "jackson-core" % "2.13.5"
-    )
-  )
-  .dependsOn(core)
-
-lazy val `jackson-214` = project
-  .in(modules / "jackson-214")
-  .settings(crossScalaSettings)
-  .settings(commonSettings)
-  .settings(jacksonSettings)
-  .settings(testSettings)
-  .settings(
-    name := "tethys-jackson214",
-    libraryDependencies ++= Seq(
-      "com.fasterxml.jackson.core" % "jackson-core" % "2.14.3"
-    )
-  )
-  .dependsOn(core)
-
-lazy val `jackson-215` = project
-  .in(modules / "jackson-215")
-  .settings(crossScalaSettings)
-  .settings(commonSettings)
-  .settings(jacksonSettings)
-  .settings(testSettings)
-  .settings(
-    name := "tethys-jackson215",
-    libraryDependencies ++= Seq(
-      "com.fasterxml.jackson.core" % "jackson-core" % "2.15.4"
-    )
-  )
-  .dependsOn(core)
+lazy val ast = modules / "ast"
 
 lazy val circe = project
-  .in(modules / "circe")
+  .in(ast / "circe")
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(testSettings)
@@ -224,10 +145,10 @@ lazy val circe = project
       "io.circe" %% "circe-core" % "0.14.10"
     )
   )
-  .dependsOn(core, `jackson-212` % Test)
+  .dependsOn(core, `jackson-218` % Test)
 
 lazy val json4s = project
-  .in(modules / "json4s")
+  .in(ast / "json4s")
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(testSettings)
@@ -239,8 +160,23 @@ lazy val json4s = project
   )
   .dependsOn(core)
 
+lazy val integrations = modules / "integrations"
+
+lazy val cats = project
+  .in(integrations / "cats")
+  .settings(crossScalaSettings)
+  .settings(commonSettings)
+  .settings(testSettings)
+  .settings(
+    name := "tethys-cats",
+    libraryDependencies ++= Seq(
+      "org.typelevel" %% "cats-core" % "2.13.0"
+    )
+  )
+  .dependsOn(core)
+
 lazy val enumeratum = project
-  .in(modules / "enumeratum")
+  .in(integrations / "enumeratum")
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(testSettings)
@@ -257,7 +193,7 @@ lazy val enumeratum = project
   .dependsOn(core)
 
 lazy val refined = project
-  .in(modules / "refined")
+  .in(integrations / "refined")
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(testSettings)
@@ -265,6 +201,112 @@ lazy val refined = project
     name := "tethys-refined",
     libraryDependencies ++= Seq(
       "eu.timepit" %% "refined" % "0.10.3"
+    )
+  )
+  .dependsOn(core)
+
+lazy val jackson = modules / "backend" / "jackson"
+
+lazy val jacksonSettings = Seq(
+  Compile / unmanagedSourceDirectories += jackson / "jackson-backend" / "src" / "main",
+  Test / unmanagedSourceDirectories += jackson / "jackson-backend" / "src" / "test",
+  Test / unmanagedResourceDirectories += jackson / "jackson-backend" / "src" / "test" / "resources"
+)
+
+lazy val `jackson-212` = project
+  .in(jackson / "jackson-212")
+  .settings(crossScalaSettings)
+  .settings(commonSettings)
+  .settings(jacksonSettings)
+  .settings(testSettings)
+  .settings(
+    name := "tethys-jackson212",
+    libraryDependencies ++= Seq(
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.12.7"
+    )
+  )
+  .dependsOn(core)
+
+lazy val `jackson-213` = project
+  .in(jackson / "jackson-213")
+  .settings(crossScalaSettings)
+  .settings(commonSettings)
+  .settings(jacksonSettings)
+  .settings(testSettings)
+  .settings(
+    name := "tethys-jackson213",
+    libraryDependencies ++= Seq(
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.13.5"
+    )
+  )
+  .dependsOn(core)
+
+lazy val `jackson-214` = project
+  .in(jackson / "jackson-214")
+  .settings(crossScalaSettings)
+  .settings(commonSettings)
+  .settings(jacksonSettings)
+  .settings(testSettings)
+  .settings(
+    name := "tethys-jackson214",
+    libraryDependencies ++= Seq(
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.14.3"
+    )
+  )
+  .dependsOn(core)
+
+lazy val `jackson-215` = project
+  .in(jackson / "jackson-215")
+  .settings(crossScalaSettings)
+  .settings(commonSettings)
+  .settings(jacksonSettings)
+  .settings(testSettings)
+  .settings(
+    name := "tethys-jackson215",
+    libraryDependencies ++= Seq(
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.15.4"
+    )
+  )
+  .dependsOn(core)
+
+lazy val `jackson-216` = project
+  .in(jackson / "jackson-216")
+  .settings(crossScalaSettings)
+  .settings(commonSettings)
+  .settings(jacksonSettings)
+  .settings(testSettings)
+  .settings(
+    name := "tethys-jackson216",
+    libraryDependencies ++= Seq(
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.16.2"
+    )
+  )
+  .dependsOn(core)
+
+lazy val `jackson-217` = project
+  .in(jackson / "jackson-217")
+  .settings(crossScalaSettings)
+  .settings(commonSettings)
+  .settings(jacksonSettings)
+  .settings(testSettings)
+  .settings(
+    name := "tethys-jackson217",
+    libraryDependencies ++= Seq(
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.17.3"
+    )
+  )
+  .dependsOn(core)
+
+lazy val `jackson-218` = project
+  .in(jackson / "jackson-218")
+  .settings(crossScalaSettings)
+  .settings(commonSettings)
+  .settings(jacksonSettings)
+  .settings(testSettings)
+  .settings(
+    name := "tethys-jackson218",
+    libraryDependencies ++= Seq(
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.18.3"
     )
   )
   .dependsOn(core)
@@ -294,5 +336,5 @@ lazy val benchmarks = project
       }
     }
   )
-  .dependsOn(core, `macro-derivation`, `jackson-211`)
+  .dependsOn(core, `macro-derivation`, `jackson-218`)
   .enablePlugins(JmhPlugin)
