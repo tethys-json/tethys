@@ -34,6 +34,12 @@ lazy val commonSettings = Seq(
       name = "Erlan Zhaygutov",
       email = "zhaigutov.erlan@gmail.com",
       url = url("https://github.com/MrIrre")
+    ),
+    Developer(
+      id = "goshacodes",
+      name = "Georgii Kovalev",
+      email = "goshacodes@gmail.com",
+      url = url("https://github.com/goshacodes")
     )
   ),
   Test / publishArtifact := false
@@ -115,8 +121,49 @@ lazy val core = project
     libraryDependencies ++= addScalaReflect(scalaVersion.value)
   )
 
+lazy val `macro-derivation` = project
+  .in(modules / "macro-derivation")
+  .settings(crossScalaSettings)
+  .settings(commonSettings)
+  .settings(testSettings)
+  .settings(
+    name := "tethys-derivation",
+    libraryDependencies ++= addScalaReflect(scalaVersion.value)
+  )
+  .dependsOn(core)
+
+lazy val ast = modules / "ast"
+
+lazy val circe = project
+  .in(ast / "circe")
+  .settings(crossScalaSettings)
+  .settings(commonSettings)
+  .settings(testSettings)
+  .settings(
+    name := "tethys-circe",
+    libraryDependencies ++= Seq(
+      "io.circe" %% "circe-core" % "0.14.10"
+    )
+  )
+  .dependsOn(core, `jackson-212` % Test)
+
+lazy val json4s = project
+  .in(ast / "json4s")
+  .settings(crossScalaSettings)
+  .settings(commonSettings)
+  .settings(testSettings)
+  .settings(
+    name := "tethys-json4s",
+    libraryDependencies ++= Seq(
+      "org.json4s" %% "json4s-ast" % "4.0.7"
+    )
+  )
+  .dependsOn(core)
+
+lazy val integrations = modules / "integrations"
+
 lazy val cats = project
-  .in(modules / "cats")
+  .in(integrations / "cats")
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(testSettings)
@@ -128,14 +175,33 @@ lazy val cats = project
   )
   .dependsOn(core)
 
-lazy val `macro-derivation` = project
-  .in(modules / "macro-derivation")
+lazy val enumeratum = project
+  .in(integrations / "enumeratum")
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(testSettings)
   .settings(
-    name := "tethys-derivation",
-    libraryDependencies ++= addScalaReflect(scalaVersion.value)
+    name := "tethys-enumeratum",
+    libraryDependencies ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, y)) =>
+          Seq("com.beachape" %% "enumeratum" % "1.7.5")
+        case _ => Seq.empty
+      }
+    }
+  )
+  .dependsOn(core)
+
+lazy val refined = project
+  .in(integrations / "refined")
+  .settings(crossScalaSettings)
+  .settings(commonSettings)
+  .settings(testSettings)
+  .settings(
+    name := "tethys-refined",
+    libraryDependencies ++= Seq(
+      "eu.timepit" %% "refined" % "0.10.3"
+    )
   )
   .dependsOn(core)
 
@@ -241,62 +307,6 @@ lazy val `jackson-218` = project
     name := "tethys-jackson218",
     libraryDependencies ++= Seq(
       "com.fasterxml.jackson.core" % "jackson-core" % "2.18.3"
-    )
-  )
-  .dependsOn(core)
-
-lazy val circe = project
-  .in(modules / "circe")
-  .settings(crossScalaSettings)
-  .settings(commonSettings)
-  .settings(testSettings)
-  .settings(
-    name := "tethys-circe",
-    libraryDependencies ++= Seq(
-      "io.circe" %% "circe-core" % "0.14.10"
-    )
-  )
-  .dependsOn(core, `jackson-212` % Test)
-
-lazy val json4s = project
-  .in(modules / "json4s")
-  .settings(crossScalaSettings)
-  .settings(commonSettings)
-  .settings(testSettings)
-  .settings(
-    name := "tethys-json4s",
-    libraryDependencies ++= Seq(
-      "org.json4s" %% "json4s-ast" % "4.0.7"
-    )
-  )
-  .dependsOn(core)
-
-lazy val enumeratum = project
-  .in(modules / "enumeratum")
-  .settings(crossScalaSettings)
-  .settings(commonSettings)
-  .settings(testSettings)
-  .settings(
-    name := "tethys-enumeratum",
-    libraryDependencies ++= {
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, y)) =>
-          Seq("com.beachape" %% "enumeratum" % "1.7.5")
-        case _ => Seq.empty
-      }
-    }
-  )
-  .dependsOn(core)
-
-lazy val refined = project
-  .in(modules / "refined")
-  .settings(crossScalaSettings)
-  .settings(commonSettings)
-  .settings(testSettings)
-  .settings(
-    name := "tethys-refined",
-    libraryDependencies ++= Seq(
-      "eu.timepit" %% "refined" % "0.10.3"
     )
   )
   .dependsOn(core)
