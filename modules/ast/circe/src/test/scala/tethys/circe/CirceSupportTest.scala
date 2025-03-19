@@ -6,6 +6,7 @@ import org.scalatest.matchers.should.Matchers
 import tethys.circe.SimpleTokenWriterRaw._
 import tethys.commons.TokenNode
 import tethys.commons.TokenNode.{value => token, _}
+import tethys.jackson._
 
 class CirceSupportTest extends AnyFlatSpec with Matchers {
   behavior of "Circe ast JsonReader"

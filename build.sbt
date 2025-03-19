@@ -145,7 +145,7 @@ lazy val circe = project
       "io.circe" %% "circe-core" % "0.14.10"
     )
   )
-  .dependsOn(core, `jackson-212` % Test)
+  .dependsOn(core, `jackson-218` % Test)
 
 lazy val json4s = project
   .in(ast / "json4s")
