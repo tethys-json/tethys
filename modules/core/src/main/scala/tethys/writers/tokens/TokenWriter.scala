@@ -1,6 +1,5 @@
 package tethys.writers.tokens
 
-
 trait TokenWriter {
 
   /** Writes a JSON array start marker [ . */
