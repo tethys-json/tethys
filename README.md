@@ -16,8 +16,8 @@ It's advantages:
     * Discriminator support for sum types derivation
 
 Read more about library usage bellow:
-- [Scala 3](https://github.com/tethys-json/tethys?tab=readme-ov-file#scala-3)
-- [Scala 2](https://github.com/tethys-json/tethys?tab=readme-ov-file#scala-2)
+- [Scala 3](#scala-3)
+- [Scala 2](#scala-2)
 
 
 # Scala 3
@@ -36,7 +36,7 @@ libraryDependencies ++= Seq(
 tethys provides extension methods allowing you to read and write JSON
 
 They look something like this:
-```scala 3
+```scala
 package tethys
 
 extension [A](value: A)
@@ -74,7 +74,7 @@ You can create new instances for your types using:
 1. **contramap** on already existing writer
 2. **map** on already existing reader
 
-```scala 3
+```scala
 import tethys.*
 
 case class StringWrapper(value: String) extends AnyVal
@@ -90,7 +90,7 @@ given JsonReader[StringWrapper] =
 
 To build JsonWriter for case class you can use `obj` method on its companion object.  
 
-```scala 3
+```scala
 import tethys.*
 
   case class MobileSession(
@@ -104,18 +104,15 @@ object MobileSession:
     .addField("id")(_.id)
     .addField("deviceId")(_.deviceId)
     .addField("userId")(_.userId)
-
 ```
 
 You can concat multiple **JsonObjectWriter**.  
 Combining concatenation with derivation allows to create **JsonWriter** for sealed trait.
 To derive JsonWriter for sealed trait you need to have **JsonObjectWriter** instances for all subtypes in scope
 
-```scala 3
-
+```scala
 given JsonWriter[Session] =
    JsonWriter.obj[Session].addField("typ")(_.typ) ++ JsonObjectWriter.derived[Session]
-
 ```
 
 
@@ -123,7 +120,7 @@ given JsonWriter[Session] =
 
 To build JsonReader for case class you can use `builder` method on its companion object.
 
-```scala 3
+```scala
 import tethys.*
 
   case class MobileSession(
@@ -138,13 +135,11 @@ import tethys.*
       .addField[String]("deviceId")
       .addField[java.lang.UUID]("userId")
       .buildReader(MobileSession(_, _, _))
-  
-
 ```   
 
 To build JsonReader for sealed trait you can use `selectReader` after adding some field:
 
-```scala 3
+```scala
 import tethys.*
   
   object Session:
@@ -157,15 +152,13 @@ import tethys.*
          case "web" => webReader
          case "mobile" => mobileReader
       }
-  
-
 ```  
 
 
 ## Derivation
 
 All examples consider you made this imports:
-```scala 3
+```scala
 import tethys.*
 import tethys.jackson.* // or tethys.jackson.pretty.* for pretty printing
 ```
@@ -174,7 +167,7 @@ import tethys.jackson.* // or tethys.jackson.pretty.* for pretty printing
 ### Basic enums
 1. **StringEnumJsonWriter** and **StringEnumJsonReader**
 
-```scala 3
+```scala
 enum SessionType derives StringEnumJsonWriter, StringEnumJsonReader:
   case Mobile, Web
  
@@ -188,7 +181,7 @@ session.asJson == json
 ```
 2. **OrdinalEnumJsonWriter** and **OrdinalEnumJsonReader**
 
-```scala 3
+```scala
 enum SessionType derives OrdinalEnumJsonWriter, OrdinalEnumJsonReader:
   case Mobile, Web
  
@@ -203,7 +196,7 @@ session.asJson == json
 
 ### Case classes
 
-```scala 3
+```scala
 case class Session(
     id: Long, 
     userId: String
@@ -224,7 +217,7 @@ Discriminator for **JsonWriter** is optional.
 If you don't need readers/writers for subtypes, you can omit them,
 they will be derived recursively for your trait/enum.
 
-```scala 3
+```scala
 import tethys.selector
 
 sealed trait UserAccount(@selector val typ: String) derives JsonReader, JsonObjectWriter
@@ -257,21 +250,21 @@ account.asJson == json
 3. To configure **JsonWriter** use **WriterBuilder**
 4. Configuration can be provided:
    * **directly to derived method**
-   ```scala 3
+   ```scala
       given JsonWriter[UserAccount.Customer] = 
         JsonObjectWriter.derived {
           WriterBuilder[UserAccount.Customer]
         }
    ```
    * **as an inline given to derives**
-   ```scala 3
+   ```scala
       object Customer:
         inline given WriterBuilder[UserAccount.Customer] =
           WriterBuilder[UserAccount.Customer]
    ```
    P.S. There are empty **WriterBuilder** in the examples to simplify demonstration of two approaches. You shouldn't use empty one
 5. **WriterBuilder** features
-```scala 3
+```scala
 case class Foo(a: Int, b: String, c: Any, d: Boolean, e: Double)
 
 inline given WriterBuilder[Foo] =
@@ -297,7 +290,7 @@ inline given WriterBuilder[Foo] =
      }
 ```
 6. **ReaderBuilder** features
-```scala 3
+```scala
 
 inline given ReaderBuilder[Foo] =
   ReaderBuilder[Foo]
@@ -321,12 +314,12 @@ inline given ReaderBuilder[Foo] =
 ### Configuration via **JsonConfiguration**
 1. To configure both **JsonWriter** and **JsonReader** you can use **JsonConfiguration**
 2. **JsonConfiguration** can be provided as an inline given to derives
-```scala 3
+```scala
 inline given JsonConfiguration = JsonConfiguration.default
 ```
 3. **JsonConfiguration** will be applied recursively to all nested readers/writers
   * Product types
-  ```scala 3
+  ```scala
   import tethys.*
   import tethys.jackson.*
 
@@ -341,10 +334,9 @@ inline given JsonConfiguration = JsonConfiguration.default
 
   json.jsonAs[Outer] == Right(outer)
   outer.asJson == json
-
   ```
   * Sum types
-  ```scala 3
+  ```scala
   import tethys.*
   import tethys.jackson.*
 
@@ -367,7 +359,7 @@ inline given JsonConfiguration = JsonConfiguration.default
   secondJson.jsonAs[Choice] == second
   ```
 4. **WriterBuilder** and **ReaderBuilder** settings have higher priority than **JsonConfiguration** settings
-```scala 3
+```scala
 import tethys.*
 import tethys.jackson.*
 
@@ -392,11 +384,9 @@ val json = """{"ID": 5, "PHONENUMBER": "+123"}"""
 
 json.jsonAs[Customer] == Right(customer)
 customer.asJson == json
-
 ```
 5. **JsonConfiguration** features
-```scala 3
-
+```scala
 inline given JsonConfiguration =
   JsonConfiguration
     // default config, entrypoint for configuration
@@ -420,7 +410,7 @@ so tethys can offer you **circe** and **json4s** AST support
 libraryDependencies += "com.tethys-json" %% "tethys-circe" % tethysVersion
 ```
 
-```scala 3
+```scala
 import tethys.*
 import tethys.jackson.*
 import tethys.circe.*
@@ -465,7 +455,6 @@ libraryDependencies += "com.tethys-json" %% "tethys-enumeratum" % tethysVersion
 
 enumeratum module provides a bunch of mixins for your Enum classes.
 ```scala
-
 import enumeratum.{Enum, EnumEntry}
 import tethys.enumeratum.*
 
@@ -482,7 +471,6 @@ case object Direction extends Enum[Direction]
 
   val values = findValues
 }
-
 ```
 
 ### Migration notes
@@ -503,7 +491,7 @@ Scala 3 derivation API in **0.29.0** has a lot of deprecations and is not fully 
         * select some field from your model
         * provide type to method and name of field as string parameter
 
-```scala 3
+```scala
    ReaderBuilder[SimpleType]
      .extract(_.i).from(_.d).and[Double]("e")((d, e) => (d + e).toInt)
 ```
