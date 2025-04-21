@@ -65,12 +65,17 @@ package object jackson {
   implicit def jacksonTokenIteratorProducer(implicit
       jsonFactory: JsonFactory = defaultJsonFactory
   ): TokenIteratorProducer = new TokenIteratorProducer {
+    override def produce(json: String): Either[ReaderError, TokenIterator] =
+      ReaderError.catchNonFatal(
+        JacksonTokenIterator.fromFreshParser(jsonFactory.createParser(json))
+      )(FieldName.Root)
+
     override def fromReader(
         reader: Reader
     ): Either[ReaderError, TokenIterator] = {
       ReaderError.catchNonFatal(
         JacksonTokenIterator.fromFreshParser(jsonFactory.createParser(reader))
-      )(FieldName())
+      )(FieldName.Root)
     }
   }
 }

@@ -5,7 +5,7 @@ import tethys.readers.tokens.TokenIterator
 import tethys.readers.{FieldName, ReaderError}
 
 trait AllJsonReaders extends OptionReaders {
-  implicit lazy val booleanReader: JsonReader[Boolean] =
+  implicit val booleanReader: JsonReader[Boolean] =
     new JsonReader[Boolean] {
       override def read(
           it: TokenIterator
@@ -22,7 +22,7 @@ trait AllJsonReaders extends OptionReaders {
       }
     }
 
-  implicit lazy val stringReader: JsonReader[String] = new JsonReader[String] {
+  implicit val stringReader: JsonReader[String] = new JsonReader[String] {
     override def read(
         it: TokenIterator
     )(implicit fieldName: FieldName): String = {
@@ -38,7 +38,7 @@ trait AllJsonReaders extends OptionReaders {
     }
   }
 
-  implicit lazy val charReader: JsonReader[Char] = stringReader.mapWithField {
+  implicit val charReader: JsonReader[Char] = stringReader.mapWithField {
     implicit fieldName =>
       {
         case s if s.length == 1 => s.head
@@ -46,7 +46,7 @@ trait AllJsonReaders extends OptionReaders {
       }
   }
 
-  implicit lazy val numberReader: JsonReader[Number] = new JsonReader[Number] {
+  implicit val numberReader: JsonReader[Number] = new JsonReader[Number] {
     override def read(
         it: TokenIterator
     )(implicit fieldName: FieldName): Number = {
@@ -62,7 +62,7 @@ trait AllJsonReaders extends OptionReaders {
     }
   }
 
-  implicit lazy val byteReader: JsonReader[Byte] = new JsonReader[Byte] {
+  implicit val byteReader: JsonReader[Byte] = new JsonReader[Byte] {
     override def read(
         it: TokenIterator
     )(implicit fieldName: FieldName): Byte = {
@@ -78,7 +78,7 @@ trait AllJsonReaders extends OptionReaders {
     }
   }
 
-  implicit lazy val shortReader: JsonReader[Short] = new JsonReader[Short] {
+  implicit val shortReader: JsonReader[Short] = new JsonReader[Short] {
     override def read(
         it: TokenIterator
     )(implicit fieldName: FieldName): Short = {
@@ -94,7 +94,7 @@ trait AllJsonReaders extends OptionReaders {
     }
   }
 
-  implicit lazy val intReader: JsonReader[Int] = new JsonReader[Int] {
+  implicit val intReader: JsonReader[Int] = new JsonReader[Int] {
     override def read(it: TokenIterator)(implicit fieldName: FieldName): Int = {
       if (it.currentToken().isNumberValue) {
         val res = it.int()
@@ -108,7 +108,7 @@ trait AllJsonReaders extends OptionReaders {
     }
   }
 
-  implicit lazy val longReader: JsonReader[Long] = new JsonReader[Long] {
+  implicit val longReader: JsonReader[Long] = new JsonReader[Long] {
     override def read(
         it: TokenIterator
     )(implicit fieldName: FieldName): Long = {
@@ -124,7 +124,7 @@ trait AllJsonReaders extends OptionReaders {
     }
   }
 
-  implicit lazy val floatReader: JsonReader[Float] = new JsonReader[Float] {
+  implicit val floatReader: JsonReader[Float] = new JsonReader[Float] {
     override def read(
         it: TokenIterator
     )(implicit fieldName: FieldName): Float = {
@@ -140,7 +140,7 @@ trait AllJsonReaders extends OptionReaders {
     }
   }
 
-  implicit lazy val doubleReader: JsonReader[Double] = new JsonReader[Double] {
+  implicit val doubleReader: JsonReader[Double] = new JsonReader[Double] {
     override def read(
         it: TokenIterator
     )(implicit fieldName: FieldName): Double = {
@@ -156,7 +156,7 @@ trait AllJsonReaders extends OptionReaders {
     }
   }
 
-  implicit lazy val bigDecimalReader: JsonReader[BigDecimal] =
+  implicit val bigDecimalReader: JsonReader[BigDecimal] =
     numberReader.map {
       case bd: BigDecimal            => bd
       case bi: BigInt                => BigDecimal(bi)
@@ -171,7 +171,7 @@ trait AllJsonReaders extends OptionReaders {
       case num                       => BigDecimal(num.doubleValue())
     }
 
-  implicit lazy val bigIntReader: JsonReader[BigInt] = numberReader.map {
+  implicit val bigIntReader: JsonReader[BigInt] = numberReader.map {
     case bi: BigInt                => bi
     case jbi: java.math.BigInteger => BigInt(jbi)
     case bd: BigDecimal            => bd.toBigInt
@@ -183,47 +183,47 @@ trait AllJsonReaders extends OptionReaders {
     case num                       => BigInt(num.longValue())
   }
 
-  implicit lazy val javaBooleanReader: JsonReader[java.lang.Boolean] =
+  implicit val javaBooleanReader: JsonReader[java.lang.Boolean] =
     booleanReader.map(a => a)
-  implicit lazy val javaByteReader: JsonReader[java.lang.Byte] =
+  implicit val javaByteReader: JsonReader[java.lang.Byte] =
     byteReader.map(a => a)
-  implicit lazy val javaShortReader: JsonReader[java.lang.Short] =
+  implicit val javaShortReader: JsonReader[java.lang.Short] =
     shortReader.map(a => a)
-  implicit lazy val javaIntReader: JsonReader[java.lang.Integer] =
+  implicit val javaIntReader: JsonReader[java.lang.Integer] =
     intReader.map(a => a)
-  implicit lazy val javaLongReader: JsonReader[java.lang.Long] =
+  implicit val javaLongReader: JsonReader[java.lang.Long] =
     longReader.map(a => a)
-  implicit lazy val javaFloatReader: JsonReader[java.lang.Float] =
+  implicit val javaFloatReader: JsonReader[java.lang.Float] =
     floatReader.map(a => a)
-  implicit lazy val javaDoubleReader: JsonReader[java.lang.Double] =
+  implicit val javaDoubleReader: JsonReader[java.lang.Double] =
     doubleReader.map(a => a)
-  implicit lazy val javaBigDecimalReader: JsonReader[java.math.BigDecimal] =
+  implicit val javaBigDecimalReader: JsonReader[java.math.BigDecimal] =
     bigDecimalReader.map(_.bigDecimal)
-  implicit lazy val javaBigIntegerReader: JsonReader[java.math.BigInteger] =
+  implicit val javaBigIntegerReader: JsonReader[java.math.BigInteger] =
     bigIntReader.map(_.bigInteger)
-  implicit lazy val javaUUIDReader: JsonReader[java.util.UUID] =
+  implicit val javaUUIDReader: JsonReader[java.util.UUID] =
     stringReader.map(java.util.UUID.fromString(_))
 
-  implicit lazy val javaInstantReader: JsonReader[java.time.Instant] =
+  implicit val javaInstantReader: JsonReader[java.time.Instant] =
     stringReader.map(java.time.Instant.parse)
-  implicit lazy val javaLocalDateReader: JsonReader[java.time.LocalDate] =
+  implicit val javaLocalDateReader: JsonReader[java.time.LocalDate] =
     stringReader.map(
       java.time.LocalDate
         .parse(_, java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
     )
-  implicit lazy val javaLocalDateTimeReader
+  implicit val javaLocalDateTimeReader
       : JsonReader[java.time.LocalDateTime] =
     stringReader.map(
       java.time.LocalDateTime
         .parse(_, java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME)
     )
-  implicit lazy val javaOffsetDateTimeReader
+  implicit val javaOffsetDateTimeReader
       : JsonReader[java.time.OffsetDateTime] =
     stringReader.map(
       java.time.OffsetDateTime
         .parse(_, java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME)
     )
-  implicit lazy val javaZonedDateTimeReader
+  implicit val javaZonedDateTimeReader
       : JsonReader[java.time.ZonedDateTime] =
     stringReader.map(
       java.time.ZonedDateTime

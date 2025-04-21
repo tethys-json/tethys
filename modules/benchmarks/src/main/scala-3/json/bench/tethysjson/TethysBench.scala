@@ -15,7 +15,11 @@ object TethysBench {
 
   object TethysDataProcessor extends DataWriter with DataReader {
     override def write(seq: Seq[Data]): String = seq.asJson
-    override def read(json: String): Seq[Data] = ???
+    override def read(json: String): Seq[Data] =
+      json.jsonAs[Seq[Data]] match {
+        case Right(data) => data
+        case Left(ex)    => throw ex
+      }
   }
 
   object TethysJacksonDataProcessor extends DataWriter with DataReader {

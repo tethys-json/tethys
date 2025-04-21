@@ -1,6 +1,6 @@
 package tethys.readers
 
-final case class FieldName(value: () => String) {
+final case class FieldName(value: () => String) extends AnyVal {
   self =>
 
   def appendFieldName(s: String): FieldName = FieldName(() => s"${value()}.$s")
@@ -8,7 +8,9 @@ final case class FieldName(value: () => String) {
   def appendArrayIndex(i: Int): FieldName = FieldName(() => s"${value()}[$i]")
 }
 object FieldName {
-  def apply(): FieldName = new FieldName(() => "[ROOT]")
+  val Root: FieldName = new FieldName(() => "[ROOT]")
+
+  def apply(): FieldName = Root
 
   def apply(value: String): FieldName = new FieldName(() => value)
 }

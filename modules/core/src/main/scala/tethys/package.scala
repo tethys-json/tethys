@@ -1,12 +1,8 @@
 import tethys.readers.tokens.{TokenIterator, TokenIteratorProducer}
 import tethys.readers.{FieldName, ReaderError}
-import tethys.writers.tokens.{
-  TokenWriter,
-  TokenWriterConfig,
-  TokenWriterProducer
-}
+import tethys.writers.tokens.{TokenWriter, TokenWriterConfig, TokenWriterProducer}
 
-import java.io.{Reader, StringReader}
+import java.io.{Reader, StringReader, StringWriter}
 import scala.Specializable.Group
 
 package object tethys {
@@ -56,14 +52,13 @@ package object tethys {
         jsonReader: JsonReader[A],
         producer: TokenIteratorProducer
     ): Either[ReaderError, A] = {
-      new StringReader(json).readJson[A]
+      implicit val fieldName: FieldName = FieldName.Root
+      producer.produce(json).flatMap(it => ReaderError.catchNonFatal(jsonReader.read(it)))
     }
 
     def toTokenIterator(implicit
         producer: TokenIteratorProducer
-    ): Either[ReaderError, TokenIterator] = {
-      new StringReader(json).toTokenIterator
-    }
+    ): Either[ReaderError, TokenIterator] = producer.produce(json)
   }
 
   implicit class ReaderReaderOps(val reader: Reader) extends AnyVal {
@@ -71,7 +66,7 @@ package object tethys {
         jsonReader: JsonReader[A],
         producer: TokenIteratorProducer
     ): Either[ReaderError, A] = {
-      implicit val root: FieldName = FieldName()
+      implicit val root: FieldName = FieldName.Root
       producer.fromReader(reader).right.flatMap(_.readJson[A])
     }
 
@@ -93,7 +88,7 @@ package object tethys {
     def readJson[A](implicit
         jsonReader: JsonReader[A]
     ): Either[ReaderError, A] = {
-      implicit val fieldName: FieldName = FieldName()
+      implicit val fieldName: FieldName = FieldName.Root
       ReaderError.catchNonFatal(jsonReader.read(tokenIterator))
     }
   }

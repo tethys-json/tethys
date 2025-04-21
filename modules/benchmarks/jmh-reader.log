@@ -1,0 +1,113 @@
+# JMH version: 1.37
+# VM version: JDK 17.0.7, OpenJDK 64-Bit Server VM, 17.0.7+7-LTS
+# VM invoker: /Users/gosha/Library/Java/JavaVirtualMachines/corretto-17.0.7/Contents/Home/bin/java
+# VM options: -Xms1G -Xmx1G
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 4 iterations, 5 s each
+# Measurement: 4 iterations, 5 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: json.bench.JmhReaderBench.bench
+# Parameters: (jsonSize = 128b, processorName = tethys)
+
+# Run progress: 0.00% complete, ETA 00:01:28
+# Fork: 1 of 1
+# Warmup Iteration   1: 1784680.808 ops/s
+# Warmup Iteration   2: 1846010.197 ops/s
+# Warmup Iteration   3: 1841240.555 ops/s
+# Warmup Iteration   4: 1835400.577 ops/s
+Iteration   1: 1850061.894 ops/s
+Iteration   2: 1835378.960 ops/s
+Iteration   3: 1859444.262 ops/s
+Iteration   4: 1836691.632 ops/s
+
+
+Result "json.bench.JmhReaderBench.bench":
+  1845394.187 ±(99.9%) 74170.513 ops/s [Average]
+  (min, avg, max) = (1835378.960, 1845394.187, 1859444.262), stdev = 11477.969
+  CI (99.9%): [1771223.674, 1919564.700] (assumes normal distribution)
+
+
+# JMH version: 1.37
+# VM version: JDK 17.0.7, OpenJDK 64-Bit Server VM, 17.0.7+7-LTS
+# VM invoker: /Users/gosha/Library/Java/JavaVirtualMachines/corretto-17.0.7/Contents/Home/bin/java
+# VM options: -Xms1G -Xmx1G
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 4 iterations, 5 s each
+# Measurement: 4 iterations, 5 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: json.bench.JmhReaderBench.bench
+# Parameters: (jsonSize = 128b, processorName = tethys-jackson)
+
+# Run progress: 45.45% complete, ETA 00:00:48
+# Fork: 1 of 1
+# Warmup Iteration   1: 1436200.404 ops/s
+# Warmup Iteration   2: 1497128.016 ops/s
+# Warmup Iteration   3: 1488807.518 ops/s
+# Warmup Iteration   4: 1495728.184 ops/s
+Iteration   1: 1498466.737 ops/s
+Iteration   2: 1498386.191 ops/s
+Iteration   3: 1495089.091 ops/s
+Iteration   4: 1502923.983 ops/s
+
+
+Result "json.bench.JmhReaderBench.bench":
+  1498716.500 ±(99.9%) 20783.273 ops/s [Average]
+  (min, avg, max) = (1495089.091, 1498716.500, 1502923.983), stdev = 3216.235
+  CI (99.9%): [1477933.227, 1519499.774] (assumes normal distribution)
+
+
+# JMH version: 1.37
+# VM version: JDK 17.0.7, OpenJDK 64-Bit Server VM, 17.0.7+7-LTS
+# VM invoker: /Users/gosha/Library/Java/JavaVirtualMachines/corretto-17.0.7/Contents/Home/bin/java
+# VM options: -Xms1G -Xmx1G
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 4 iterations, 1 s each
+# Measurement: 4 iterations, 1 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: json.bench.JmhWriterBench.bench
+# Parameters: (jsonSize = 128b, processorName = tethys)
+
+# Run progress: 90.91% complete, ETA 00:00:08
+# Fork: 1 of 1
+# Warmup Iteration   1: 4413936.316 ops/s
+# Warmup Iteration   2: 5379633.919 ops/s
+# Warmup Iteration   3: 5391641.469 ops/s
+# Warmup Iteration   4: 5370543.532 ops/s
+Iteration   1: 5356394.259 ops/s
+Iteration   2: 5314757.444 ops/s
+Iteration   3: 5359772.820 ops/s
+Iteration   4: 5341900.740 ops/s
+
+
+Result "json.bench.JmhWriterBench.bench":
+  5343206.316 ±(99.9%) 132400.559 ops/s [Average]
+  (min, avg, max) = (5314757.444, 5343206.316, 5359772.820), stdev = 20489.133
+  CI (99.9%): [5210805.757, 5475606.875] (assumes normal distribution)
+
+
+# Run complete. Total time: 00:01:28
+
+REMEMBER: The numbers below are just data. To gain reusable insights, you need to follow up on
+why the numbers are the way they are. Use profilers (see -prof, -lprof), design factorial
+experiments, perform baseline and negative tests that provide experimental control, make sure
+the benchmarking environment is safe on JVM/OS/HW level, ask for reviews from the domain experts.
+Do not assume the numbers tell you what you want them to tell.
+
+NOTE: Current JVM experimentally supports Compiler Blackholes, and they are in use. Please exercise
+extra caution when trusting the results, look into the generated code to check the benchmark still
+works, and factor in a small probability of new VM bugs. Additionally, while comparisons between
+different JVMs are already problematic, the performance difference caused by different Blackhole
+modes can be very significant. Please make sure you use the consistent Blackhole mode for comparisons.
+
+Benchmark             (jsonSize)  (processorName)   Mode  Cnt        Score        Error  Units
+JmhReaderBench.bench        128b           tethys  thrpt    4  1845394.187 ±  74170.513  ops/s
+JmhReaderBench.bench        128b   tethys-jackson  thrpt    4  1498716.500 ±  20783.273  ops/s
+JmhWriterBench.bench        128b           tethys  thrpt    4  5343206.316 ± 132400.559  ops/s
+
+Benchmark result is saved to jmh-reader.json

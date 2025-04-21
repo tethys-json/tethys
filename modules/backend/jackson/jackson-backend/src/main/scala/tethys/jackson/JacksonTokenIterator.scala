@@ -10,6 +10,7 @@ import scala.annotation.switch
 final class JacksonTokenIterator(jsonParser: JsonParser)
     extends BaseTokenIterator {
   private[this] var token: Token = fromId(jsonParser.currentTokenId())
+  
   override def currentToken(): Token = token
 
   override def nextToken(): Token = {
