@@ -1,5 +1,7 @@
 package tethys
 
+import scala.annotation.ConstantAnnotation
+
 package object derivation {
   case class SimpleType(i: Int, s: String, d: Double)
   case class SimpleTypeWithAny(i: Int, s: String, d: Double, any: Any)
@@ -34,4 +36,8 @@ package object derivation {
   }
 
   case class DefaultField[T](value: T, default: Boolean = true)
+
+  class someAnnotation extends ConstantAnnotation
+
+  case class DefaultFieldWithAnnotation[T](@someAnnotation value: T, default: Boolean = true)
 }

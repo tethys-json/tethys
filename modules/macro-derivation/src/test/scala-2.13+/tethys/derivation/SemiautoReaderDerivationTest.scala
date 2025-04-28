@@ -353,4 +353,23 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
       default = true
     )
   }
+
+  it should "derive reader for class with default params and one of members being annotated" in {
+    implicit val reader: JsonReader[DefaultFieldWithAnnotation[Int]] = jsonReader[DefaultFieldWithAnnotation[Int]]
+
+    read[DefaultFieldWithAnnotation[Int]](obj(
+      "value" -> 1,
+      "default" -> false
+    )) shouldBe DefaultFieldWithAnnotation(
+      value = 1,
+      default = false
+    )
+
+    read[DefaultFieldWithAnnotation[Int]](obj(
+      "value" -> 1,
+    )) shouldBe DefaultFieldWithAnnotation(
+      value = 1,
+      default = true
+    )
+  }
 }

@@ -128,7 +128,13 @@ lazy val `macro-derivation` = project
   .settings(testSettings)
   .settings(
     name := "tethys-derivation",
-    libraryDependencies ++= addScalaReflect(scalaVersion.value)
+    libraryDependencies ++= addScalaReflect(scalaVersion.value),
+    Test / scalacOptions ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, 13)) => Seq("-Ymacro-annotations")
+        case _             => Seq.empty
+      }
+    }
   )
   .dependsOn(core)
 
