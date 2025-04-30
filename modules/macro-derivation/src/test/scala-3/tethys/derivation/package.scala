@@ -39,5 +39,8 @@ package object derivation {
 
   class someAnnotation extends ConstantAnnotation
 
-  case class DefaultFieldWithAnnotation[T](@someAnnotation value: T, default: Boolean = true)
+  case class DefaultFieldWithAnnotation[T](
+      @someAnnotation value: T,
+      default: Boolean = true
+  )
 }
