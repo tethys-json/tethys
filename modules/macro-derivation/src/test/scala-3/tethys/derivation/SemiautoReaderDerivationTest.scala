@@ -514,4 +514,28 @@ class SemiautoReaderDerivationTest extends AnyFlatSpec with Matchers {
     }).getMessage shouldBe "Illegal json at '[ROOT]': unexpected field 'not_id_param', expected one of 'some_param', 'id_param', 'simple'"
   }
 
+  it should "derive reader for class with default params and one of members being annotated" in {
+    implicit val reader: JsonReader[DefaultFieldWithAnnotation[Int]] =
+      jsonReader[DefaultFieldWithAnnotation[Int]]
+
+    read[DefaultFieldWithAnnotation[Int]](
+      obj(
+        "value" -> 1,
+        "default" -> false
+      )
+    ) shouldBe DefaultFieldWithAnnotation(
+      value = 1,
+      default = false
+    )
+
+    read[DefaultFieldWithAnnotation[Int]](
+      obj(
+        "value" -> 1
+      )
+    ) shouldBe DefaultFieldWithAnnotation(
+      value = 1,
+      default = true
+    )
+  }
+
 }

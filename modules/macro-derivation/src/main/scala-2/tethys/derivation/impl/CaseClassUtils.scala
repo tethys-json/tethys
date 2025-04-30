@@ -49,7 +49,7 @@ trait CaseClassUtils extends LoggingUtils {
       tpe = possibleRealType.getOrElse(param.typeSignatureIn(tpe)),
       defaultValue = 
         if (param.asTerm.isParamWithDefault) {
-          val methodName = TermName(s"apply$$default$$${idx + 1}") 
+          val methodName = TermName(s"$$lessinit$$greater$$default$$${idx + 1}")
           val select = q"${tpe.companion.typeSymbol.asClass.module}.$methodName"
           Some(select)
         } else
