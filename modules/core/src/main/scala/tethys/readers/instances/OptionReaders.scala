@@ -5,7 +5,7 @@ import tethys.readers.FieldName
 import tethys.readers.tokens.TokenIterator
 
 private[tethys] trait OptionReaders extends LowPriorityOptionReaders {
-  implicit lazy val byteOptionReader: JsonReader[Option[Byte]] =
+  implicit val byteOptionReader: JsonReader[Option[Byte]] =
     new OptionJsonReader[Byte] {
       override protected def readSomeValue(
           it: TokenIterator
@@ -14,7 +14,7 @@ private[tethys] trait OptionReaders extends LowPriorityOptionReaders {
       }
     }
 
-  implicit lazy val shortOptionReader: JsonReader[Option[Short]] =
+  implicit val shortOptionReader: JsonReader[Option[Short]] =
     new OptionJsonReader[Short] {
       override protected def readSomeValue(
           it: TokenIterator
@@ -23,7 +23,7 @@ private[tethys] trait OptionReaders extends LowPriorityOptionReaders {
       }
     }
 
-  implicit lazy val intOptionReader: JsonReader[Option[Int]] =
+  implicit val intOptionReader: JsonReader[Option[Int]] =
     new OptionJsonReader[Int] {
       override protected def readSomeValue(
           it: TokenIterator
@@ -32,7 +32,7 @@ private[tethys] trait OptionReaders extends LowPriorityOptionReaders {
       }
     }
 
-  implicit lazy val longOptionReader: JsonReader[Option[Long]] =
+  implicit val longOptionReader: JsonReader[Option[Long]] =
     new OptionJsonReader[Long] {
       override protected def readSomeValue(
           it: TokenIterator
@@ -41,7 +41,7 @@ private[tethys] trait OptionReaders extends LowPriorityOptionReaders {
       }
     }
 
-  implicit lazy val floatOptionReader: JsonReader[Option[Float]] =
+  implicit val floatOptionReader: JsonReader[Option[Float]] =
     new OptionJsonReader[Float] {
       override protected def readSomeValue(
           it: TokenIterator
@@ -50,7 +50,7 @@ private[tethys] trait OptionReaders extends LowPriorityOptionReaders {
       }
     }
 
-  implicit lazy val doubleOptionReader: JsonReader[Option[Double]] =
+  implicit val doubleOptionReader: JsonReader[Option[Double]] =
     new OptionJsonReader[Double] {
       override protected def readSomeValue(
           it: TokenIterator
@@ -59,7 +59,7 @@ private[tethys] trait OptionReaders extends LowPriorityOptionReaders {
       }
     }
 
-  implicit lazy val booleanOptionReader: JsonReader[Option[Boolean]] =
+  implicit val booleanOptionReader: JsonReader[Option[Boolean]] =
     new OptionJsonReader[Boolean] {
       override protected def readSomeValue(
           it: TokenIterator

@@ -2,9 +2,7 @@ package tethys.commons
 
 import tethys.JsonReader
 import tethys.commons.Token._
-import tethys.readers.ReaderError
 import tethys.readers.tokens.{QueueIterator, TokenIteratorProducer}
-
 sealed trait TokenNode {
   def token: Token
 }
@@ -144,7 +142,8 @@ object TokenNode {
 
   implicit class TokenListOps(private val tokens: Seq[TokenNode])
       extends AnyVal {
-    import tethys.TokenIteratorOps
+    import tethys._
+
     def tokensAs[A: JsonReader]: A =
       QueueIterator(tokens).readJson[A].fold(throw _, identity)
   }

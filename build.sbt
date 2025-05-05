@@ -231,7 +231,7 @@ lazy val `jackson-212` = project
       "com.fasterxml.jackson.core" % "jackson-core" % "2.12.7"
     )
   )
-  .dependsOn(core)
+  .dependsOn(core % "compile->compile;test->test")
 
 lazy val `jackson-213` = project
   .in(jackson / "jackson-213")
@@ -245,7 +245,7 @@ lazy val `jackson-213` = project
       "com.fasterxml.jackson.core" % "jackson-core" % "2.13.5"
     )
   )
-  .dependsOn(core)
+  .dependsOn(core % "compile->compile;test->test")
 
 lazy val `jackson-214` = project
   .in(jackson / "jackson-214")
@@ -259,7 +259,7 @@ lazy val `jackson-214` = project
       "com.fasterxml.jackson.core" % "jackson-core" % "2.14.3"
     )
   )
-  .dependsOn(core)
+  .dependsOn(core % "compile->compile;test->test")
 
 lazy val `jackson-215` = project
   .in(jackson / "jackson-215")
@@ -273,7 +273,7 @@ lazy val `jackson-215` = project
       "com.fasterxml.jackson.core" % "jackson-core" % "2.15.4"
     )
   )
-  .dependsOn(core)
+  .dependsOn(core % "compile->compile;test->test")
 
 lazy val `jackson-216` = project
   .in(jackson / "jackson-216")
@@ -287,7 +287,7 @@ lazy val `jackson-216` = project
       "com.fasterxml.jackson.core" % "jackson-core" % "2.16.2"
     )
   )
-  .dependsOn(core)
+  .dependsOn(core % "compile->compile;test->test")
 
 lazy val `jackson-217` = project
   .in(jackson / "jackson-217")
@@ -301,7 +301,7 @@ lazy val `jackson-217` = project
       "com.fasterxml.jackson.core" % "jackson-core" % "2.17.3"
     )
   )
-  .dependsOn(core)
+  .dependsOn(core % "compile->compile;test->test")
 
 lazy val `jackson-218` = project
   .in(jackson / "jackson-218")
@@ -315,7 +315,7 @@ lazy val `jackson-218` = project
       "com.fasterxml.jackson.core" % "jackson-core" % "2.18.3"
     )
   )
-  .dependsOn(core)
+  .dependsOn(core % "compile->compile;test->test")
 
 lazy val benchmarks = project
   .in(modules / "benchmarks")
@@ -333,6 +333,8 @@ lazy val benchmarks = project
       "io.circe" %% "circe-jackson210" % "0.14.0",
       "dev.zio" %% "zio-json" % "0.7.1",
       "com.typesafe.play" %% "play-json" % "2.10.5",
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % "2.33.1",
+      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.33.1",
       "org.knowm.xchart" % "xchart" % "3.8.2" exclude ("de.erichseifert.vectorgraphics2d", "VectorGraphics2D") withSources ()
     ),
     scalacOptions ++= {
