@@ -1,0 +1,2139 @@
+package tethys.readers.tokens
+
+import tethys.commons.Token
+import java.math.MathContext
+
+import java.io.InputStream
+import java.nio.ByteBuffer
+import scala.annotation.tailrec
+import scala.util.control.NoStackTrace
+
+final class DefaultTokenIterator(
+    private var buf: Array[Byte] = new Array[Byte](32768),
+    private var head: Int = 0,
+    private var tail: Int = 0,
+    private var mark: Int = -1,
+    private var charBuf: Array[Char] = new Array[Char](4096),
+    private var bbuf: ByteBuffer = null,
+    private var in: InputStream = null,
+    private var totalRead: Long = 0,
+    private var config: ReaderConfig = null
+) extends TokenIterator
+    with BaseTokenIterator {
+  import DefaultTokenIterator._
+
+  private var magnitude: Array[Byte] = _
+  private val objectTrace = new scala.collection.mutable.Stack[Boolean](6)
+  private var token: Token = _
+
+  def init(s: String): this.type = {
+    objectTrace.clear()
+    this.buf = s.getBytes()
+    this.config = config
+    head = 0
+    val to = buf.length
+    tail = to
+    totalRead = 0
+    mark = -1
+    token = nextTethysToken(null)
+    this
+  }
+
+  override def next(): this.type = {
+    token = nextTethysToken(token)
+    this
+  }
+
+  override def currentToken(): Token = token
+
+  override def nextToken(): Token = try {
+    val b = searchNextToken(head)
+    val next =
+      if (
+        b == '"' &&
+        objectTrace.nonEmpty
+        && objectTrace.head &&
+        token != null &&
+        !token.isFieldName
+      )
+        head -= 1
+        Token.FieldNameToken
+      else if (b == '"')
+        head -= 1
+        Token.StringValueToken
+      else if ((b >= '0' && b <= '9') || b == '-')
+        head -= 1
+        Token.NumberValueToken
+      else if (b == 'n') readNullOrError(Token.NullValueToken, "expected null")
+      else if (b == 'f' || b == 't')
+        head -= 1
+        Token.BooleanValueToken
+      else if (b == '[')
+        objectTrace.push(false)
+        Token.ArrayStartToken
+      else if (b == ']')
+        objectTrace.pop()
+        Token.ArrayEndToken
+      else if (b == '{')
+        objectTrace.push(true)
+        Token.ObjectStartToken
+      else if (b == '}')
+        objectTrace.pop()
+        Token.ObjectEndToken
+      else decodeError("expected value")
+    token = next
+    next
+  } catch case _: EndOfInputError => Token.Empty
+
+  @tailrec
+  private def searchNextToken(pos: Int): Byte =
+    if (pos < tail) {
+      val b = buf(pos)
+      if (b == ' ' || b == ',' || b == '\n' || (b | 0x4) == '\r')
+        searchNextToken(pos + 1)
+      else {
+        head = pos + 1
+        b
+      }
+    } else searchNextToken(loadMoreOrError(pos))
+
+  private def decodeError(msg: String, bs: Int, pos: Int): Nothing =
+    decodeError(
+      msg,
+      (java.lang.Integer.numberOfTrailingZeros(bs ^ 0x6c6c756e) >> 3) + pos - 1
+    )
+
+  private def decodeError(
+      from: Int,
+      pos: Int,
+      cause: Throwable
+  ): Nothing = {
+    var i = appendString(", offset: 0x", from)
+    val offset =
+      if ((bbuf eq null) && (in eq null)) 0
+      else totalRead - tail
+    i = appendHexOffset(offset + pos, i)
+    if (config.appendHexDumpToParseException) {
+      i = appendString(", buf:", i)
+      i = appendHexDump(pos, offset.toInt, i)
+    }
+    throw new JsonReaderException(
+      new String(charBuf, 0, i),
+      cause,
+      config.throwReaderExceptionWithStackTrace
+    )
+  }
+
+  private def appendHexDump(pos: Int, offset: Int, from: Int): Int = {
+    val hexDumpSizeInBytes = config.hexDumpSize << 4
+    val start = Math.max(pos - hexDumpSizeInBytes & 0xfffffff0, 0)
+    val end = Math.min(pos + hexDumpSizeInBytes + 16 & 0xfffffff0, tail)
+    val alignedAbsFrom = start + offset & 0xfffffff0
+    val alignedAbsTo = end + offset + 15 & 0xfffffff0
+    val len = alignedAbsTo - alignedAbsFrom
+    val bufOffset = alignedAbsFrom - offset
+    var i = appendChars(dumpBorder, from)
+    i = appendChars(dumpHeader, i)
+    i = appendChars(dumpBorder, i)
+    val buf = this.buf
+    val ds = hexDigits
+    var charBuf = this.charBuf
+    var lim = charBuf.length
+    var j = 0
+    while (j < len) {
+      val linePos = j & 0xf
+      if (linePos == 0) {
+        if (i + 81 >= lim) { // 81 == dumpBorder.length
+          lim = growCharBuf(i + 81)
+          charBuf = this.charBuf
+        }
+        charBuf(i) = '\n'
+        charBuf(i + 1) = '|'
+        charBuf(i + 2) = ' '
+        putHexInt(alignedAbsFrom + j, i + 3, charBuf, ds)
+        charBuf(i + 11) = ' '
+        charBuf(i + 12) = '|'
+        charBuf(i + 13) = ' '
+        i += 14
+      }
+      val pos = bufOffset + j
+      charBuf(i + 50 - (linePos << 1)) = if (pos >= start && pos < end) {
+        val b = buf(pos)
+        charBuf(i) = ds(b >> 4 & 0xf)
+        charBuf(i + 1) = ds(b & 0xf)
+        charBuf(i + 2) = ' '
+        if (b <= 31 || b >= 127) '.'
+        else b.toChar
+      } else {
+        charBuf(i) = ' '
+        charBuf(i + 1) = ' '
+        charBuf(i + 2) = ' '
+        ' '
+      }
+      i += 3
+      if (linePos == 15) {
+        charBuf(i) = '|'
+        charBuf(i + 1) = ' '
+        charBuf(i + 18) = ' '
+        charBuf(i + 19) = '|'
+        i += 20
+      }
+      j += 1
+    }
+    appendChars(dumpBorder, i)
+  }
+
+  private def appendChar(ch: Char, i: Int): Int = {
+    ensureCharBufCapacity(i + 1)
+    charBuf(i) = ch
+    i + 1
+  }
+
+  private def appendChars(cs: Array[Char], i: Int): Int = {
+    val len = cs.length
+    val required = i + len
+    ensureCharBufCapacity(required)
+    System.arraycopy(cs, 0, charBuf, i, len)
+    required
+  }
+
+  private def appendHexOffset(d: Long, i: Int): Int = {
+    ensureCharBufCapacity(i + 16)
+    val ds = hexDigits
+    var j = i
+    val dl = d.toInt
+    if (dl != d) {
+      val dh = (d >> 32).toInt
+      var shift = 32 - java.lang.Integer.numberOfLeadingZeros(dh) & 0x1c
+      while (shift >= 0) {
+        charBuf(j) = ds(dh >> shift & 0xf)
+        shift -= 4
+        j += 1
+      }
+    }
+    putHexInt(dl, j, charBuf, ds)
+    j + 8
+  }
+
+  private def appendHexByte(b: Byte, i: Int, ds: Array[Char]): Int = {
+    ensureCharBufCapacity(i + 2)
+    charBuf(i) = ds(b >> 4 & 0xf)
+    charBuf(i + 1) = ds(b & 0xf)
+    i + 2
+  }
+
+  private def putHexInt(
+      d: Int,
+      i: Int,
+      charBuf: Array[Char],
+      ds: Array[Char]
+  ): Unit = {
+    charBuf(i) = ds(d >>> 28)
+    charBuf(i + 1) = ds(d >> 24 & 0xf)
+    charBuf(i + 2) = ds(d >> 20 & 0xf)
+    charBuf(i + 3) = ds(d >> 16 & 0xf)
+    charBuf(i + 4) = ds(d >> 12 & 0xf)
+    charBuf(i + 5) = ds(d >> 8 & 0xf)
+    charBuf(i + 6) = ds(d >> 4 & 0xf)
+    charBuf(i + 7) = ds(d & 0xf)
+  }
+
+  private def appendString(s: String, i: Int): Int = {
+    val len = s.length
+    val required = i + len
+    ensureCharBufCapacity(required)
+    s.getChars(0, len, charBuf, i)
+    required
+  }
+
+  private def ensureCharBufCapacity(required: Int): Unit =
+    if (charBuf.length < required) growCharBuf(required): Unit
+
+  private def growCharBuf(required: Int): Int = {
+    var charBufLen = charBuf.length
+    val maxCharBufSize = config.maxCharBufSize
+    if (charBufLen == maxCharBufSize) tooLongStringError()
+    charBufLen =
+      (-1 >>> Integer.numberOfLeadingZeros(charBufLen | required)) + 1
+    if (Integer.compareUnsigned(charBufLen, maxCharBufSize) > 0)
+      charBufLen = maxCharBufSize
+    charBuf = java.util.Arrays.copyOf(charBuf, charBufLen)
+    charBufLen
+  }
+
+  private def tooLongInputError(): Nothing =
+    decodeError("too long part of input exceeded 'maxBufSize'", tail)
+
+  private def tooLongStringError(): Nothing =
+    decodeError("too long string exceeded 'maxCharBufSize'", tail)
+
+  def decodeError(msg: String): Nothing = decodeError(msg, head - 1)
+
+  private def decodeError(
+      msg: String,
+      pos: Int,
+      cause: Throwable = null
+  ): Nothing =
+    decodeError(appendString(msg, 0), pos, cause)
+
+  private def loadMoreOrError(pos: Int): Int = {
+    if ((bbuf eq null) && (in eq null)) throw EndOfInputError()
+    loadMore(pos, throwOnEndOfInput = true)
+  }
+
+  private def loadMore(pos: Int): Int =
+    if ((bbuf eq null) && (in eq null)) pos
+    else loadMore(pos, throwOnEndOfInput = false)
+
+  private def loadMore(pos: Int, throwOnEndOfInput: Boolean): Int = {
+    var newPos = pos
+    val offset =
+      if (mark < 0) pos
+      else mark
+    if (offset > 0) {
+      newPos -= offset
+      val buf = this.buf
+      val remaining = tail - offset
+      var i = 0
+      while (i < remaining) {
+        buf(i) = buf(i + offset)
+        i += 1
+      }
+      if (mark > 0) mark = 0
+      tail = remaining
+      head = newPos
+    } else growBuf()
+    var len = buf.length - tail
+    if (bbuf ne null) {
+      len = Math.min(bbuf.remaining, len)
+      bbuf.get(buf, tail, len)
+    } else len = Math.max(in.read(buf, tail, len), 0)
+    if (throwOnEndOfInput && len == 0) throw EndOfInputError()
+    tail += len
+    totalRead += len
+    newPos
+  }
+
+  private class EndOfInputError extends RuntimeException with NoStackTrace
+
+  private def growBuf(): Unit = {
+    var bufLen = buf.length
+    val maxBufSize = config.maxBufSize
+    if (bufLen == maxBufSize) tooLongInputError()
+    bufLen <<= 1
+    if (Integer.compareUnsigned(bufLen, maxBufSize) > 0) bufLen = maxBufSize
+    buf = java.util.Arrays.copyOf(buf, bufLen)
+  }
+
+  override def fieldName(): String = readKeyAsString()
+
+  /** Reads a JSON key into the internal char buffer and returns a `String`
+    * instance.
+    *
+    * @return
+    *   a `String` instance of the parsed JSON key
+    * @throws JsonReaderException
+    *   in cases of reaching the end of input or invalid encoding of JSON key
+    */
+  private def readKeyAsString(): String = {
+    nextTokenOrError('"', head)
+    val pos = head
+    val len = parseString(0, Math.min(tail - pos, charBuf.length), charBuf, pos)
+    nextTokenOrError(':', head)
+    new String(charBuf, 0, len)
+  }
+
+  @tailrec
+  private def nextTokenOrError(t: Byte, pos: Int): Unit =
+    if (pos < tail) {
+      val b = buf(pos)
+      head = pos + 1
+      if (
+        b != t && ((b != ' ' && b != '\n' && (b | 0x4) != '\r') || searchNextToken(
+          pos + 1
+        ) != t)
+      ) tokenError(t, head - 1)
+    } else nextTokenOrError(t, loadMoreOrError(pos))
+
+  override def string(): String = readString(null)
+
+  /** Reads a JSON string value into a `String` instance. In case of `null` JSON
+    * value returns the provided default value or throws a
+    * [[JsonReaderException]] if the provided default value is `null`.
+    *
+    * @param default
+    *   the default `String` value to return if the JSON value is `null`.
+    * @return
+    *   a `String` instance of the parsed JSON value or the default value if the
+    *   JSON value is `null`.
+    * @throws JsonReaderException
+    *   in cases of reaching the end of input or invalid encoding of JSON value
+    *   or when both the JSON value and the provided default value are `null`
+    */
+  private def readString(default: String): String = {
+    val pos = head + 1
+    val len =
+      parseString(0, Math.min(tail - pos, charBuf.length), charBuf, pos)
+    new String(charBuf, 0, len)
+  }
+
+  @tailrec
+  private def parseString(
+      i: Int,
+      minLim: Int,
+      charBuf: Array[Char],
+      pos: Int
+  ): Int =
+    if (i + 3 < minLim) { // Based on SWAR routine of JSON string parsing: https://github.com/sirthias/borer/blob/fde9d1ce674d151b0fee1dd0c2565020c3f6633a/core/src/main/scala/io/bullet/borer/json/JsonParser.scala#L456
+      val bs = ByteArrayAccess.getInt(buf, pos)
+      val m =
+        ((bs - 0x20202020 ^ 0x3c3c3c3c) - 0x1010101 | (bs ^ 0x5d5d5d5d) + 0x1010101) & 0x80808080
+      charBuf(i) = (bs & 0xff).toChar
+      charBuf(i + 1) = (bs >> 8 & 0xff).toChar
+      charBuf(i + 2) = (bs >> 16 & 0xff).toChar
+      charBuf(i + 3) = (bs >> 24).toChar
+      if (m != 0) {
+        val offset = java.lang.Integer.numberOfTrailingZeros(m) >> 3
+        if ((bs >> (offset << 3)).toByte == '"') {
+          head = pos + offset + 1
+          i + offset
+        } else
+          parseEncodedString(
+            i + offset,
+            charBuf.length - 1,
+            charBuf,
+            pos + offset
+          )
+      } else parseString(i + 4, minLim, charBuf, pos + 4)
+    } else if (i < minLim) {
+      val b = buf(pos)
+      charBuf(i) = b.toChar
+      if (b == '"') {
+        head = pos + 1
+        i
+      } else if ((b - 0x20 ^ 0x3c) <= 0)
+        parseEncodedString(i, charBuf.length - 1, charBuf, pos)
+      else parseString(i + 1, minLim, charBuf, pos + 1)
+    } else if (pos >= tail) {
+      val newPos = loadMoreOrError(pos)
+      parseString(
+        i,
+        Math.min(charBuf.length, i + tail - newPos),
+        charBuf,
+        newPos
+      )
+    } else
+      parseString(
+        i,
+        Math.min(growCharBuf(i + 1), i + tail - pos),
+        this.charBuf,
+        pos
+      )
+
+  @tailrec
+  private def parseEncodedString(
+      i: Int,
+      lim: Int,
+      charBuf: Array[Char],
+      pos: Int
+  ): Int = {
+    val remaining = tail - pos
+    if (i < lim) {
+      if (remaining > 0) {
+        val b1 = buf(pos)
+        if (b1 >= 0) {
+          if (b1 == '"') {
+            head = pos + 1
+            i
+          } else if (b1 != '\\') { // 0aaaaaaa (UTF-8 byte) -> 000000000aaaaaaa (UTF-16 char)
+            if (b1 < ' ') unescapedControlCharacterError(pos)
+            charBuf(i) = b1.toChar
+            parseEncodedString(i + 1, lim, charBuf, pos + 1)
+          } else if (remaining > 1) {
+            val b2 = buf(pos + 1)
+            if (b2 != 'u') {
+              charBuf(i) = (b2: @scala.annotation.switch) match {
+                case '"'  => '"'
+                case 'n'  => '\n'
+                case 'r'  => '\r'
+                case 't'  => '\t'
+                case 'b'  => '\b'
+                case 'f'  => '\f'
+                case '\\' => '\\'
+                case '/'  => '/'
+                case _    => escapeSequenceError(pos + 1)
+              }
+              parseEncodedString(i + 1, lim, charBuf, pos + 2)
+            } else if (remaining > 5) {
+              val ch1 = readEscapedUnicode(pos + 2, buf)
+              charBuf(i) = ch1
+              if ((ch1 & 0xf800) != 0xd800)
+                parseEncodedString(i + 1, lim, charBuf, pos + 6)
+              else if (remaining > 11) {
+                if (buf(pos + 6) != '\\') escapeSequenceError(pos + 6)
+                if (buf(pos + 7) != 'u') escapeSequenceError(pos + 7)
+                val ch2 = readEscapedUnicode(pos + 8, buf)
+                charBuf(i + 1) = ch2
+                if (ch1 >= 0xdc00 || (ch2 & 0xfc00) != 0xdc00)
+                  decodeError("illegal surrogate character pair", pos + 11)
+                parseEncodedString(i + 2, lim, charBuf, pos + 12)
+              } else parseEncodedString(i, lim, charBuf, loadMoreOrError(pos))
+            } else parseEncodedString(i, lim, charBuf, loadMoreOrError(pos))
+          } else parseEncodedString(i, lim, charBuf, loadMoreOrError(pos))
+        } else if ((b1 & 0xe0) == 0xc0) { // 110bbbbb 10aaaaaa (UTF-8 bytes) -> 00000bbbbbaaaaaa (UTF-16 char)
+          if (remaining > 1) {
+            val b2 = buf(pos + 1)
+            val ch =
+              (b1 << 6 ^ b2 ^ 0xf80).toChar // 0xF80 == 0xC0.toByte << 6 ^ 0x80.toByte
+            charBuf(i) = ch
+            if ((b2 & 0xc0) != 0x80 || ch < 0x80)
+              malformedBytesError(b1, b2, pos)
+            parseEncodedString(i + 1, lim, charBuf, pos + 2)
+          } else parseEncodedString(i, lim, charBuf, loadMoreOrError(pos))
+        } else if ((b1 & 0xf0) == 0xe0) { // 1110cccc 10bbbbbb 10aaaaaa (UTF-8 bytes) -> ccccbbbbbbaaaaaa (UTF-16 char)
+          if (remaining > 2) {
+            val b2 = buf(pos + 1)
+            val b3 = buf(pos + 2)
+            val ch =
+              (b1 << 12 ^ b2 << 6 ^ b3 ^ 0x1f80).toChar // 0x1F80 == (0x80.toByte << 6 ^ 0x80.toByte).toChar
+            charBuf(i) = ch
+            if (
+              (b2 & 0xc0) != 0x80 || (b3 & 0xc0) != 0x80 || ch < 0x800 ||
+              (ch & 0xf800) == 0xd800
+            ) malformedBytesError(b1, b2, b3, pos)
+            parseEncodedString(i + 1, lim, charBuf, pos + 3)
+          } else parseEncodedString(i, lim, charBuf, loadMoreOrError(pos))
+        } else if ((b1 & 0xf8) == 0xf0) { // 11110ddd 10ddcccc 10bbbbbb 10aaaaaa (UTF-8 bytes) -> 110110uuuuccccbb 110111bbbbaaaaaa (UTF-16 chars), where uuuu = ddddd - 1
+          if (remaining > 3) {
+            val b2 = buf(pos + 1)
+            val b3 = buf(pos + 2)
+            val b4 = buf(pos + 3)
+            val cp =
+              b1 << 18 ^ b2 << 12 ^ b3 << 6 ^ b4 ^ 0x381f80 // 0x381F80 == 0xF0.toByte << 18 ^ 0x80.toByte << 12 ^ 0x80.toByte << 6 ^ 0x80.toByte
+            val ch1 =
+              ((cp >>> 10) + 0xd7c0).toChar // 0xD7C0 == 0xD800 - (0x10000 >>> 10)
+            charBuf(i) = ch1
+            charBuf(i + 1) = ((cp & 0x3ff) | 0xdc00).toChar
+            if (
+              (b2 & 0xc0) != 0x80 || (b3 & 0xc0) != 0x80 || (b4 & 0xc0) != 0x80 ||
+              (ch1 & 0xf800) != 0xd800
+            ) malformedBytesError(b1, b2, b3, b4, pos)
+            parseEncodedString(i + 2, lim, charBuf, pos + 4)
+          } else parseEncodedString(i, lim, charBuf, loadMoreOrError(pos))
+        } else malformedBytesError(b1, pos)
+      } else parseEncodedString(i, lim, charBuf, loadMoreOrError(pos))
+    } else
+      parseEncodedString(
+        i,
+        growCharBuf(i + 2) - 1,
+        this.charBuf,
+        pos
+      ) // 2 is length of surrogate pair
+  }
+
+  private def readEscapedUnicode(pos: Int, buf: Array[Byte]): Char = {
+    val ns = nibbles
+    val x =
+      ns(buf(pos) & 0xff) << 12 |
+        ns(buf(pos + 1) & 0xff) << 8 |
+        ns(buf(pos + 2) & 0xff) << 4 |
+        ns(buf(pos + 3) & 0xff)
+    if (x < 0) hexDigitError(pos)
+    x.toChar
+  }
+
+  @tailrec
+  private def hexDigitError(pos: Int): Nothing = {
+    if (nibbles(buf(pos) & 0xff) < 0) decodeError("expected hex digit", pos)
+    hexDigitError(pos + 1)
+  }
+
+  private def malformedBytesError(b1: Byte, pos: Int): Nothing = {
+    var i = appendString("malformed byte(s): 0x", 0)
+    i = appendHexByte(b1, i, hexDigits)
+    decodeError(i, pos, null)
+  }
+
+  private def malformedBytesError(
+      b1: Byte,
+      b2: Byte,
+      pos: Int
+  ): Nothing = {
+    val ds = hexDigits
+    var i = appendString("malformed byte(s): 0x", 0)
+    i = appendHexByte(b1, i, ds)
+    i = appendString(", 0x", i)
+    i = appendHexByte(b2, i, ds)
+    decodeError(i, pos + 1, null)
+  }
+
+  private def malformedBytesError(
+      b1: Byte,
+      b2: Byte,
+      b3: Byte,
+      pos: Int
+  ): Nothing = {
+    val ds = hexDigits
+    var i = appendString("malformed byte(s): 0x", 0)
+    i = appendHexByte(b1, i, ds)
+    i = appendString(", 0x", i)
+    i = appendHexByte(b2, i, ds)
+    i = appendString(", 0x", i)
+    i = appendHexByte(b3, i, ds)
+    decodeError(i, pos + 2, null)
+  }
+
+  private def malformedBytesError(
+      b1: Byte,
+      b2: Byte,
+      b3: Byte,
+      b4: Byte,
+      pos: Int
+  ): Nothing = {
+    val ds = hexDigits
+    var i = appendString("malformed byte(s): 0x", 0)
+    i = appendHexByte(b1, i, ds)
+    i = appendString(", 0x", i)
+    i = appendHexByte(b2, i, ds)
+    i = appendString(", 0x", i)
+    i = appendHexByte(b3, i, ds)
+    i = appendString(", 0x", i)
+    i = appendHexByte(b4, i, ds)
+    decodeError(i, pos + 3, null)
+  }
+
+  override def number(): Number = readBigDecimal(
+    isToken = true,
+    null,
+    bigDecimalMathContext,
+    bigDecimalScaleLimit,
+    bigDecimalDigitsLimit
+  )
+
+  private def readBigDecimal(
+      isToken: Boolean,
+      default: BigDecimal,
+      mc: MathContext,
+      scaleLimit: Int,
+      digitsLimit: Int
+  ): BigDecimal = {
+    var b =
+      if (isToken) searchNextToken(head)
+      else nextByte(head)
+    if (isToken && b == 'n') readNullOrNumberError(default, head)
+    else {
+      var s = 0
+      if (b == '-') {
+        b = nextByte(head)
+        s = -1
+      }
+      if (b < '0' || b > '9') numberError()
+      var pos = head
+      var buf = this.buf
+      var from = pos - 1
+      val oldMark = mark
+      val newMark =
+        if (oldMark < 0) from
+        else oldMark
+      mark = newMark
+      var digits = 1
+      if (isToken && b == '0') {
+        if (
+          (pos < tail || {
+            pos = loadMore(pos)
+            buf = this.buf
+            pos < tail
+          }) && {
+            b = buf(pos)
+            b >= '0' && b <= '9'
+          }
+        ) leadingZeroError(pos - 1)
+      } else {
+        digits -= pos
+        var m, bs = 0L
+        while (
+          (pos + 7 < tail || {
+            digits += pos
+            pos = loadMore(pos)
+            digits -= pos
+            buf = this.buf
+            pos + 7 < tail
+          }) && {
+            bs = ByteArrayAccess.getLong(
+              buf,
+              pos
+            ) // Based on the fast parsing of numbers by 8-byte words: https://github.com/wrandelshofer/FastDoubleParser/blob/0903817a765b25e654f02a5a9d4f1476c98a80c9/src/main/java/ch.randelshofer.fastdoubleparser/ch/randelshofer/fastdoubleparser/FastDoubleSimd.java#L114-L130
+            m = (bs + 0x4646464646464646L | bs - 0x3030303030303030L) & 0x8080808080808080L
+            m == 0
+          }
+        ) pos += 8
+        if (m == 0) {
+          while (
+            (pos < tail || {
+              digits += pos
+              pos = loadMore(pos)
+              digits -= pos
+              buf = this.buf
+              pos < tail
+            }) && {
+              b = buf(pos)
+              b >= '0' && b <= '9'
+            }
+          ) pos += 1
+        } else {
+          val offset = java.lang.Long.numberOfTrailingZeros(m) >> 3
+          pos += offset
+          b = (bs >> (offset << 3)).toByte
+        }
+        digits += pos
+      }
+      var fracLen, scale = 0
+      if (digits >= digitsLimit)
+        digitsLimitError(pos + digitsLimit - digits - 1)
+      if (b == '.') {
+        pos += 1
+        fracLen -= pos
+        var m, bs = 0L
+        while (
+          (pos + 7 < tail || {
+            fracLen += pos
+            pos = loadMore(pos)
+            fracLen -= pos
+            buf = this.buf
+            pos + 7 < tail
+          }) && {
+            bs = ByteArrayAccess.getLong(
+              buf,
+              pos
+            ) // Based on the fast parsing of numbers by 8-byte words: https://github.com/wrandelshofer/FastDoubleParser/blob/0903817a765b25e654f02a5a9d4f1476c98a80c9/src/main/java/ch.randelshofer.fastdoubleparser/ch/randelshofer/fastdoubleparser/FastDoubleSimd.java#L114-L130
+            m = (bs + 0x4646464646464646L | bs - 0x3030303030303030L) & 0x8080808080808080L
+            m == 0
+          }
+        ) pos += 8
+        if (m == 0) {
+          while (
+            (pos < tail || {
+              fracLen += pos
+              pos = loadMore(pos)
+              fracLen -= pos
+              buf = this.buf
+              pos < tail
+            }) && {
+              b = buf(pos)
+              b >= '0' && b <= '9'
+            }
+          ) pos += 1
+        } else {
+          val offset = java.lang.Long.numberOfTrailingZeros(m) >> 3
+          pos += offset
+          b = (bs >> (offset << 3)).toByte
+        }
+        fracLen += pos
+        digits += fracLen
+        if (fracLen == 0) numberError(pos)
+        if (digits >= digitsLimit)
+          digitsLimitError(pos + digitsLimit - digits - 1)
+      }
+      if ((b | 0x20) == 'e') {
+        b = nextByte(pos + 1)
+        var ss = 0
+        if (b == '-' || b == '+') {
+          ss = '+' - b >> 31
+          b = nextByte(head)
+        }
+        if (b < '0' || b > '9') numberError()
+        scale = '0' - b
+        pos = head
+        buf = this.buf
+        while (
+          (pos < tail || {
+            pos = loadMore(pos)
+            buf = this.buf
+            pos < tail
+          }) && {
+            b = buf(pos)
+            b >= '0' && b <= '9'
+          }
+        ) {
+          if (
+            scale < -214748364 || {
+              scale = scale * 10 + ('0' - b)
+              scale > 0
+            }
+          ) numberError(pos)
+          pos += 1
+        }
+        scale ^= ss
+        scale -= ss
+        if (scale == -2147483648) numberError(pos - 1)
+      }
+      head = pos
+      if (mark == 0) from -= newMark
+      if (mark > oldMark) mark = oldMark
+      var d =
+        if (fracLen != 0) {
+          val limit = from + digits + 1
+          val fracPos = limit - fracLen
+          val fracLimit = fracPos - 1
+          if (digits < 19) {
+            var x = (buf(from) - '0').toLong
+            from += 1
+            while (from < fracLimit) {
+              x = x * 10 + (buf(from) - '0')
+              from += 1
+            }
+            from += 1
+            while (from < limit) {
+              x = x * 10 + (buf(from) - '0')
+              from += 1
+            }
+            java.math.BigDecimal.valueOf((x ^ s) - s, scale + fracLen)
+          } else
+            toBigDecimal(buf, from, fracLimit, s, scale).add(
+              toBigDecimal(buf, fracPos, limit, s, scale + fracLen)
+            )
+        } else toBigDecimal(buf, from, from + digits, s, scale)
+      if (mc.getPrecision < digits) d = d.plus(mc)
+      if (Math.abs(d.scale) >= scaleLimit) scaleLimitError()
+      new BigDecimal(d, mc)
+    }
+  }
+
+  @tailrec
+  private def readNullOrNumberError[@specialized A](
+      default: A,
+      pos: Int
+  ): A =
+    if (default != null) {
+      if (pos + 2 < tail) {
+        val bs = ByteArrayAccess.getInt(buf, pos - 1)
+        if (bs == 0x6c6c756e) {
+          head = pos + 3
+          default
+        } else decodeError("expected number or null", bs, pos)
+      } else readNullOrNumberError(default, loadMoreOrError(pos - 1) + 1)
+    } else numberError(pos - 1)
+
+  private def toBigDecimal(
+      buf: Array[Byte],
+      p: Int,
+      limit: Int,
+      s: Int,
+      scale: Int
+  ): java.math.BigDecimal = {
+    val len = limit - p
+    if (len < 19) {
+      var pos = p
+      var x = (buf(pos) - '0').toLong
+      pos += 1
+      while (pos < limit) {
+        x = x * 10 + (buf(pos) - '0')
+        pos += 1
+      }
+      java.math.BigDecimal.valueOf((x ^ s) - s, scale)
+    } else if (len <= 36) toBigDecimal36(buf, p, limit, s, scale)
+    else if (len <= 308)
+      new java.math.BigDecimal(toBigInteger308(buf, p, limit, s), scale)
+    else {
+      // Based on the great idea of Eric Obermühlner to use a tree of smaller BigDecimals for parsing really big numbers
+      // with O(n^1.5) complexity instead of O(n^2) when using the constructor for the decimal representation from JDK:
+      // https://github.com/eobermuhlner/big-math/commit/7a5419aac8b2adba2aa700ccf00197f97b2ad89f
+      val mid = len >> 1
+      val midPos = limit - mid
+      toBigDecimal(buf, p, midPos, s, scale - mid).add(
+        toBigDecimal(buf, midPos, limit, s, scale)
+      )
+    }
+  }
+
+  private def toBigDecimal36(
+      buf: Array[Byte],
+      p: Int,
+      limit: Int,
+      s: Int,
+      scale: Int
+  ): java.math.BigDecimal = {
+    val firstBlockLimit = limit - 18
+    var pos = p
+    var x1 = (buf(pos) - '0').toLong
+    pos += 1
+    while (pos < firstBlockLimit) {
+      x1 = x1 * 10 + (buf(pos) - '0')
+      pos += 1
+    }
+    val x2 =
+      ({ // Based on the fast parsing of numbers by 8-byte words: https://github.com/wrandelshofer/FastDoubleParser/blob/0903817a765b25e654f02a5a9d4f1476c98a80c9/src/main/java/ch.randelshofer.fastdoubleparser/ch/randelshofer/fastdoubleparser/FastDoubleSimd.java#L114-L130
+        val dec =
+          (ByteArrayAccess.getLong(buf, pos) - 0x3030303030303030L) * 2561
+        (dec >> 8 & 0xff000000ffL) * 42949672960001000L + (dec >> 24 & 0xff000000ffL) * 429496729600010L >> 32
+      } + buf(pos + 8)) * 1000000000 + {
+        val dec =
+          (ByteArrayAccess.getLong(buf, pos + 9) - 0x3030303030303030L) * 2561
+        (dec >> 8 & 0xff000000ffL) * 42949672960001000L + (dec >> 24 & 0xff000000ffL) * 429496729600010L >> 32
+      } + buf(pos + 17) - 48000000048L
+    val q = x1 * 1000000000000000000L
+    val l = q + x2
+    val h = Math.multiplyHigh(x1, 1000000000000000000L) + ((~l & q) >>> 63)
+    if (l >= 0 && h == 0) java.math.BigDecimal.valueOf((l ^ s) - s, scale)
+    else {
+      var magnitude = this.magnitude
+      if (magnitude eq null) {
+        magnitude = new Array[Byte](128)
+        this.magnitude = magnitude
+      }
+      ByteArrayAccess.setLongReversed(magnitude, 0, h)
+      ByteArrayAccess.setLongReversed(magnitude, 8, l)
+      new java.math.BigDecimal(
+        new java.math.BigInteger(s | 1, magnitude, 0, 16),
+        scale
+      )
+    }
+  }
+
+  private def toBigInteger308(
+      buf: Array[Byte],
+      p: Int,
+      limit: Int,
+      s: Int
+  ): java.math.BigInteger = {
+    val len = limit - p
+    val last =
+      (len * 222930821L >> 32).toInt << 3 // (len * Math.log(10) / Math.log(1L << 64)).toInt * 8
+    var magnitude = this.magnitude
+    if (magnitude eq null) {
+      magnitude = new Array[Byte](128)
+      this.magnitude = magnitude
+    } else {
+      var i = 0
+      while (i < last) {
+        ByteArrayAccess.setLong(magnitude, i, 0L)
+        i += 8
+      }
+    }
+    var x = 0L
+    val firstBlockLimit = len % 18 + p
+    var pos = p
+    while (pos < firstBlockLimit) {
+      x = x * 10 + (buf(pos) - '0')
+      pos += 1
+    }
+    ByteArrayAccess.setLong(magnitude, last, x)
+    var first = last
+    while (pos < limit) {
+      x =
+        ({ // Based on the fast parsing of numbers by 8-byte words: https://github.com/wrandelshofer/FastDoubleParser/blob/0903817a765b25e654f02a5a9d4f1476c98a80c9/src/main/java/ch.randelshofer.fastdoubleparser/ch/randelshofer/fastdoubleparser/FastDoubleSimd.java#L114-L130
+          val dec =
+            (ByteArrayAccess.getLong(buf, pos) - 0x3030303030303030L) * 2561
+          (dec >> 8 & 0xff000000ffL) * 42949672960001000L + (dec >> 24 & 0xff000000ffL) * 429496729600010L >> 32
+        } + buf(pos + 8)) * 1000000000 + {
+          val dec =
+            (ByteArrayAccess.getLong(buf, pos + 9) - 0x3030303030303030L) * 2561
+          (dec >> 8 & 0xff000000ffL) * 42949672960001000L + (dec >> 24 & 0xff000000ffL) * 429496729600010L >> 32
+        } + buf(pos + 17) - 48000000048L
+      pos += 18
+      first = Math.max(first - 8, 0)
+      var i = last
+      val q = 1000000000000000000L
+      var m, mq = 0L
+      while ({
+        m = ByteArrayAccess.getLong(magnitude, i)
+        mq = m * q
+        x += mq
+        ByteArrayAccess.setLong(magnitude, i, x)
+        i -= 8
+        i >= first
+      }) {
+        x = Math.multiplyHigh(
+          m,
+          q
+        ) + (m >> 63 & q) + ((~x & mq) >>> 63) // TODO: when dropping JDK 17 support replace by Math.unsignedMultiplyHigh(m, q) + ((~x & mq) >>> 63)
+      }
+    }
+    var i = 0
+    while (i <= last) {
+      ByteArrayAccess.setLongReversed(
+        magnitude,
+        i,
+        ByteArrayAccess.getLong(magnitude, i)
+      )
+      i += 8
+    }
+    new java.math.BigInteger(s | 1, magnitude, 0, last + 8)
+  }
+
+  override def byte(): Byte = readByte(isToken = true)
+
+  private def readByte(isToken: Boolean): Byte = {
+    var b =
+      if (isToken) searchNextToken(head)
+      else nextByte(head)
+    var s = 0
+    if (b == '-') {
+      b = nextByte(head)
+      s = -1
+    }
+    if (b < '0' || b > '9') numberError()
+    var x = b - '0'
+    if (isToken && x == 0) ensureNotLeadingZero()
+    else {
+      var pos = head
+      var buf = this.buf
+      while (
+        (pos < tail || {
+          pos = loadMore(pos)
+          buf = this.buf
+          pos < tail
+        }) && {
+          b = buf(pos)
+          b >= '0' && b <= '9'
+        }
+      ) {
+        x = x * 10 + (b - '0')
+        if (x > 128) byteOverflowError(pos)
+        pos += 1
+      }
+      head = pos
+      x ^= s
+      x -= s
+      if (x == 128) byteOverflowError(pos - 1)
+      if ((b | 0x20) == 'e' || b == '.') numberError(pos)
+    }
+    x.toByte
+  }
+
+  override def short(): Short = readShort(isToken = true)
+
+  private def readShort(isToken: Boolean): Short = {
+    var b =
+      if (isToken) searchNextToken(head)
+      else nextByte(head)
+    var s = 0
+    if (b == '-') {
+      b = nextByte(head)
+      s = -1
+    }
+    if (b < '0' || b > '9') numberError()
+    var x = b - '0'
+    if (isToken && x == 0) ensureNotLeadingZero()
+    else {
+      var pos = head
+      var buf = this.buf
+      while (
+        (pos < tail || {
+          pos = loadMore(pos)
+          buf = this.buf
+          pos < tail
+        }) && {
+          b = buf(pos)
+          b >= '0' && b <= '9'
+        }
+      ) {
+        x = x * 10 + (b - '0')
+        if (x > 32768) shortOverflowError(pos)
+        pos += 1
+      }
+      head = pos
+      x ^= s
+      x -= s
+      if (x == 32768) shortOverflowError(pos - 1)
+      if ((b | 0x20) == 'e' || b == '.') numberError(pos)
+    }
+    x.toShort
+  }
+
+  override def int(): Int = readInt(isToken = true)
+
+  private def readInt(isToken: Boolean): Int = {
+    var b =
+      if (isToken) searchNextToken(head)
+      else nextByte(head)
+    var s = -1
+    if (b == '-') {
+      b = nextByte(head)
+      s = 0
+    }
+    if (b < '0' || b > '9') numberError()
+    var x = '0' - b
+    if (isToken && x == 0) ensureNotLeadingZero()
+    else {
+      var pos = head
+      var buf = this.buf
+      while (
+        (pos < tail || {
+          pos = loadMore(pos)
+          buf = this.buf
+          pos < tail
+        }) && {
+          b = buf(pos)
+          b >= '0' && b <= '9'
+        }
+      ) {
+        if (
+          x < -214748364 || {
+            x = x * 10 + ('0' - b)
+            x > 0
+          }
+        ) intOverflowError(pos)
+        pos += 1
+      }
+      head = pos
+      x ^= s
+      x -= s
+      if ((s & x) == -2147483648) intOverflowError(pos - 1)
+      if ((b | 0x20) == 'e' || b == '.') numberError(pos)
+    }
+    x
+  }
+
+  private def intOverflowError(pos: Int): Nothing =
+    decodeError("value is too large for int", pos)
+
+  private def shortOverflowError(pos: Int): Nothing =
+    decodeError("value is too large for short", pos)
+
+  private def byteOverflowError(pos: Int): Nothing =
+    decodeError("value is too large for byte", pos)
+
+  override def long(): Long = readLong(isToken = true)
+
+  private def readLong(isToken: Boolean): Long = {
+    var b =
+      if (isToken) searchNextToken(head)
+      else nextByte(head)
+    var s = -1L
+    if (b == '-') {
+      b = nextByte(head)
+      s = 0L
+    }
+    if (b < '0' || b > '9') numberError()
+    var x = ('0' - b).toLong
+    if (isToken && x == 0) ensureNotLeadingZero()
+    else {
+      var pos = head
+      var buf = this.buf
+      var dec = 0L
+      while (
+        (pos + 7 < tail || {
+          pos = loadMore(pos)
+          buf = this.buf
+          pos + 7 < tail
+        }) && {
+          val bs = ByteArrayAccess.getLong(
+            buf,
+            pos
+          ) // Based on the fast parsing of numbers by 8-byte words: https://github.com/wrandelshofer/FastDoubleParser/blob/0903817a765b25e654f02a5a9d4f1476c98a80c9/src/main/java/ch.randelshofer.fastdoubleparser/ch/randelshofer/fastdoubleparser/FastDoubleSimd.java#L114-L130
+          dec = bs - 0x3030303030303030L
+          ((bs + 0x4646464646464646L | dec) & 0x8080808080808080L) == 0
+        }
+      ) {
+        if (
+          x < -92233720368L || {
+            dec *= 2561
+            x *= 100000000
+            x -= ((dec >> 8 & 0xff000000ffL) * 4294967296000100L + (dec >> 24 & 0xff000000ffL) * 42949672960001L >> 32)
+            x > 0
+          }
+        ) longOverflowError(pos + 2)
+        pos += 8
+      }
+      while (
+        (pos < tail || {
+          pos = loadMore(pos)
+          buf = this.buf
+          pos < tail
+        }) && {
+          b = buf(pos)
+          b >= '0' && b <= '9'
+        }
+      ) {
+        if (
+          x < -922337203685477580L || {
+            x = x * 10 + ('0' - b)
+            x > 0
+          }
+        ) longOverflowError(pos)
+        pos += 1
+      }
+      head = pos
+      x ^= s
+      x -= s
+      if ((s & x) == -9223372036854775808L) longOverflowError(pos - 1)
+      if ((b | 0x20) == 'e' || b == '.') numberError(pos)
+    }
+    x
+  }
+
+  private def ensureNotLeadingZero(): Unit = {
+    var pos = head
+    if (
+      (pos < tail || {
+        pos = loadMore(pos)
+        pos < tail
+      }) && {
+        val b = buf(pos)
+        b >= '0' && b <= '9'
+      }
+    ) leadingZeroError(pos - 1)
+  }
+
+  override def float() = readFloat(isToken = true)
+
+  private def readFloat(isToken: Boolean): Float = {
+    var b =
+      if (isToken) searchNextToken(head)
+      else nextByte(head)
+    var isNeg = false
+    if (b == '-') {
+      b = nextByte(head)
+      isNeg = true
+    }
+    if (b < '0' || b > '9') numberError()
+    var pos = head
+    var buf = this.buf
+    val from = pos - 1
+    val oldMark = mark
+    val newMark =
+      if (oldMark < 0) from
+      else oldMark
+    mark = newMark
+    var m10 = (b - '0').toLong
+    var e10 = 0
+    var digits = 1
+    if (isToken && m10 == 0) {
+      if (
+        (pos < tail || {
+          pos = loadMore(pos)
+          buf = this.buf
+          pos < tail
+        }) && {
+          b = buf(pos)
+          b >= '0' && b <= '9'
+        }
+      ) leadingZeroError(pos - 1)
+    } else {
+      while (
+        (pos < tail || {
+          pos = loadMore(pos)
+          buf = this.buf
+          pos < tail
+        }) && {
+          b = buf(pos)
+          b >= '0' && b <= '9'
+        }
+      ) {
+        if (m10 < 922337203685477580L) {
+          m10 = m10 * 10 + (b - '0')
+          digits += 1
+        } else e10 += 1
+        pos += 1
+      }
+    }
+    if (b == '.') {
+      pos += 1
+      e10 += digits
+      var noFracDigits = true
+      while (
+        (pos < tail || {
+          pos = loadMore(pos)
+          buf = this.buf
+          pos < tail
+        }) && {
+          b = buf(pos)
+          b >= '0' && b <= '9'
+        }
+      ) {
+        if (m10 < 922337203685477580L) {
+          m10 = m10 * 10 + (b - '0')
+          digits += 1
+        }
+        noFracDigits = false
+        pos += 1
+      }
+      e10 -= digits
+      if (noFracDigits) numberError(pos)
+    }
+    if ((b | 0x20) == 'e') {
+      b = nextByte(pos + 1)
+      var s = 0
+      if (b == '-' || b == '+') {
+        s = '+' - b >> 31
+        b = nextByte(head)
+      }
+      if (b < '0' || b > '9') numberError()
+      var exp = b - '0'
+      pos = head
+      buf = this.buf
+      while (
+        (pos < tail || {
+          pos = loadMore(pos)
+          buf = this.buf
+          pos < tail
+        }) && {
+          b = buf(pos)
+          b >= '0' && b <= '9'
+        }
+      ) {
+        if (exp < 214748364) exp = exp * 10 + (b - '0')
+        pos += 1
+      }
+      exp ^= s
+      exp -= s
+      e10 += exp
+    }
+    head = pos
+    var x: Float =
+      if (e10 == 0 && m10 < 922337203685477580L) m10.toFloat
+      else if (m10 < 4294967296L && e10 >= digits - 23 && e10 <= 19 - digits) {
+        val pow10 = pow10Doubles
+        (if (e10 < 0) m10 / pow10(-e10)
+         else m10 * pow10(e10)).toFloat
+      } else toFloat(m10, e10, from, newMark, pos)
+    if (isNeg) x = -x
+    if (mark > oldMark) mark = oldMark
+    x
+  }
+
+  // Based on the 'Moderate Path' algorithm from the awesome library of Alexander Huszagh: https://github.com/Alexhuszagh/rust-lexical
+  // Here is his inspiring post: https://www.reddit.com/r/rust/comments/a6j5j1/making_rust_float_parsing_fast_and_correct
+  private def toFloat(
+      m10: Long,
+      e10: Int,
+      from: Int,
+      newMark: Int,
+      pos: Int
+  ): Float =
+    if (m10 == 0 || e10 < -64) 0.0f
+    else if (e10 >= 39) Float.PositiveInfinity
+    else {
+      var shift = java.lang.Long.numberOfLeadingZeros(m10)
+      var m2 = unsignedMultiplyHigh(
+        pow10Mantissas(e10 + 343),
+        m10 << shift
+      ) // FIXME: Use Math.unsignedMultiplyHigh after dropping of JDK 17 support
+      var e2 =
+        (e10 * 108853 >> 15) - shift + 1 // (e10 * Math.log(10) / Math.log(2)).toInt - shift + 1
+      shift = java.lang.Long.numberOfLeadingZeros(m2)
+      m2 <<= shift
+      e2 -= shift
+      val roundingError =
+        (if (m10 < 922337203685477580L) 1
+         else 19) << shift
+      val truncatedBitNum = Math.max(-149 - e2, 40)
+      val savedBitNum = 64 - truncatedBitNum
+      val mask = -1L >>> Math.max(savedBitNum, 0)
+      val halfwayDiff = (m2 & mask) - (mask >>> 1)
+      if (Math.abs(halfwayDiff) > roundingError || savedBitNum <= 0)
+        java.lang.Float.intBitsToFloat {
+          var mf = 0
+          if (savedBitNum > 0) mf = (m2 >>> truncatedBitNum).toInt
+          e2 += truncatedBitNum
+          if (savedBitNum >= 0 && halfwayDiff > 0) {
+            if (mf == 0xffffff) {
+              mf = 0x800000
+              e2 += 1
+            } else mf += 1
+          }
+          if (e2 == -149) mf
+          else if (e2 >= 105) 0x7f800000
+          else e2 + 150 << 23 | mf & 0x7fffff
+        }
+      else toFloat(from, newMark, pos)
+    }
+
+  private def toFloat(from: Int, newMark: Int, pos: Int): Float = {
+    var offset = from
+    if (mark == 0) offset -= newMark
+    java.lang.Float.parseFloat(new String(buf, 0, offset, pos - offset))
+  }
+
+  override def double() = readDouble(isToken = true)
+
+  private def readDouble(isToken: Boolean): Double = {
+    var b =
+      if (isToken) searchNextToken(head)
+      else nextByte(head)
+    var isNeg = false
+    if (b == '-') {
+      b = nextByte(head)
+      isNeg = true
+    }
+    if (b < '0' || b > '9') numberError()
+    var pos = head
+    var buf = this.buf
+    val from = pos - 1
+    val oldMark = mark
+    val newMark =
+      if (oldMark < 0) from
+      else oldMark
+    mark = newMark
+    var m10 = (b - '0').toLong
+    var e10 = 0
+    var digits = 1
+    if (isToken && m10 == 0) {
+      if (
+        (pos < tail || {
+          pos = loadMore(pos)
+          buf = this.buf
+          pos < tail
+        }) && {
+          b = buf(pos)
+          b >= '0' && b <= '9'
+        }
+      ) leadingZeroError(pos - 1)
+    } else {
+      while (
+        (pos < tail || {
+          pos = loadMore(pos)
+          buf = this.buf
+          pos < tail
+        }) && {
+          b = buf(pos)
+          b >= '0' && b <= '9'
+        }
+      ) {
+        if (m10 < 922337203685477580L) {
+          m10 = m10 * 10 + (b - '0')
+          digits += 1
+        } else e10 += 1
+        pos += 1
+      }
+    }
+    if (b == '.') {
+      pos += 1
+      e10 += digits
+      var noFracDigits = true
+      while (
+        (pos < tail || {
+          pos = loadMore(pos)
+          buf = this.buf
+          pos < tail
+        }) && {
+          b = buf(pos)
+          b >= '0' && b <= '9'
+        }
+      ) {
+        if (m10 < 922337203685477580L) {
+          m10 = m10 * 10 + (b - '0')
+          digits += 1
+        }
+        noFracDigits = false
+        pos += 1
+      }
+      e10 -= digits
+      if (noFracDigits) numberError(pos)
+    }
+    if ((b | 0x20) == 'e') {
+      b = nextByte(pos + 1)
+      var s = 0
+      if (b == '-' || b == '+') {
+        s = '+' - b >> 31
+        b = nextByte(head)
+      }
+      if (b < '0' || b > '9') numberError()
+      var exp = b - '0'
+      pos = head
+      buf = this.buf
+      while (
+        (pos < tail || {
+          pos = loadMore(pos)
+          buf = this.buf
+          pos < tail
+        }) && {
+          b = buf(pos)
+          b >= '0' && b <= '9'
+        }
+      ) {
+        if (exp < 214748364) exp = exp * 10 + (b - '0')
+        pos += 1
+      }
+      exp ^= s
+      exp -= s
+      e10 += exp
+    }
+    head = pos
+    var x: Double =
+      if (e10 == 0 && m10 < 922337203685477580L) m10.toDouble
+      else if (m10 < 4503599627370496L && e10 >= -22 && e10 <= 38 - digits) {
+        val pow10 = pow10Doubles
+        if (e10 < 0) m10 / pow10(-e10)
+        else if (e10 <= 22) m10 * pow10(e10)
+        else {
+          val slop = 16 - digits
+          (m10 * pow10(slop)) * pow10(e10 - slop)
+        }
+      } else toDouble(m10, e10, from, newMark, pos)
+    if (isNeg) x = -x
+    if (mark > oldMark) mark = oldMark
+    x
+  }
+
+  // Based on the 'Moderate Path' algorithm from the awesome library of Alexander Huszagh: https://github.com/Alexhuszagh/rust-lexical
+  // Here is his inspiring post: https://www.reddit.com/r/rust/comments/a6j5j1/making_rust_float_parsing_fast_and_correct
+  private def toDouble(
+      m10: Long,
+      e10: Int,
+      from: Int,
+      newMark: Int,
+      pos: Int
+  ): Double =
+    if (m10 == 0 || e10 < -343) 0.0
+    else if (e10 >= 310) Double.PositiveInfinity
+    else {
+      var shift = java.lang.Long.numberOfLeadingZeros(m10)
+      var m2 = unsignedMultiplyHigh(
+        pow10Mantissas(e10 + 343),
+        m10 << shift
+      ) // FIXME: Use Math.unsignedMultiplyHigh after dropping of JDK 17 support
+      var e2 =
+        (e10 * 108853 >> 15) - shift + 1 // (e10 * Math.log(10) / Math.log(2)).toInt - shift + 1
+      shift = java.lang.Long.numberOfLeadingZeros(m2)
+      m2 <<= shift
+      e2 -= shift
+      val roundingError =
+        (if (m10 < 922337203685477580L) 1
+         else 19) << shift
+      val truncatedBitNum = Math.max(-1074 - e2, 11)
+      val savedBitNum = 64 - truncatedBitNum
+      val mask = -1L >>> Math.max(savedBitNum, 0)
+      val halfwayDiff = (m2 & mask) - (mask >>> 1)
+      if (Math.abs(halfwayDiff) > roundingError || savedBitNum <= 0)
+        java.lang.Double.longBitsToDouble {
+          if (savedBitNum <= 0) m2 = 0
+          m2 >>>= truncatedBitNum
+          e2 += truncatedBitNum
+          if (savedBitNum >= 0 && halfwayDiff > 0) {
+            if (m2 == 0x1fffffffffffffL) {
+              m2 = 0x10000000000000L
+              e2 += 1
+            } else m2 += 1
+          }
+          if (e2 == -1074) m2
+          else if (e2 >= 972) 0x7ff0000000000000L
+          else (e2 + 1075).toLong << 52 | m2 & 0xfffffffffffffL
+        }
+      else toDouble(from, newMark, pos)
+    }
+
+  private def unsignedMultiplyHigh(x: Long, y: Long): Long =
+    Math.multiplyHigh(
+      x,
+      y
+    ) + x + y // Use implementation that works only when both params are negative
+
+  private def toDouble(from: Int, newMark: Int, pos: Int): Double = {
+    var offset = from
+    if (mark == 0) offset -= newMark
+    java.lang.Double.parseDouble(new String(buf, 0, offset, pos - offset))
+  }
+
+  override def boolean() = parseBoolean(isToken = true, head)
+
+  override def skipExpression() = {
+    skip(token)
+    token = nextTethysToken(null)
+    this
+  }
+
+  def nextTethysToken(previous: Token): Token = {
+    if (!skipWhitespaces()) return Token.Empty
+    val b = searchNextToken(head)
+    val token =
+      if (
+        b == '"' &&
+        objectTrace.nonEmpty
+        && objectTrace.head &&
+        previous != null &&
+        !previous.isFieldName
+      )
+        rollbackToken()
+        Token.FieldNameToken
+      else if (b == '"')
+        rollbackToken()
+        Token.StringValueToken
+      else if ((b >= '0' && b <= '9') || b == '-')
+        rollbackToken()
+        Token.NumberValueToken
+      else if (b == 'n') readNullOrError(Token.NullValueToken, "expected null")
+      else if (b == 'f' || b == 't')
+        rollbackToken()
+        Token.BooleanValueToken
+      else if (b == '[')
+        objectTrace.push(false)
+        Token.ArrayStartToken
+      else if (b == ']')
+        objectTrace.pop()
+        Token.ArrayEndToken
+      else if (b == '{')
+        objectTrace.push(true)
+        Token.ObjectStartToken
+      else if (b == '}')
+        objectTrace.pop()
+        Token.ObjectEndToken
+      else decodeError("expected value")
+    token
+  }
+
+  /** Skips whitespace characters in the input.
+    *
+    * @return
+    *   `true` if and only if there are non-whitespace characters left in the
+    *   input after skipping the whitespace
+    */
+  private def skipWhitespaces(): Boolean = {
+    var pos = head
+    var buf = this.buf
+    while (
+      (pos < tail || {
+        pos = loadMore(pos)
+        buf = this.buf
+        pos < tail
+      }) && {
+        val b = buf(pos)
+        b == ' ' || b == '\n' || (b | 0x4) == '\r'
+      }
+    ) pos += 1
+    head = pos
+    pos != tail
+  }
+
+  /** Finishes reading the `null` JSON value and returns the provided default
+    * value or throws [[JsonReaderException]]. Before calling it the `n` token
+    * should be parsed already.
+    *
+    * @param default
+    *   the default value to return
+    * @param msg
+    *   the exception message
+    * @tparam A
+    *   the type of the default value
+    * @return
+    *   the default value
+    * @throws JsonReaderException
+    *   in cases of reaching the end of input or illegal format of JSON value or
+    *   when the provided default value is `null`
+    */
+  @tailrec
+  def readNullOrError[@specialized A](default: A, msg: String): A =
+    if (default != null) {
+      val pos = head
+      if (pos != 0) {
+        if (pos + 2 < tail) {
+          val bs = ByteArrayAccess.getInt(buf, pos - 1)
+          if (bs == 0x6c6c756e) {
+            head = pos + 3
+            default
+          } else decodeError(msg, bs, pos)
+        } else if (buf(pos - 1) == 'n') {
+          head = loadMoreOrError(pos - 1) + 1
+          readNullOrError(default, msg)
+        } else decodeError(msg, pos - 1)
+      } else illegalTokenOperation()
+    } else decodeError(msg)
+
+  private def leadingZeroError(pos: Int): Nothing =
+    decodeError("illegal number with leading zero", pos)
+
+  private def numberError(pos: Int = head - 1): Nothing =
+    decodeError("illegal number", pos)
+
+  private def scaleLimitError(pos: Int = head - 1): Nothing =
+    decodeError("value exceeds limit for scale", pos)
+
+  private def digitsLimitError(pos: Int): Nothing =
+    decodeError("value exceeds limit for number of digits", pos)
+
+  private def longOverflowError(pos: Int): Nothing =
+    decodeError("value is too large for long", pos)
+
+  /** Rolls back the current reading position by one.
+    *
+    * @throws java.lang.IllegalStateException
+    *   if no any token was parsed yet
+    */
+  def rollbackToken(): Unit = {
+    val pos = head
+    if (pos == 0) illegalTokenOperation()
+    head = pos - 1
+  }
+
+  private def illegalTokenOperation(): Nothing =
+    throw new IllegalStateException(
+      "expected preceding call of 'nextToken()' or 'isNextToken()'"
+    )
+
+  /** Skips the next JSON value.
+    *
+    * @throws JsonReaderException
+    *   in cases of reaching the end of input
+    */
+  def skip(current: Token): Unit = {
+    val b: Byte =
+      if (current.isObjectStart)
+        objectTrace.pop()
+        '{'
+      else if (current.isArrayStart)
+        objectTrace.pop()
+        '['
+      else searchNextToken(head)
+
+    var pos = head
+    if (b == '"') pos = skipString(evenBackSlashes = true, pos)
+    else if ((b >= '0' && b <= '9') || b == '-') pos = skipNumber(pos)
+    else if (b == 'n' || b == 't') pos = skipFixedBytes(3, pos)
+    else if (b == 'f') pos = skipFixedBytes(4, pos)
+    else if (b == '[') pos = skipArray(0, pos)
+    else if (b == '{') pos = skipObject(0, pos)
+    else decodeError("expected value")
+    head = pos
+  }
+
+  @tailrec
+  private def skipObject(level: Int, pos: Int): Int =
+    if (pos < tail) {
+      val b = buf(pos)
+      if (b == '"')
+        skipObject(level, skipString(evenBackSlashes = true, pos + 1))
+      else if (b == '{') skipObject(level + 1, pos + 1)
+      else if (b != '}') skipObject(level, pos + 1)
+      else if (level != 0) skipObject(level - 1, pos + 1)
+      else pos + 1
+    } else skipObject(level, loadMoreOrError(pos))
+
+  @tailrec
+  private def skipArray(level: Int, pos: Int): Int =
+    if (pos < tail) {
+      val b = buf(pos)
+      if (b == '"')
+        skipArray(level, skipString(evenBackSlashes = true, pos + 1))
+      else if (b == '[') skipArray(level + 1, pos + 1)
+      else if (b != ']') skipArray(level, pos + 1)
+      else if (level != 0) skipArray(level - 1, pos + 1)
+      else pos + 1
+    } else skipArray(level, loadMoreOrError(pos))
+
+  @tailrec
+  private def skipString(evenBackSlashes: Boolean, pos: Int): Int =
+    if (pos < tail) {
+      if (evenBackSlashes) {
+        val b = buf(pos)
+        if (b == '"') pos + 1
+        else skipString(b != '\\', pos + 1)
+      } else skipString(evenBackSlashes = true, pos + 1)
+    } else skipString(evenBackSlashes, loadMoreOrError(pos))
+
+  private def skipNumber(p: Int): Int = {
+    var pos = p
+    var buf = this.buf
+    while (
+      (pos < tail || {
+        pos = loadMore(pos)
+        buf = this.buf
+        pos < tail
+      }) && {
+        val b = buf(pos)
+        (b >= '0' && b <= '9') || b == '.' || (b | 0x20) == 'e' || b == '-' || b == '+'
+      }
+    ) pos += 1
+    pos
+  }
+
+  @tailrec
+  private def skipFixedBytes(n: Int, pos: Int): Int = {
+    val newPos = pos + n
+    if (newPos <= tail) newPos
+    else skipFixedBytes(n, loadMoreOrError(pos))
+  }
+
+  @tailrec
+  private def parseBoolean(isToken: Boolean, pos: Int): Boolean =
+    if (pos + 3 < tail) {
+      val bs = ByteArrayAccess.getInt(buf, pos)
+      if (bs == 0x65757274) {
+        head = pos + 4
+        true
+      } else if (bs == 0x736c6166) {
+        if (nextByte(pos + 4) != 'e') booleanError(pos + 4)
+        false
+      } else if (
+        isToken && {
+          val b1 = bs.toByte
+          b1 == ' ' || b1 == '\n' || (b1 | 0x4) == '\r'
+        }
+      ) parseBoolean(isToken, pos + 1)
+      else booleanError(bs, pos)
+    } else parseBoolean(isToken, loadMoreOrError(pos))
+
+  private def booleanError(bs: Int, pos: Int): Nothing =
+    booleanError(
+      (Math.max(
+        java.lang.Integer.numberOfTrailingZeros(bs ^ 0x65757274),
+        java.lang.Integer.numberOfTrailingZeros(bs ^ 0x736c6166)
+      ) >> 3) + pos
+    )
+
+  private def escapeSequenceError(pos: Int): Nothing =
+    decodeError("illegal escape sequence", pos)
+
+  private def unescapedControlCharacterError(pos: Int): Nothing =
+    decodeError("unescaped control character", pos)
+
+  private def booleanError(pos: Int): Nothing =
+    decodeError("illegal boolean", pos)
+
+  @tailrec
+  private def nextByte(pos: Int): Byte =
+    if (pos < tail) {
+      head = pos + 1
+      buf(pos)
+    } else nextByte(loadMoreOrError(pos))
+
+  @tailrec
+  private def nextByteOrError(t: Byte, pos: Int): Unit =
+    if (pos < tail) {
+      if (buf(pos) != t) tokenError(t, pos)
+      head = pos + 1
+    } else nextByteOrError(t, loadMoreOrError(pos))
+
+  private def tokenError(t: Byte, pos: Int = head - 1): Nothing = {
+    var i = appendString("expected '", 0)
+    i = appendChar(t.toChar, i)
+    i = appendChar('\'', i)
+    decodeError(i, pos, null)
+  }
+
+}
+
+object DefaultTokenIterator:
+  private final val hexDigits: Array[Char] =
+    Array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd',
+      'e', 'f')
+
+  private final val pow10Doubles: Array[Double] =
+    Array(1, 1e+1, 1e+2, 1e+3, 1e+4, 1e+5, 1e+6, 1e+7, 1e+8, 1e+9, 1e+10, 1e+11,
+      1e+12, 1e+13, 1e+14, 1e+15, 1e+16, 1e+17, 1e+18, 1e+19, 1e+20, 1e+21,
+      1e+22)
+
+  /* Use the following code to generate `dumpBorder` in Scala REPL:
+      "\n+----------+-------------------------------------------------+------------------+".toCharArray
+        .grouped(16).map(_.map(_.toInt).mkString(", ")).mkString("Array(\n", ",\n", "\n)")
+   */
+  private final val dumpBorder: Array[Char] = Array(
+    10, 43, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 43, 45, 45, 45, 45, 45, 45,
+    45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
+    45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
+    45, 45, 45, 45, 45, 43, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
+    45, 45, 45, 45, 45, 43
+  )
+
+  /* Use the following code to generate `dumpHeader` in Scala REPL:
+    "\n|          |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f | 0123456789abcdef |".toCharArray
+      .grouped(16).map(_.map(_.toInt).mkString(", ")).mkString("Array(\n", ",\n", "\n)")
+   */
+  private final val dumpHeader: Array[Char] = Array(
+    10, 124, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 124, 32, 32, 48, 32, 32,
+    49, 32, 32, 50, 32, 32, 51, 32, 32, 52, 32, 32, 53, 32, 32, 54, 32, 32, 55,
+    32, 32, 56, 32, 32, 57, 32, 32, 97, 32, 32, 98, 32, 32, 99, 32, 32, 100, 32,
+    32, 101, 32, 32, 102, 32, 124, 32, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+    97, 98, 99, 100, 101, 102, 32, 124
+  )
+
+  /* Use the following code to generate `pow10Mantissas` in Scala REPL:
+        val ms = new Array[Long](653)
+        var pow10 = BigInt(10)
+        var i = 342
+        while (i >= 0) {
+          ms(i) = ((BigInt(1) << (pow10.bitLength + 63)) / pow10).longValue
+          pow10 *= 10
+          i -= 1
+        }
+        pow10 = BigInt(1) << 63
+        i = 343
+        while (i < 653) {
+          ms(i) = (pow10 >> (pow10.bitLength - 64)).longValue
+          pow10 *= 10
+          i += 1
+        }
+        ms.grouped(4).map(_.mkString("L, ")).mkString("Array(\n", "L,\n", "L\n)")
+   */
+  private final val pow10Mantissas: Array[Long] = Array(
+    -4671960508600951122L, -1228264617323800998L, -7685194413468457480L,
+    -4994806998408183946L, -1631822729582842029L, -7937418233630358124L,
+    -5310086773610559751L, -2025922448585811785L, -8183730558007214222L,
+    -5617977179081629873L, -2410785455424649437L, -8424269937281487754L,
+    -5918651403174471789L, -2786628235540701832L, -8659171674854020501L,
+    -6212278575140137722L, -3153662200497784248L, -8888567902952197011L,
+    -6499023860262858360L, -3512093806901185046L, -9112587656954322510L,
+    -6779048552765515233L, -3862124672529506138L, -215969822234494768L,
+    -7052510166537641086L, -4203951689744663454L, -643253593753441413L,
+    -7319562523736982739L, -4537767136243840520L, -1060522901877412746L,
+    -7580355841314464822L, -4863758783215693124L, -1468012460592228501L,
+    -7835036815511224669L, -5182110000961642932L, -1865951482774665761L,
+    -8083748704375247957L, -5492999862041672042L, -2254563809124702148L,
+    -8326631408344020699L, -5796603242002637969L, -2634068034075909558L,
+    -8563821548938525330L, -6093090917745768758L, -3004677628754823043L,
+    -8795452545612846258L, -6382629663588669919L, -3366601061058449494L,
+    -9021654690802612790L, -6665382345075878084L, -3720041912917459700L,
+    -38366372719436721L, -6941508010590729807L, -4065198994811024355L,
+    -469812725086392539L, -7211161980820077193L, -4402266457597708587L,
+    -891147053569747830L, -7474495936122174250L, -4731433901725329908L,
+    -1302606358729274481L, -7731658001846878407L, -5052886483881210105L,
+    -1704422086424124727L, -7982792831656159810L, -5366805021142811859L,
+    -2096820258001126919L, -8228041688891786181L, -5673366092687344822L,
+    -2480021597431793123L, -8467542526035952558L, -5972742139117552794L,
+    -2854241655469553088L, -8701430062309552536L, -6265101559459552766L,
+    -3219690930897053053L, -8929835859451740015L, -6550608805887287114L,
+    -3576574988931720989L, -9152888395723407474L, -6829424476226871438L,
+    -3925094576856201394L, -294682202642863838L, -7101705404292871755L,
+    -4265445736938701790L, -720121152745989333L, -7367604748107325189L,
+    -4597819916706768583L, -1135588877456072824L, -7627272076051127371L,
+    -4922404076636521310L, -1541319077368263733L, -7880853450996246689L,
+    -5239380795317920458L, -1937539975720012668L, -8128491512466089774L,
+    -5548928372155224313L, -2324474446766642487L, -8370325556870233411L,
+    -5851220927660403859L, -2702340141148116920L, -8606491615858654931L,
+    -6146428501395930760L, -3071349608317525546L, -8837122532839535322L,
+    -6434717147622031249L, -3431710416100151157L, -9062348037703676329L,
+    -6716249028702207507L, -3783625267450371480L, -117845565885576446L,
+    -6991182506319567135L, -4127292114472071014L, -547429124662700864L,
+    -7259672230555269896L, -4462904269766699466L, -966944318780986428L,
+    -7521869226879198374L, -4790650515171610063L, -1376627125537124675L,
+    -7777920981101784778L, -5110715207949843068L, -1776707991509915931L,
+    -8027971522334779313L, -5423278384491086237L, -2167411962186469893L,
+    -8272161504007625539L, -5728515861582144020L, -2548958808550292121L,
+    -8510628282985014432L, -6026599335303880135L, -2921563150702462265L,
+    -8743505996830120772L, -6317696477610263061L, -3285434578585440922L,
+    -8970925639256982432L, -6601971030643840136L, -3640777769877412266L,
+    -9193015133814464522L, -6879582898840692749L, -3987792605123478032L,
+    -373054737976959636L, -7150688238876681629L, -4326674280168464132L,
+    -796656831783192261L, -7415439547505577019L, -4657613415954583370L,
+    -1210330751515841308L, -7673985747338482674L, -4980796165745715438L,
+    -1614309188754756393L, -7926472270612804602L, -5296404319838617848L,
+    -2008819381370884406L, -8173041140997884610L, -5604615407819967859L,
+    -2394083241347571919L, -8413831053483314306L, -5905602798426754978L,
+    -2770317479606055818L, -8648977452394866743L, -6199535797066195524L,
+    -3137733727905356501L, -8878612607581929669L, -6486579741050024183L,
+    -3496538657885142324L, -9102865688819295809L, -6766896092596731857L,
+    -3846934097318526917L, -196981603220770742L, -7040642529654063570L,
+    -4189117143640191558L, -624710411122851544L, -7307973034592864071L,
+    -4523280274813692185L, -1042414325089727327L, -7569037980822161435L,
+    -4849611457600313890L, -1450328303573004458L, -7823984217374209643L,
+    -5168294253290374149L, -1848681798185579782L, -8072955151507069220L,
+    -5479507920956448621L, -2237698882768172872L, -8316090829371189901L,
+    -5783427518286599473L, -2617598379430861437L, -8553528014785370254L,
+    -6080224000054324913L, -2988593981640518238L, -8785400266166405755L,
+    -6370064314280619289L, -3350894374423386208L, -9011838011655698236L,
+    -6653111496142234891L, -3704703351750405709L, -19193171260619233L,
+    -6929524759678968877L, -4050219931171323192L, -451088895536766085L,
+    -7199459587351560659L, -4387638465762062920L, -872862063775190746L,
+    -7463067817500576073L, -4717148753448332187L, -1284749923383027329L,
+    -7720497729755473937L, -5038936143766954517L, -1686984161281305242L,
+    -7971894128441897632L, -5353181642124984136L, -2079791034228842266L,
+    -8217398424034108273L, -5660062011615247437L, -2463391496091671392L,
+    -8457148712698376476L, -5959749872445582691L, -2838001322129590460L,
+    -8691279853972075893L, -6252413799037706963L, -3203831230369745799L,
+    -8919923546622172981L, -6538218414850328322L, -3561087000135522498L,
+    -9143208402725783417L, -6817324484979841368L, -3909969587797413806L,
+    -275775966319379353L, -7089889006590693952L, -4250675239810979535L,
+    -701658031336336515L, -7356065297226292178L, -4583395603105477319L,
+    -1117558485454458744L, -7616003081050118571L, -4908317832885260310L,
+    -1523711272679187483L, -7869848573065574033L, -5225624697904579637L,
+    -1920344853953336643L, -8117744561361917258L, -5535494683275008668L,
+    -2307682335666372931L, -8359830487432564938L, -5838102090863318269L,
+    -2685941595151759932L, -8596242524610931813L, -6133617137336276863L,
+    -3055335403242958174L, -8827113654667930715L, -6422206049907525490L,
+    -3416071543957018958L, -9052573742614218705L, -6704031159840385477L,
+    -3768352931373093942L, -98755145788979524L, -6979250993759194058L,
+    -4112377723771604669L, -528786136287117932L, -7248020362820530564L,
+    -4448339435098275301L, -948738275445456222L, -7510490449794491995L,
+    -4776427043815727089L, -1358847786342270957L, -7766808894105001205L,
+    -5096825099203863602L, -1759345355577441598L, -8017119874876982855L,
+    -5409713825168840664L, -2150456263033662926L, -8261564192037121185L,
+    -5715269221619013577L, -2532400508596379068L, -8500279345513818773L,
+    -6013663163464885563L, -2905392935903719049L, -8733399612580906262L,
+    -6305063497298744923L, -3269643353196043250L, -8961056123388608887L,
+    -6589634135808373205L, -3625356651333078602L, -9183376934724255983L,
+    -6867535149977932074L, -3972732919045027189L, -354230130378896082L,
+    -7138922859127891907L, -4311967555482476980L, -778273425925708321L,
+    -7403949918844649557L, -4643251380128424042L, -1192378206733142148L,
+    -7662765406849295699L, -4966770740134231719L, -1596777406740401745L,
+    -7915514906853832947L, -5282707615139903279L, -1991698500497491195L,
+    -8162340590452013853L, -5591239719637629412L, -2377363631119648861L,
+    -8403381297090862394L, -5892540602936190089L, -2753989735242849707L,
+    -8638772612167862923L, -6186779746782440750L, -3121788665050663033L,
+    -8868646943297746252L, -6474122660694794911L, -3480967307441105734L,
+    -9093133594791772940L, -6754730975062328271L, -3831727700400522434L,
+    -177973607073265139L, -7028762532061872568L, -4174267146649952806L,
+    -606147914885053103L, -7296371474444240046L, -4508778324627912153L,
+    -1024286887357502287L, -7557708332239520786L, -4835449396872013078L,
+    -1432625727662628443L, -7812920107430224633L, -5154464115860392887L,
+    -1831394126398103205L, -8062150356639896359L, -5466001927372482545L,
+    -2220816390788215277L, -8305539271883716405L, -5770238071427257602L,
+    -2601111570856684098L, -8543223759426509417L, -6067343680855748868L,
+    -2972493582642298180L, -8775337516792518219L, -6357485877563259869L,
+    -3335171328526686933L, -9002011107970261189L, -6640827866535438582L,
+    -3689348814741910324L, -9223372036854775808L, -6917529027641081856L,
+    -4035225266123964416L, -432345564227567616L, -7187745005283311616L,
+    -4372995238176751616L, -854558029293551616L, -7451627795949551616L,
+    -4702848726509551616L, -1266874889709551616L, -7709325833709551616L,
+    -5024971273709551616L, -1669528073709551616L, -7960984073709551616L,
+    -5339544073709551616L, -2062744073709551616L, -8206744073709551616L,
+    -5646744073709551616L, -2446744073709551616L, -8446744073709551616L,
+    -5946744073709551616L, -2821744073709551616L, -8681119073709551616L,
+    -6239712823709551616L, -3187955011209551616L, -8910000909647051616L,
+    -6525815118631426616L, -3545582879861895366L, -9133518327554766460L,
+    -6805211891016070171L, -3894828845342699810L, -256850038250986858L,
+    -7078060301547948643L, -4235889358507547899L, -683175679707046970L,
+    -7344513827457986212L, -4568956265895094861L, -1099509313941480672L,
+    -7604722348854507276L, -4894216917640746191L, -1506085128623544835L,
+    -7858832233030797378L, -5211854272861108819L, -1903131822648998119L,
+    -8106986416796705681L, -5522047002568494197L, -2290872734783229842L,
+    -8349324486880600507L, -5824969590173362730L, -2669525969289315508L,
+    -8585982758446904049L, -6120792429631242157L, -3039304518611664792L,
+    -8817094351773372351L, -6409681921289327535L, -3400416383184271515L,
+    -9042789267131251553L, -6691800565486676537L, -3753064688430957767L,
+    -79644842111309304L, -6967307053960650171L, -4097447799023424810L,
+    -510123730351893109L, -7236356359111015049L, -4433759430461380907L,
+    -930513269649338230L, -7499099821171918250L, -4762188758037509908L,
+    -1341049929119499481L, -7755685233340769032L, -5082920523248573386L,
+    -1741964635633328828L, -8006256924911912374L, -5396135137712502563L,
+    -2133482903713240300L, -8250955842461857044L, -5702008784649933400L,
+    -2515824962385028846L, -8489919629131724885L, -6000713517987268202L,
+    -2889205879056697349L, -8723282702051517699L, -6292417359137009220L,
+    -3253835680493873621L, -8951176327949752869L, -6577284391509803182L,
+    -3609919470959866074L, -9173728696990998152L, -6855474852811359786L,
+    -3957657547586811828L, -335385916056126881L, -7127145225176161157L,
+    -4297245513042813542L, -759870872876129024L, -7392448323188662496L,
+    -4628874385558440216L, -1174406963520662366L, -7651533379841495835L,
+    -4952730706374481889L, -1579227364540714458L, -7904546130479028392L,
+    -5268996644671397586L, -1974559787411859078L, -8151628894773493780L,
+    -5577850100039479321L, -2360626606621961247L, -8392920656779807636L,
+    -5879464802547371641L, -2737644984756826647L, -8628557143114098510L,
+    -6174010410465235234L, -3105826994654156138L, -8858670899299929442L,
+    -6461652605697523899L, -3465379738694516970L, -9083391364325154962L,
+    -6742553186979055799L, -3816505465296431844L, -158945813193151901L,
+    -7016870160886801794L, -4159401682681114339L, -587566084924005019L,
+    -7284757830718584993L, -4494261269970843337L, -1006140569036166268L,
+    -7546366883288685774L, -4821272585683469313L, -1414904713676948737L,
+    -7801844473689174817L, -5140619573684080617L, -1814088448677712867L,
+    -8051334308064652398L, -5452481866653427593L, -2203916314889396588L,
+    -8294976724446954723L, -5757034887131305500L, -2584607590486743971L,
+    -8532908771695296838L, -6054449946191733143L, -2956376414312278525L,
+    -8765264286586255934L, -6344894339805432014L, -3319431906329402113L,
+    -8992173969096958177L, -6628531442943809817L, -3673978285252374367L,
+    -9213765455923815836L, -6905520801477381891L, -4020214983419339459L,
+    -413582710846786420L, -7176018221920323369L, -4358336758973016307L,
+    -836234930288882479L, -7440175859071633406L, -4688533805412153853L,
+    -1248981238337804412L, -7698142301602209614L, -5010991858575374113L,
+    -1652053804791829737L, -7950062655635975442L, -5325892301117581398L,
+    -2045679357969588844L, -8196078626372074883L, -5633412264537705700L,
+    -2430079312244744221L, -8436328597794046994L, -5933724728815170839L,
+    -2805469892591575644L, -8670947710510816634L, -6226998619711132888L,
+    -3172062256211528206L, -8900067937773286985L, -6513398903789220827L,
+    -3530062611309138130L, -9123818159709293187L, -6793086681209228580L,
+    -3879672333084147821L, -237904397927796872L, -7066219276345954901L,
+    -4221088077005055722L, -664674077828931749L, -7332950326284164199L,
+    -4554501889427817345L, -1081441343357383777L, -7593429867239446717L,
+    -4880101315621920492L, -1488440626100012711L, -7847804418953589800L,
+    -5198069505264599346L, -1885900863153361279L, -8096217067111932656L,
+    -5508585315462527915L, -2274045625900771990L, -8338807543829064350L,
+    -5811823411358942533L, -2653093245771290262L, -8575712306248138270L,
+    -6107954364382784934L, -3023256937051093263L, -8807064613298015146L,
+    -6397144748195131028L, -3384744916816525881L, -9032994600651410532L,
+    -6679557232386875260L, -3737760522056206171L, -60514634142869810L,
+    -6955350673980375487L, -4082502324048081455L, -491441886632713915L,
+    -7224680206786528053L, -4419164240055772162L, -912269281642327298L,
+    -7487697328667536418L, -4747935642407032618L, -1323233534581402868L,
+    -7744549986754458649L, -5069001465015685407L, -1724565812842218855L,
+    -7995382660667468640L, -5382542307406947896L, -2116491865831296966L,
+    -8240336443785642460L, -5688734536304665171L, -2499232151953443560L,
+    -8479549122611984081L, -5987750384837592197L, -2873001962619602342L,
+    -8713155254278333320L, -6279758049420528746L, -3238011543348273028L,
+    -8941286242233752499L, -6564921784364802720L, -3594466212028615495L,
+    -9164070410158966541L, -6843401994271320272L, -3942566474411762436L,
+    -316522074587315140L, -7115355324258153819L, -4282508136895304370L,
+    -741449152691742558L, -7380934748073420955L, -4614482416664388289L,
+    -1156417002403097458L, -7640289654143017767L, -4938676049251384305L,
+    -1561659043136842477L, -7893565929601608404L, -5255271393574622601L,
+    -1957403223540890347L, -8140906042354138323L, -5564446534515285000L,
+    -2343872149716718346L, -8382449121214030822L, -5866375383090150624L,
+    -2721283210435300376L, -8618331034163144591L, -6161227774276542835L,
+    -3089848699418290639L, -8848684464777513506L, -6449169562544503978L,
+    -3449775934753242068L, -9073638986861858149L, -6730362715149934782L,
+    -3801267375510030573L, -139898200960150313L, -7004965403241175802L,
+    -4144520735624081848L, -568964901102714406L, -7273132090830278360L,
+    -4479729095110460046L, -987975350460687153L, -7535013621679011327L,
+    -4807081008671376254L, -1397165242411832414L, -7790757304148477115L,
+    -5126760611758208489L, -1796764746270372707L, -8040506994060064798L,
+    -5438947724147693094L, -2186998636757228463L, -8284403175614349646L,
+    -5743817951090549153L, -2568086420435798537L, -8522583040413455942L,
+    -6041542782089432023L, -2940242459184402125L, -8755180564631333184L,
+    -6332289687361778576L, -3303676090774835316L, -8982326584375353929L,
+    -6616222212041804507L, -3658591746624867729L, -9204148869281624187L,
+    -6893500068174642330L, -4005189066790915008L, -394800315061255856L,
+    -7164279224554366766L, -4343663012265570553L, -817892746904575288L,
+    -7428711994456441411L, -4674203974643163860L, -1231068949876566920L,
+    -7686947121313936181L, -4996997883215032323L, -1634561335591402499L,
+    -7939129862385708418L, -5312226309554747619L, -2028596868516046619L,
+    -8185402070463610993L, -5620066569652125837L
+  )
+
+  /** The default math context used for rounding of `BigDecimal` values when
+    * parsing.
+    */
+  final val bigDecimalMathContext: MathContext = MathContext.DECIMAL128
+
+  /** The default limit for number of decimal digits in mantissa of parsed
+    * `BigDecimal` values.
+    */
+  final val bigDecimalDigitsLimit: Int = 308
+
+  /** The default limit for scale of parsed `BigDecimal` values.
+    */
+  final val bigDecimalScaleLimit: Int = 6178
+
+  /** The maximum number of digits in `BigInt` values.
+    */
+  final val bigIntDigitsLimit: Int = 308
+
+  /* Use the following code to generate `nibbles` in Scala REPL:
+      val ns = new Array[Byte](256)
+      java.util.Arrays.fill(ns, -1: Byte)
+      ns('0') = 0
+      ns('1') = 1
+      ns('2') = 2
+      ns('3') = 3
+      ns('4') = 4
+      ns('5') = 5
+      ns('6') = 6
+      ns('7') = 7
+      ns('8') = 8
+      ns('9') = 9
+      ns('A') = 10
+      ns('B') = 11
+      ns('C') = 12
+      ns('D') = 13
+      ns('E') = 14
+      ns('F') = 15
+      ns('a') = 10
+      ns('b') = 11
+      ns('c') = 12
+      ns('d') = 13
+      ns('e') = 14
+      ns('f') = 15
+      ns.grouped(16).map(_.mkString(", ")).mkString("Array(\n", ",\n", "\n)")
+   */
+  private final val nibbles: Array[Byte] = Array(
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1,
+    -1, -1, -1, -1, -1, -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1
+  )

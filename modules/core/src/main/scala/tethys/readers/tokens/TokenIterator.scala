@@ -34,7 +34,6 @@ trait TokenIterator {
   def skipExpression(): this.type
 
   def collectExpression(): TokenIterator with CopySupport
-
 }
 
 object TokenIterator {

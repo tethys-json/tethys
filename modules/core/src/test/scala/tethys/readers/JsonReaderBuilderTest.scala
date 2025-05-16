@@ -7,7 +7,7 @@ import tethys.commons.{Token, TokenNode}
 import tethys.commons.TokenNode._
 import tethys.readers.JsonReaderBuilderTest._
 import tethys.readers.tokens.QueueIterator
-import tethys.TokenIteratorOps
+import tethys._
 
 class JsonReaderBuilderTest extends AnyFlatSpec with Matchers {
   behavior of "JsonReaderBuilder"

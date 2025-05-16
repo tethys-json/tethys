@@ -1,9 +1,8 @@
-import java.io.{Reader, StringReader, StringWriter, Writer}
-
-import tethys.readers.{FieldName, ReaderError}
 import tethys.readers.tokens.{TokenIterator, TokenIteratorProducer}
-import tethys.writers.tokens.{TokenWriter, TokenWriterProducer}
+import tethys.readers.{FieldName, ReaderError}
+import tethys.writers.tokens.{TokenWriter, TokenWriterConfig, TokenWriterProducer}
 
+import java.io.{Reader, StringReader, StringWriter}
 import scala.Specializable.Group
 
 package object tethys {
@@ -12,38 +11,40 @@ package object tethys {
     (Byte, Short, Int, Long, Float, Double, Boolean)
   )
 
-  // given
-
   implicit class JsonWriterOps[A](val a: A) extends AnyVal {
     def asJson(implicit
         jsonWriter: JsonWriter[A],
-        tokenWriterProducer: TokenWriterProducer
+        tokenWriterProducer: TokenWriterProducer,
+        tokenWriterConfig: TokenWriterConfig
     ): String = {
-      val stringWriter = new StringWriter()
-      writeJson(tokenWriterProducer.forWriter(stringWriter))
-      stringWriter.toString
+      val tokenWriter = tokenWriterProducer.produce(tokenWriterConfig)
+      try jsonWriter.write(a, tokenWriter)
+      finally tokenWriter.flush()
+      tokenWriter.result()
     }
 
     def asJsonWith(
         jsonWriter: JsonWriter[A]
-    )(implicit tokenWriterProducer: TokenWriterProducer): String = {
-      asJson(jsonWriter, tokenWriterProducer)
+    )(implicit
+        tokenWriterProducer: TokenWriterProducer,
+        tokenWriterConfig: TokenWriterConfig
+    ): String = {
+      val tokenWriter = tokenWriterProducer.produce(tokenWriterConfig)
+      try
+        jsonWriter.write(a, tokenWriter)
+      finally
+        tokenWriter.flush()
+      tokenWriter.result()
     }
 
     def writeJson(
         tokenWriter: TokenWriter
     )(implicit jsonWriter: JsonWriter[A]): Unit = {
-      try jsonWriter.write(a, tokenWriter)
-      finally {
+      try
+        jsonWriter.write(a, tokenWriter)
+      finally
         tokenWriter.flush()
-      }
     }
-  }
-
-  implicit class WriterOps(val w: Writer) extends AnyVal {
-    def toTokenWriter(implicit
-        tokenWriterProducer: TokenWriterProducer
-    ): TokenWriter = tokenWriterProducer.forWriter(w)
   }
 
   implicit class StringReaderOps(val json: String) extends AnyVal {
@@ -51,14 +52,13 @@ package object tethys {
         jsonReader: JsonReader[A],
         producer: TokenIteratorProducer
     ): Either[ReaderError, A] = {
-      new StringReader(json).readJson[A]
+      implicit val fieldName: FieldName = FieldName.Root
+      producer.produce(json).flatMap(it => ReaderError.catchNonFatal(jsonReader.read(it)))
     }
 
     def toTokenIterator(implicit
         producer: TokenIteratorProducer
-    ): Either[ReaderError, TokenIterator] = {
-      new StringReader(json).toTokenIterator
-    }
+    ): Either[ReaderError, TokenIterator] = producer.produce(json)
   }
 
   implicit class ReaderReaderOps(val reader: Reader) extends AnyVal {
@@ -66,7 +66,7 @@ package object tethys {
         jsonReader: JsonReader[A],
         producer: TokenIteratorProducer
     ): Either[ReaderError, A] = {
-      implicit val root: FieldName = FieldName()
+      implicit val root: FieldName = FieldName.Root
       producer.fromReader(reader).right.flatMap(_.readJson[A])
     }
 
@@ -88,7 +88,7 @@ package object tethys {
     def readJson[A](implicit
         jsonReader: JsonReader[A]
     ): Either[ReaderError, A] = {
-      implicit val fieldName: FieldName = FieldName()
+      implicit val fieldName: FieldName = FieldName.Root
       ReaderError.catchNonFatal(jsonReader.read(tokenIterator))
     }
   }

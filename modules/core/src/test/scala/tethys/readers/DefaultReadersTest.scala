@@ -7,7 +7,7 @@ import tethys.commons.{Token, TokenNode}
 import tethys.commons.TokenNode._
 import tethys.readers.DefaultReadersTest.TestDefinition
 import tethys.readers.tokens._
-import tethys.TokenIteratorOps
+import tethys._
 
 import scala.reflect.ClassTag
 
@@ -117,7 +117,8 @@ class DefaultReadersTest extends AnyFlatSpec {
     case (TestDefinition(result, jsonReader, name), nodes) =>
       it should s"correctly read $name" in {
         val iterator = QueueIterator(nodes)
-        iterator.readJson(jsonReader).fold(throw _, identity) shouldBe result
+        implicit val reader = jsonReader
+        iterator.readJson.fold(throw _, identity) shouldBe result
         iterator.currentToken() shouldBe Token.Empty
       }
 
