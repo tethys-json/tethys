@@ -10,7 +10,8 @@ trait JsonReaderDefaultValue[A] {
   def defaultValue: Any
 }
 
-case class JsonReaderDefaultValueImpl[A](defaultValue: A) extends JsonReaderDefaultValue[A]
+case class JsonReaderDefaultValueImpl[A](defaultValue: A)
+    extends JsonReaderDefaultValue[A]
 
 object JsonReaderDefaultValue extends LowPriorityDefaultValue {
   def apply[A](implicit

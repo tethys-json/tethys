@@ -195,7 +195,8 @@ class JsonReaderBuilderTest extends AnyFlatSpec with Matchers {
 
     case class Response[T](payload: T, resultCode: String)
 
-    implicit def resp1[T: JsonReader: JsonReaderDefaultValue]: JsonReader[Response[T]] =
+    implicit def resp1[T: JsonReader: JsonReaderDefaultValue]
+        : JsonReader[Response[T]] =
       JsonReader.builder
         .addField[T]("payload")
         .addField[String]("resultCode", "")
