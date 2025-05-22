@@ -21,6 +21,7 @@ import scala.compiletime.{constValueTuple, summonInline}
 import scala.quoted.*
 import scala.collection.mutable
 import scala.deriving.Mirror
+import tethys.readers.JsonReaderDefaultValue
 
 private[tethys] object Derivation:
 
@@ -536,6 +537,7 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
             val term = Block(
               readers ++ discriminatorStats,
               '{
+                given defaultValue: JsonReaderDefaultValue[discriminator] = JsonReaderDefaultValue.noDefaultValue // TODO: summon a better default value from context
                 JsonReader.builder
                   .addField[discriminator](
                     name = ${ Expr(label) },

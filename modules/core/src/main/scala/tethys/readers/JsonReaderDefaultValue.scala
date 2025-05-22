@@ -2,11 +2,15 @@ package tethys.readers
 
 import tethys.readers.JsonReaderDefaultValue.ReaderDefaultValue
 
+import scala.annotation.implicitNotFound
 import scala.annotation.StaticAnnotation
 
+//@implicitNotFound("Missing JsonReaderDefaultValue[${A}]")
 trait JsonReaderDefaultValue[A] {
   def defaultValue: Any
 }
+
+case class JsonReaderDefaultValueImpl[A](defaultValue: A) extends JsonReaderDefaultValue[A]
 
 object JsonReaderDefaultValue extends LowPriorityDefaultValue {
   def apply[A](implicit
@@ -34,6 +38,6 @@ trait LowPriorityDefaultValue {
 
   private val noDefaultValueInstance: NoDefaultValue[Nothing] =
     new NoDefaultValue[Nothing]
-  implicit def noDefaultValue[A]: NoDefaultValue[A] =
+  def noDefaultValue[A]: NoDefaultValue[A] =
     noDefaultValueInstance.asInstanceOf[NoDefaultValue[A]]
 }

@@ -22,7 +22,7 @@ class JsonReaderBuilderTest extends AnyFlatSpec with Matchers {
   it should "build reader from fields" in {
     implicit val reader: JsonReader[B] = {
       JsonReader.builder
-        .addField[Int]("i")
+        .addField[Int]("i", 0)
         .buildReader(i => B(i))
     }
 
@@ -32,19 +32,19 @@ class JsonReaderBuilderTest extends AnyFlatSpec with Matchers {
   it should "build selecting reader from fields" in {
     implicit val readerB: JsonReader[B] = {
       JsonReader.builder
-        .addField[Int]("i")
+        .addField[Int]("i", 0)
         .buildReader(i => B(i))
     }
 
     implicit val readerC: JsonReader[C] = {
       JsonReader.builder
-        .addField[String]("s")
+        .addField[String]("s", "")
         .buildReader(s => C(s))
     }
 
     implicit val readerA: JsonReader[A] = {
       JsonReader.builder
-        .addField[String]("clazz")
+        .addField[String]("clazz", "")
         .selectReader[A] {
           case "B" => readerB
           case "C" => readerC
@@ -58,13 +58,13 @@ class JsonReaderBuilderTest extends AnyFlatSpec with Matchers {
   it should "build reader for fat object" in {
     implicit val reader: JsonReader[FatClass] = {
       JsonReader.builder
-        .addField[Int]("a")
-        .addField[String]("b")
-        .addField[Boolean]("c")
-        .addField[Seq[String]]("d")
-        .addField[Double]("e")
-        .addField[Char]("f")
-        .addField[Option[Int]]("opt")
+        .addField[Int]("a", 0)
+        .addField[String]("b", "")
+        .addField[Boolean]("c", false)
+        .addField[Seq[String]]("d", Seq())
+        .addField[Double]("e", 0.0)
+        .addField[Char]("f", Char.MinValue)
+        .addField[Option[Int]]("opt", None)
         .buildReader(FatClass.apply)
     }
 
@@ -133,30 +133,30 @@ class JsonReaderBuilderTest extends AnyFlatSpec with Matchers {
       )
     ] = {
       JsonReader.builder
-        .addField[Int]("f1")
-        .addField[Int]("f2")
-        .addField[Int]("f3")
-        .addField[Int]("f4")
-        .addField[Int]("f5")
-        .addField[Int]("f6")
-        .addField[Int]("f7")
-        .addField[Int]("f8")
-        .addField[Int]("f9")
-        .addField[Int]("f10")
-        .addField[Int]("f11")
-        .addField[Int]("f12")
-        .addField[Int]("f13")
-        .addField[Int]("f14")
-        .addField[Int]("f15")
-        .addField[Int]("f16")
-        .addField[Int]("f17")
-        .addField[Int]("f18")
-        .addField[Int]("f19")
-        .addField[Int]("f20")
-        .addField[Int]("f21")
-        .addField[Int]("f22")
-        .addField[Int]("f23")
-        .addField[Int]("f24")
+        .addField[Int]("f1", 0)
+        .addField[Int]("f2", 0)
+        .addField[Int]("f3", 0)
+        .addField[Int]("f4", 0)
+        .addField[Int]("f5", 0)
+        .addField[Int]("f6", 0)
+        .addField[Int]("f7", 0)
+        .addField[Int]("f8", 0)
+        .addField[Int]("f9", 0)
+        .addField[Int]("f10", 0)
+        .addField[Int]("f11", 0)
+        .addField[Int]("f12", 0)
+        .addField[Int]("f13", 0)
+        .addField[Int]("f14", 0)
+        .addField[Int]("f15", 0)
+        .addField[Int]("f16", 0)
+        .addField[Int]("f17", 0)
+        .addField[Int]("f18", 0)
+        .addField[Int]("f19", 0)
+        .addField[Int]("f20", 0)
+        .addField[Int]("f21", 0)
+        .addField[Int]("f22", 0)
+        .addField[Int]("f23", 0)
+        .addField[Int]("f24", 0)
         .buildReader((tuple, f23, f24) => (tuple, f23, f24))
     }
 
@@ -189,6 +189,17 @@ class JsonReaderBuilderTest extends AnyFlatSpec with Matchers {
       )
     )(reader) shouldBe ((1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
       17, 18, 19, 20, 21, 22), 23, 24)
+  }
+
+  it should "fail on missing JsonReaderDefaultValue" in {
+
+    case class Response[T](payload: T, resultCode: String)
+
+    implicit def resp1[T: JsonReader: JsonReaderDefaultValue]: JsonReader[Response[T]] =
+      JsonReader.builder
+        .addField[T]("payload")
+        .addField[String]("resultCode", "")
+        .buildReader(Response(_, _))
   }
 }
 

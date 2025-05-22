@@ -27,6 +27,11 @@ object JsonReaderBuilder {
     )
   }
 
+  def addField[B: JsonReader](name: String, defaultValue: B): JsonReaderBuilder1[B] = {
+    implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(defaultValue)
+    addField[B](name)
+  }
+
   trait SingleJsonValueReader[A1] {
     private[JsonReaderBuilder] def fields(
         arr: Array[SimpleJsonReader.FieldDefinition[_]]
@@ -69,6 +74,11 @@ object JsonReaderBuilder {
         readerDefaultValue.defaultValue,
         jsonReader
       )
+    }
+
+    def addField[B: JsonReader](name: String, defaultValue: B): JsonReaderBuilder2[A1, B] = {
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(defaultValue)
+      addField[B](name)
     }
 
     def buildReader[Res](fun: A1 => Res): JsonReader[Res] = {
@@ -133,6 +143,11 @@ object JsonReaderBuilder {
         readerDefaultValue.defaultValue,
         jsonReader
       )
+    }
+
+    def addField[B: JsonReader](name: String, defaultValue: B): JsonReaderBuilder3[A1, A2, B] = {
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(defaultValue)
+      addField[B](name)
     }
 
     def buildReader[Res](fun: (A1, A2) => Res): JsonReader[Res] = {
@@ -210,6 +225,11 @@ object JsonReaderBuilder {
       )
     }
 
+    def addField[B: JsonReader](name: String, defaultValue: B): JsonReaderBuilder4[A1, A2, A3, B] = {
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(defaultValue)
+      addField[B](name)
+    }
+
     def buildReader[Res](fun: (A1, A2, A3) => Res): JsonReader[Res] = {
       buildReader(strict = false, fun)
     }
@@ -284,6 +304,11 @@ object JsonReaderBuilder {
         readerDefaultValue.defaultValue,
         jsonReader
       )
+    }
+
+    def addField[B: JsonReader](name: String, defaultValue: B): JsonReaderBuilder5[A1, A2, A3, A4, B] = {
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(defaultValue)
+      addField[B](name)
     }
 
     def buildReader[Res](fun: (A1, A2, A3, A4) => Res): JsonReader[Res] = {
@@ -370,6 +395,11 @@ object JsonReaderBuilder {
       )
     }
 
+    def addField[B: JsonReader](name: String, defaultValue: B): JsonReaderBuilder6[A1, A2, A3, A4, A5, B] = {
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(defaultValue)
+      addField[B](name)
+    }
+
     def buildReader[Res](fun: (A1, A2, A3, A4, A5) => Res): JsonReader[Res] = {
       buildReader(strict = false, fun)
     }
@@ -454,6 +484,11 @@ object JsonReaderBuilder {
         readerDefaultValue.defaultValue,
         jsonReader
       )
+    }
+
+    def addField[B: JsonReader](name: String, defaultValue: B): JsonReaderBuilder7[A1, A2, A3, A4, A5, A6, B] = {
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(defaultValue)
+      addField[B](name)
     }
 
     def buildReader[Res](
@@ -547,6 +582,11 @@ object JsonReaderBuilder {
       )
     }
 
+    def addField[B: JsonReader](name: String, defaultValue: B): JsonReaderBuilder8[A1, A2, A3, A4, A5, A6, A7, B] = {
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(defaultValue)
+      addField[B](name)
+    }
+
     def buildReader[Res](
         fun: (A1, A2, A3, A4, A5, A6, A7) => Res
     ): JsonReader[Res] = {
@@ -637,6 +677,11 @@ object JsonReaderBuilder {
         readerDefaultValue.defaultValue,
         jsonReader
       )
+    }
+
+    def addField[B: JsonReader](name: String, defaultValue: B): JsonReaderBuilder9[A1, A2, A3, A4, A5, A6, A7, A8, B] = {
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(defaultValue)
+      addField[B](name)
     }
 
     def buildReader[Res](
@@ -733,6 +778,11 @@ object JsonReaderBuilder {
       )
     }
 
+    def addField[B: JsonReader](name: String, defaultValue: B): JsonReaderBuilder10[A1, A2, A3, A4, A5, A6, A7, A8, A9, B] = {
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(defaultValue)
+      addField[B](name)
+    }
+
     def buildReader[Res](
         fun: (A1, A2, A3, A4, A5, A6, A7, A8, A9) => Res
     ): JsonReader[Res] = {
@@ -826,6 +876,11 @@ object JsonReaderBuilder {
         readerDefaultValue.defaultValue,
         jsonReader
       )
+    }
+
+    def addField[B: JsonReader](name: String, defaultValue: B): JsonReaderBuilder11[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, B] = {
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(defaultValue)
+      addField[B](name)
     }
 
     def buildReader[Res](
@@ -935,6 +990,11 @@ object JsonReaderBuilder {
         readerDefaultValue.defaultValue,
         jsonReader
       )
+    }
+
+    def addField[B: JsonReader](name: String, defaultValue: B): JsonReaderBuilder12[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, B] = {
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(defaultValue)
+      addField[B](name)
     }
 
     def buildReader[Res](
@@ -1085,6 +1145,11 @@ object JsonReaderBuilder {
         A12,
         B
       ](this, pos + 1, name, readerDefaultValue.defaultValue, jsonReader)
+    }
+
+    def addField[B: JsonReader](name: String, defaultValue: B): JsonReaderBuilder13[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, B] = {
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(defaultValue)
+      addField[B](name)
     }
 
     def buildReader[Res](
@@ -1250,6 +1315,11 @@ object JsonReaderBuilder {
         A13,
         B
       ](this, pos + 1, name, readerDefaultValue.defaultValue, jsonReader)
+    }
+
+    def addField[B: JsonReader](name: String, defaultValue: B): JsonReaderBuilder14[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, B] = {
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(defaultValue)
+      addField[B](name)
     }
 
     def buildReader[Res](
@@ -1421,6 +1491,11 @@ object JsonReaderBuilder {
         A14,
         B
       ](this, pos + 1, name, readerDefaultValue.defaultValue, jsonReader)
+    }
+
+    def addField[B: JsonReader](name: String, defaultValue: B): JsonReaderBuilder15[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, B] = {
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(defaultValue)
+      addField[B](name)
     }
 
     def buildReader[Res](
@@ -1643,6 +1718,11 @@ object JsonReaderBuilder {
         A15,
         B
       ](this, pos + 1, name, readerDefaultValue.defaultValue, jsonReader)
+    }
+
+    def addField[B: JsonReader](name: String, defaultValue: B): JsonReaderBuilder16[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, B] = {
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(defaultValue)
+      addField[B](name)
     }
 
     def buildReader[Res](
@@ -1890,6 +1970,11 @@ object JsonReaderBuilder {
         A16,
         B
       ](this, pos + 1, name, readerDefaultValue.defaultValue, jsonReader)
+    }
+
+    def addField[B: JsonReader](name: String, defaultValue: B): JsonReaderBuilder17[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, B] = {
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(defaultValue)
+      addField[B](name)
     }
 
     def buildReader[Res](
@@ -2179,6 +2264,11 @@ object JsonReaderBuilder {
         A17,
         B
       ](this, pos + 1, name, readerDefaultValue.defaultValue, jsonReader)
+    }
+
+    def addField[B: JsonReader](name: String, defaultValue: B): JsonReaderBuilder18[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, B] = {
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(defaultValue)
+      addField[B](name)
     }
 
     def buildReader[Res](
@@ -2516,6 +2606,11 @@ object JsonReaderBuilder {
         A18,
         B
       ](this, pos + 1, name, readerDefaultValue.defaultValue, jsonReader)
+    }
+
+    def addField[B: JsonReader](name: String, defaultValue: B): JsonReaderBuilder19[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, B] = {
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(defaultValue)
+      addField[B](name)
     }
 
     def buildReader[Res](
@@ -2867,6 +2962,11 @@ object JsonReaderBuilder {
         A19,
         B
       ](this, pos + 1, name, readerDefaultValue.defaultValue, jsonReader)
+    }
+
+    def addField[B: JsonReader](name: String, defaultValue: B): JsonReaderBuilder20[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, B] = {
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(defaultValue)
+      addField[B](name)
     }
 
     def buildReader[Res](
@@ -3232,6 +3332,11 @@ object JsonReaderBuilder {
         A20,
         B
       ](this, pos + 1, name, readerDefaultValue.defaultValue, jsonReader)
+    }
+
+    def addField[B: JsonReader](name: String, defaultValue: B): JsonReaderBuilder21[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, B] = {
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(defaultValue)
+      addField[B](name)
     }
 
     def buildReader[Res](
@@ -3611,6 +3716,11 @@ object JsonReaderBuilder {
         A21,
         B
       ](this, pos + 1, name, readerDefaultValue.defaultValue, jsonReader)
+    }
+
+    def addField[B: JsonReader](name: String, defaultValue: B): JsonReaderBuilder22[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, B] = {
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(defaultValue)
+      addField[B](name)
     }
 
     def buildReader[Res](
@@ -4101,6 +4211,11 @@ object JsonReaderBuilder {
         readerDefaultValue.defaultValue,
         jsonReader
       )
+    }
+
+    def addField[B: JsonReader](name: String, defaultValue: B): JsonReaderBuilder2[(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21, A22), B] = {
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(defaultValue)
+      addField[B](name)
     }
 
     def buildReader[Res](
