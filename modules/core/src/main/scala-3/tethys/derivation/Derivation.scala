@@ -537,11 +537,13 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
             val term = Block(
               readers ++ discriminatorStats,
               '{
-                given defaultValue: JsonReaderDefaultValue[discriminator] = JsonReaderDefaultValue.noDefaultValue // TODO: summon a better default value from context
                 JsonReader.builder
                   .addField[discriminator](
                     name = ${ Expr(label) },
                     jsonReader = ${ lookup[JsonReader[discriminator]] }
+                  )(using
+                    readerDefaultValue =
+                      ${ lookup[JsonReaderDefaultValue[discriminator]] }
                   )
                   .selectReader[T] { discriminator =>
                     ${
