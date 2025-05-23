@@ -11,7 +11,7 @@ import tethys.derivation.ADTWithType.{ADTWithTypeA, ADTWithTypeB}
 import tethys.readers.ReaderError
 import tethys.writers.instances.SimpleJsonObjectWriter
 import tethys.readers.JsonReaderDefaultValue
-import tethys.readers.JsonReaderDefaultValueImpl
+import tethys.readers.JsonReaderDefaultValue
 
 class DerivationSpec extends AnyFlatSpec with Matchers {
 
@@ -160,7 +160,7 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     enum Disc derives StringEnumJsonWriter, StringEnumJsonReader:
       case A, B
 
-    given JsonReaderDefaultValue[Disc] = JsonReaderDefaultValueImpl(Disc.A)
+    given JsonReaderDefaultValue[Disc] = JsonReaderDefaultValue(Disc.A)
 
     sealed trait Choose(@selector val discriminator: Disc)
         derives JsonObjectWriter,
@@ -178,7 +178,7 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "write/read sum types with provided json discriminator of simple type" in {
-    given JsonReaderDefaultValue[Int] = JsonReaderDefaultValueImpl(Int.MinValue)
+    given JsonReaderDefaultValue[Int] = JsonReaderDefaultValue(Int.MinValue)
 
     enum Choose(@selector val discriminator: Int)
         derives JsonObjectWriter,
@@ -803,7 +803,7 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
       JsonWriter.obj
     implicit val subChildWriter: JsonObjectWriter[SubChild] =
       JsonWriter.derived[SubChild]
-    given JsonReaderDefaultValue[String] = JsonReaderDefaultValueImpl("")
+    given JsonReaderDefaultValue[String] = JsonReaderDefaultValue("")
 
     given JsonReader[SimpleSealedType] = JsonReader.derived[SimpleSealedType]
 
@@ -868,7 +868,7 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     inline given JsonConfiguration = JsonConfiguration.default
       .fieldStyle(FieldStyle.LowerSnakeCase)
 
-    given JsonReaderDefaultValue[Int] = JsonReaderDefaultValueImpl(Int.MinValue)
+    given JsonReaderDefaultValue[Int] = JsonReaderDefaultValue(Int.MinValue)
 
     enum Choice(@selector val select: Int) derives JsonReader, JsonWriter:
       case First(firstField: Int) extends Choice(0)

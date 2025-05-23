@@ -666,7 +666,7 @@ import tethys.JsonReaderDefaultValue.Implicits.*
 3. Or by constructing appropriate instance manually:
 
 ```scala
-implicit val myObjectDefaultValue: JsonReaderDefaultValue[MyObject] = JsonReaderDefaultValueImpl(MyObject())
+implicit val myObjectDefaultValue: JsonReaderDefaultValue[MyObject] = JsonReaderDefaultValue(MyObject())
 ```
 
 ### Default `null` value for AnyRef

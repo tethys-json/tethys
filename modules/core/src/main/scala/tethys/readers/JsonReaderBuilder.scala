@@ -31,7 +31,7 @@ object JsonReaderBuilder {
       name: String,
       defaultValue: B
   ): JsonReaderBuilder1[B] = {
-    implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(
+    implicit val jsonReaderDefaultValue = JsonReaderDefaultValue(
       defaultValue
     )
     addField[B](name)
@@ -85,7 +85,7 @@ object JsonReaderBuilder {
         name: String,
         defaultValue: B
     ): JsonReaderBuilder2[A1, B] = {
-      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValue(
         defaultValue
       )
       addField[B](name)
@@ -159,7 +159,7 @@ object JsonReaderBuilder {
         name: String,
         defaultValue: B
     ): JsonReaderBuilder3[A1, A2, B] = {
-      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValue(
         defaultValue
       )
       addField[B](name)
@@ -244,7 +244,7 @@ object JsonReaderBuilder {
         name: String,
         defaultValue: B
     ): JsonReaderBuilder4[A1, A2, A3, B] = {
-      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValue(
         defaultValue
       )
       addField[B](name)
@@ -330,7 +330,7 @@ object JsonReaderBuilder {
         name: String,
         defaultValue: B
     ): JsonReaderBuilder5[A1, A2, A3, A4, B] = {
-      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValue(
         defaultValue
       )
       addField[B](name)
@@ -424,7 +424,7 @@ object JsonReaderBuilder {
         name: String,
         defaultValue: B
     ): JsonReaderBuilder6[A1, A2, A3, A4, A5, B] = {
-      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValue(
         defaultValue
       )
       addField[B](name)
@@ -520,7 +520,7 @@ object JsonReaderBuilder {
         name: String,
         defaultValue: B
     ): JsonReaderBuilder7[A1, A2, A3, A4, A5, A6, B] = {
-      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValue(
         defaultValue
       )
       addField[B](name)
@@ -621,7 +621,7 @@ object JsonReaderBuilder {
         name: String,
         defaultValue: B
     ): JsonReaderBuilder8[A1, A2, A3, A4, A5, A6, A7, B] = {
-      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValue(
         defaultValue
       )
       addField[B](name)
@@ -723,7 +723,7 @@ object JsonReaderBuilder {
         name: String,
         defaultValue: B
     ): JsonReaderBuilder9[A1, A2, A3, A4, A5, A6, A7, A8, B] = {
-      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValue(
         defaultValue
       )
       addField[B](name)
@@ -827,7 +827,7 @@ object JsonReaderBuilder {
         name: String,
         defaultValue: B
     ): JsonReaderBuilder10[A1, A2, A3, A4, A5, A6, A7, A8, A9, B] = {
-      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValue(
         defaultValue
       )
       addField[B](name)
@@ -932,7 +932,7 @@ object JsonReaderBuilder {
         name: String,
         defaultValue: B
     ): JsonReaderBuilder11[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, B] = {
-      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValue(
         defaultValue
       )
       addField[B](name)
@@ -1051,7 +1051,7 @@ object JsonReaderBuilder {
         name: String,
         defaultValue: B
     ): JsonReaderBuilder12[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, B] = {
-      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValue(
         defaultValue
       )
       addField[B](name)
@@ -1225,7 +1225,7 @@ object JsonReaderBuilder {
       A12,
       B
     ] = {
-      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValue(
         defaultValue
       )
       addField[B](name)
@@ -1415,7 +1415,7 @@ object JsonReaderBuilder {
       A13,
       B
     ] = {
-      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValue(
         defaultValue
       )
       addField[B](name)
@@ -1612,7 +1612,7 @@ object JsonReaderBuilder {
       A14,
       B
     ] = {
-      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValue(
         defaultValue
       )
       addField[B](name)
@@ -1861,7 +1861,7 @@ object JsonReaderBuilder {
       A15,
       B
     ] = {
-      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValue(
         defaultValue
       )
       addField[B](name)
@@ -2136,7 +2136,7 @@ object JsonReaderBuilder {
       A16,
       B
     ] = {
-      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValue(
         defaultValue
       )
       addField[B](name)
@@ -2454,7 +2454,7 @@ object JsonReaderBuilder {
       A17,
       B
     ] = {
-      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValue(
         defaultValue
       )
       addField[B](name)
@@ -2821,7 +2821,7 @@ object JsonReaderBuilder {
       A18,
       B
     ] = {
-      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValue(
         defaultValue
       )
       addField[B](name)
@@ -3203,7 +3203,7 @@ object JsonReaderBuilder {
       A19,
       B
     ] = {
-      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValue(
         defaultValue
       )
       addField[B](name)
@@ -3600,7 +3600,7 @@ object JsonReaderBuilder {
       A20,
       B
     ] = {
-      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValue(
         defaultValue
       )
       addField[B](name)
@@ -4012,7 +4012,7 @@ object JsonReaderBuilder {
       A21,
       B
     ] = {
-      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValue(
         defaultValue
       )
       addField[B](name)
@@ -4538,7 +4538,7 @@ object JsonReaderBuilder {
       ),
       B
     ] = {
-      implicit val jsonReaderDefaultValue = JsonReaderDefaultValueImpl(
+      implicit val jsonReaderDefaultValue = JsonReaderDefaultValue(
         defaultValue
       )
       addField[B](name)

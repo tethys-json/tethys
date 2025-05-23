@@ -10,13 +10,16 @@ trait JsonReaderDefaultValue[A] {
   def defaultValue: Any
 }
 
-case class JsonReaderDefaultValueImpl[A](defaultValue: A)
-    extends JsonReaderDefaultValue[A]
-
 object JsonReaderDefaultValue extends LowPriorityDefaultValue {
   def apply[A](implicit
       dv: JsonReaderDefaultValue[A]
   ): JsonReaderDefaultValue[A] = dv
+
+  case class JsonReaderDefaultValueImpl[A](defaultValue: A)
+      extends JsonReaderDefaultValue[A]
+
+  def apply[A](value: A): JsonReaderDefaultValue[A] =
+    JsonReaderDefaultValueImpl(value)
 
   // Allows easy access of default value in macro
   class ReaderDefaultValue(value: Any) extends StaticAnnotation
