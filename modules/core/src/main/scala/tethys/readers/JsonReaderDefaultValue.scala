@@ -29,6 +29,35 @@ object JsonReaderDefaultValue extends LowPriorityDefaultValue {
     new OptionDefaultValue[Nothing]
   implicit def optionDefaultValue[A]: OptionDefaultValue[A] =
     optionInstance.asInstanceOf[OptionDefaultValue[A]]
+
+  object Implicits {
+    implicit lazy val byteDefaultValue: JsonReaderDefaultValue[Byte] =
+      JsonReaderDefaultValueImpl(0)
+    implicit lazy val charDefaultValue: JsonReaderDefaultValue[Byte] =
+      JsonReaderDefaultValueImpl('\u0000')
+    implicit lazy val shortDefaultValue: JsonReaderDefaultValue[Short] =
+      JsonReaderDefaultValueImpl(0)
+    implicit lazy val intDefaultValue: JsonReaderDefaultValue[Int] =
+      JsonReaderDefaultValueImpl(0)
+    implicit lazy val longDefaultValue: JsonReaderDefaultValue[Long] =
+      JsonReaderDefaultValueImpl(0L)
+    implicit lazy val stringDefaultValue: JsonReaderDefaultValue[String] =
+      JsonReaderDefaultValueImpl("")
+    implicit lazy val booleanDefaultValue: JsonReaderDefaultValue[Boolean] =
+      JsonReaderDefaultValueImpl(false)
+    implicit def seqDefaultValue[T]: JsonReaderDefaultValue[Seq[T]] =
+      JsonReaderDefaultValueImpl(Seq())
+    implicit def listDefaultValue[T]: JsonReaderDefaultValue[List[T]] =
+      JsonReaderDefaultValueImpl(List())
+    implicit lazy val floatDefaultValue: JsonReaderDefaultValue[Float] =
+      JsonReaderDefaultValueImpl(0.0)
+    implicit lazy val doubleDefaultValue: JsonReaderDefaultValue[Double] =
+      JsonReaderDefaultValueImpl(0.0)
+  }
+  object AnyRefImplicit {
+    implicit def anyRefNullDefaultValue[A <: AnyRef]
+        : JsonReaderDefaultValue[A] = JsonReaderDefaultValue(null)
+  }
 }
 
 trait LowPriorityDefaultValue {

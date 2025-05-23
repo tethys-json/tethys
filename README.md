@@ -647,6 +647,43 @@ implicit val fooBarReader: JsonReader[FooBar] = JsonReader.builder
 
 Please check out `tethys` package object for all available syntax Ops classes
 
+### Default values
+
+Default values could be provided in a few ways:
+
+1. Directly in `addField`:
+
+```scala
+JsonReader.builder
+    .addField[String]("clazz", "UndefinedClass")
+```
+2. Via implicit imports
+
+```scala
+import tethys.JsonReaderDefaultValue.Implicits.*
+```
+
+3. Or by constructing appropriate instance manually:
+
+```scala
+implicit val myObjectDefaultValue: JsonReaderDefaultValue[MyObject] = JsonReaderDefaultValueImpl(MyObject())
+```
+
+### Default `null` value for AnyRef
+
+For some cases it might be appropriate to provide `null` in AnyRefs.
+
+```scala
+import tethys.JsonReaderDefaultValue.AnyRefImplicit.anyRefNullDefaultValue
+```
+
+### Runtime failure default value
+
+Old behavior could be restored using the following implicit:
+```scala
+implicit def failureDefaultValue[A]: JsonReaderDefaultValue[A] = JsonReaderDefaultValue.noDefaultValue[A]
+```
+
 # derivation
 
 `tethys-derivation` provides semiauto and auto macro derivation JsonReader and JsonWriter instances.  
