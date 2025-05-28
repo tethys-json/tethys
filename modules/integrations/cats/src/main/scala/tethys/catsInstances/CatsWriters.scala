@@ -1,4 +1,4 @@
-package tethys.cats.writers
+package tethys.catsInstances
 
 import cats.data._
 import tethys.JsonWriter
