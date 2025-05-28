@@ -1,11 +1,11 @@
-package tethys.cats
+package tethys.catsInstances
 
 import cats.data.NonEmptySet
 import tethys.JsonReader
 import tethys.readers.{FieldName, ReaderError}
 import tethys.readers.tokens.TokenIterator
 
-import scala.collection.immutable.{Seq, SortedSet}
+import scala.collection.immutable.SortedSet
 
 trait NonEmptySetReader {
 
@@ -15,7 +15,7 @@ trait NonEmptySetReader {
       override def read(
           it: TokenIterator
       )(implicit fieldName: FieldName): NonEmptySet[T] =
-        NonEmptySet.fromSet(SortedSet(JsonReader[Seq[T]].read(it): _*)) match {
+        NonEmptySet.fromSet(SortedSet.from(JsonReader[Seq[T]].read(it))) match {
           case Some(value) => value
           case None =>
             ReaderError.wrongJson(

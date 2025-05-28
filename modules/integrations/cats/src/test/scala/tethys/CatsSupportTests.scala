@@ -1,9 +1,9 @@
-package tethys.cats
+package tethys
 
 import cats.data._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import tethys.cats.instances._
+import tethys.catsInstances._
 import tethys.commons.TokenNode._
 import tethys.readers.ReaderError
 import tethys.writers.tokens.SimpleTokenWriter._
