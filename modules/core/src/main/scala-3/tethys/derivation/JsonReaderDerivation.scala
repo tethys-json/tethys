@@ -19,18 +19,6 @@ import scala.compiletime.{
 }
 
 private[tethys] trait JsonReaderDerivation:
-  def const[A](value: A): JsonReader[A] =
-    new JsonReader[A]:
-      override def read(it: TokenIterator)(implicit fieldName: FieldName): A =
-        if !it.currentToken().isObjectStart then
-          ReaderError.wrongJson(
-            "Expected object start but found: " + it.currentToken().toString
-          )
-        else {
-          it.skipExpression()
-          value
-        }
-
   inline def derived[A](inline config: ReaderBuilder[A])(using
       mirror: Mirror.ProductOf[A]
   ): JsonReader[A] =
