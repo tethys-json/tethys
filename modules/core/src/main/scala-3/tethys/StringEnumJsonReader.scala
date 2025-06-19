@@ -3,7 +3,9 @@ package tethys
 import tethys.readers.{FieldName, ReaderError}
 import tethys.readers.tokens.TokenIterator
 
-trait StringEnumJsonReader[A] extends JsonReader[A]
+trait StringEnumJsonReader[A] extends JsonReader[A]:
+  // override def defaultValue: A = null.asInstanceOf[A]
+  override def defaultValue: A = throw new IllegalArgumentException("StringEnumJsonReader does not have default value")
 
 object StringEnumJsonReader:
   def from[A](impl: TokenIterator => FieldName ?=> A): StringEnumJsonReader[A] =

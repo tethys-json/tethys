@@ -14,8 +14,6 @@ private[readers] class SimpleJsonReader[A](
     strict: Boolean
 ) extends JsonReader[A] {
 
-  private val defaults: Array[Any] = fields.map(_.defaultValue)
-
   override def read(it: TokenIterator)(implicit fieldName: FieldName): A = {
     if (!it.currentToken().isObjectStart)
       ReaderError.wrongJson(
@@ -23,54 +21,85 @@ private[readers] class SimpleJsonReader[A](
       )
     else {
       it.nextToken()
-      val extracted: Array[Any] = recRead(it, defaults.clone())
-
+      val extracted: Map[String, Any] = recRead(it, Map())
+      val extractedWithDefaultValues = addDefaultValues(0, extracted)
       val notExtracted = collectNotExtracted(
         0,
         hasErrors = false,
-        extracted,
+        extractedWithDefaultValues.keySet,
         new mutable.StringBuilder()
       )
       if (notExtracted.nonEmpty)
         ReaderError.wrongJson(s"Can not extract fields $notExtracted")
-      else mapper(extracted)
+      else {
+        val arr = fields.map(f => extractedWithDefaultValues(f.name))
+        mapper(arr)
+      }
     }
   }
+
+  override def defaultValue: A = throw new IllegalStateException("No default value")
 
   @tailrec
   private def collectNotExtracted(
       i: Int,
       hasErrors: Boolean,
-      extracted: Array[Any],
+      extracted: Set[String],
       builder: mutable.StringBuilder
   ): String = {
-    if (i >= extracted.length) {
+    if (i >= fields.length) {
       if (hasErrors) builder.append('\'').result()
       else ""
-    } else if (extracted(i) == null) {
-      if (!hasErrors)
-        collectNotExtracted(
-          i + 1,
-          hasErrors = true,
-          extracted,
-          builder.append('\'').append(fields(i).name)
-        )
-      else
-        collectNotExtracted(
-          i + 1,
-          hasErrors = true,
-          extracted,
-          builder.append("', '").append(fields(i).name)
-        )
     } else {
-      collectNotExtracted(i + 1, hasErrors, extracted, builder)
+      val name = fields(i).name
+      if (extracted.contains(name)) {
+        collectNotExtracted(i + 1, hasErrors, extracted, builder)
+      } else {
+        if (!hasErrors)
+          collectNotExtracted(
+            i + 1,
+            hasErrors = true,
+            extracted,
+            builder.append('\'').append(name)
+          )
+        else
+          collectNotExtracted(
+            i + 1,
+            hasErrors = true,
+            extracted,
+            builder.append("', '").append(name)
+          )    
+        }
     }
   }
 
   @tailrec
-  private def recRead(it: TokenIterator, extracted: Array[Any])(implicit
+  private def addDefaultValues(
+      i: Int,
+      extracted: Map[String, Any]
+  ): Map[String, Any] = {
+    if (i >= fields.length) {
+      extracted
+    } else {
+      val name = fields(i).name
+      addDefaultValues(i + 1, 
+        if (extracted.contains(name)) {
+          extracted
+        } else {
+          try {
+            extracted.updated(name, fields(i).reader.defaultValue)
+          } catch {
+            case e: IllegalArgumentException => extracted
+          }
+        }
+      )
+    }
+  }
+
+  @tailrec
+  private def recRead(it: TokenIterator, extracted: Map[String, Any])(implicit
       fieldName: FieldName
-  ): Array[Any] = {
+  ): Map[String, Any] = {
     it.currentToken() match {
       case token if token.isObjectEnd =>
         it.nextToken()
@@ -90,9 +119,9 @@ private[readers] class SimpleJsonReader[A](
       i: Int,
       name: String,
       it: TokenIterator,
-      extracted: Array[Any]
-  )(implicit fieldName: FieldName): Array[Any] = {
-    if (i >= extracted.length) {
+      extracted: Map[String, Any]
+  )(implicit fieldName: FieldName): Map[String, Any] = {
+    if (i >= fields.size) {
       if (strict) {
         ReaderError.wrongJson(
           s"unexpected field '$name', expected one of ${fields.map(_.name).mkString("'", "', '", "'")}"
@@ -104,8 +133,7 @@ private[readers] class SimpleJsonReader[A](
     } else {
       val field = fields(i)
       if (field.name == name) {
-        extracted(i) = field.reader.read(it)(fieldName.appendFieldName(name))
-        extracted
+        extracted.updated(name, field.reader.read(it)(fieldName.appendFieldName(name)))
       } else {
         extractField(i + 1, name, it, extracted)
       }
@@ -116,7 +144,6 @@ private[readers] class SimpleJsonReader[A](
 private[readers] object SimpleJsonReader {
   case class FieldDefinition[A](
       name: String,
-      defaultValue: Any,
       reader: JsonReader[A]
   )
 }

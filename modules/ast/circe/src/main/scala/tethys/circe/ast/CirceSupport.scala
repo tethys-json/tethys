@@ -56,6 +56,7 @@ trait CirceSupport {
 
           JsonObject.fromIterable(builder.result)
         }
+      override def defaultValue: JsonObject = JsonObject()
     }
 
   implicit lazy val circeJsonReader: JsonReader[Json] = new JsonReader[Json] {
@@ -87,6 +88,7 @@ trait CirceSupport {
       else if (token.isNullValue) { it.next(); Json.Null }
       else ReaderError.wrongJson(s"Unexpected token found: $token")(fieldName)
     }
+    override def defaultValue: Json = Json.Null
   }
 
   private[this] class TethysJsonFolder(writer: TokenWriter)

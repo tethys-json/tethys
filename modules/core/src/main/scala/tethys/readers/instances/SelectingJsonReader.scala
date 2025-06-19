@@ -13,4 +13,6 @@ class SelectingJsonReader[A, B](simpleJsonReader: SimpleJsonReader[A])(
     val it2 = it1.copy()
     selector(simpleJsonReader.read(it1)).read(it2)
   }
+
+  override def defaultValue: B = selector(simpleJsonReader.defaultValue).defaultValue
 }

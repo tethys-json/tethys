@@ -113,6 +113,8 @@ trait Json4sSupport {
           JObject(builder.result())
         }
       }
+
+      override def defaultValue: JObject = JObject()
     }
   implicit lazy val json4sJArrayReader: JsonReader[JArray] =
     JsonReader[List[JValue]].map(JArray(_))
@@ -149,5 +151,6 @@ trait Json4sSupport {
         } else
           ReaderError.wrongJson(s"Unexpected token found: $token")(fieldName)
       }
+      override def defaultValue: JValue = org.json4s.JNull
     }
 }

@@ -22,5 +22,9 @@ trait NonEmptySetReader {
               s"Seq is empty and can't be converted to NonEmptySet"
             )
         }
+      override def defaultValue: NonEmptySet[T] = {
+        given FieldName = FieldName("[defaultValue]")
+        ReaderError.wrongJson("Seq is empty and can't be converted to NonEmptySet (in default value)")
+      }
     }
 }

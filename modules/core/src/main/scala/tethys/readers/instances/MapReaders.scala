@@ -158,6 +158,8 @@ private[tethys] trait LowPriorityMapReaders extends IterableReaders {
         )
     }
 
+    override def defaultValue: M[K, A] = cb.newBuilder.result()
+
     @tailrec
     private def recRead(
         it: TokenIterator,

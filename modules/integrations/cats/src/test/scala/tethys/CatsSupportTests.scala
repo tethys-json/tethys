@@ -1,6 +1,6 @@
 package tethys
 
-import cats.data._
+import _root_.cats.data._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import tethys.catsInstances._
