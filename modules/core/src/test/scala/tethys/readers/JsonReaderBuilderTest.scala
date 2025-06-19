@@ -190,6 +190,25 @@ class JsonReaderBuilderTest extends AnyFlatSpec with Matchers {
     )(reader) shouldBe ((1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
       17, 18, 19, 20, 21, 22), 23, 24)
   }
+
+  it should "works well with option arg in generic field" in {
+
+    case class Response[T](payload: T, resultCode: String)
+
+    implicit def resp1[T: JsonReader]: JsonReader[Response[T]] =
+      JsonReader.builder
+        .addField[T]("payload")
+        .addField[String]("resultCode")
+        .buildReader(Response(_, _))
+
+    read[Response[Option[String]]](obj("resultCode" -> "Ok")) shouldBe Response(
+      None,
+      "Ok"
+    )
+    read[Response[Option[String]]](
+      obj("payload" -> "data", "resultCode" -> "Ok")
+    ) shouldBe Response(Some("data"), "Ok")
+  }
 }
 
 object JsonReaderBuilderTest {

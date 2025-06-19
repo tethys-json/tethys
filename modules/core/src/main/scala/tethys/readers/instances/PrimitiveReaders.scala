@@ -16,6 +16,7 @@ object PrimitiveReaders {
         )
       }
     }
+    val defaultValue: Option[Byte] = None
   }
 
   object ShortJsonReader {
@@ -30,6 +31,7 @@ object PrimitiveReaders {
         )
       }
     }
+    val defaultValue: Option[Short] = None
   }
 
   object IntJsonReader {
@@ -42,6 +44,8 @@ object PrimitiveReaders {
         error(it)
       }
     }
+
+    val defaultValue: Option[Int] = None
 
     private def error(it: TokenIterator)(implicit fieldName: FieldName) = {
       ReaderError.wrongJson(
@@ -62,6 +66,8 @@ object PrimitiveReaders {
         )
       }
     }
+
+    val defaultValue: Option[Long] = None
   }
 
   object FloatJsonReader {
@@ -76,6 +82,7 @@ object PrimitiveReaders {
         )
       }
     }
+    val defaultValue: Option[Float] = None
   }
 
   object DoubleJsonReader {
@@ -90,6 +97,7 @@ object PrimitiveReaders {
         )
       }
     }
+    val defaultValue: Option[Double] = None
   }
 
   object BooleanJsonReader {
@@ -104,5 +112,6 @@ object PrimitiveReaders {
         )
       }
     }
+    val defaultValue: Option[Boolean] = None
   }
 }

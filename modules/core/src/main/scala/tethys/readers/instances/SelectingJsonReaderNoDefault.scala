@@ -4,7 +4,9 @@ import tethys.JsonReader
 import tethys.readers.FieldName
 import tethys.readers.tokens.TokenIterator
 
-class SelectingJsonReader[A, B](simpleJsonReader: SimpleJsonReader[A])(
+class SelectingJsonReaderNoDefault[A, B](
+    simpleJsonReader: SimpleJsonReaderNoDefault[A]
+)(
     selector: A => JsonReader[_ <: B]
 ) extends JsonReader[B] {
 
