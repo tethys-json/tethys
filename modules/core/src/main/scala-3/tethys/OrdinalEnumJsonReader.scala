@@ -4,7 +4,7 @@ import tethys.readers.{FieldName, ReaderError}
 import tethys.readers.tokens.TokenIterator
 
 trait OrdinalEnumJsonReader[A] extends JsonReader[A]:
-  override def defaultValue: A = throw new IllegalArgumentException("OrdinalEnumJsonReader does not have default value")
+  override def defaultValue: Option[A] = None
 
 object OrdinalEnumJsonReader:
   def from[A](

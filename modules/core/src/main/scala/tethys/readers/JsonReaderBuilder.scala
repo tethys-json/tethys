@@ -5,7 +5,10 @@ import tethys.readers.instances.{SelectingJsonReader, SimpleJsonReader}
 import scala.annotation.targetName
 
 object JsonReaderBuilder {
-  def addField[B](name: String, jsonReader: JsonReader[B]): JsonReaderBuilder1[B] = {
+  def addField[B](
+      name: String,
+      jsonReader: JsonReader[B]
+  ): JsonReaderBuilder1[B] = {
     new JsonReaderBuilder1[B](
       0,
       name,
@@ -40,19 +43,21 @@ object JsonReaderBuilder {
     private[JsonReaderBuilder] def fields(
         arr: Array[SimpleJsonReader.FieldDefinition[_]]
     ): Unit = {
-      arr(pos) =
-        SimpleJsonReader.FieldDefinition[A1](name, jsonReader)
+      arr(pos) = SimpleJsonReader.FieldDefinition[A1](name, jsonReader)
     }
 
     private[JsonReaderBuilder] def value(extracted: Array[Any]): A1 = extracted(
       pos
     ).asInstanceOf[A1]
 
-    def addField[B](name: String, jsonReader: JsonReader[B]): JsonReaderBuilder2[A1, B] = {
+    def addField[B](
+        name: String,
+        jsonReader: JsonReader[B]
+    ): JsonReaderBuilder2[A1, B] = {
       addField[B](name)(jsonReader)
     }
 
-    @targetName("addField1") 
+    @targetName("addField1")
     def addField[B](name: String)(implicit
         jsonReader: JsonReader[B]
     ): JsonReaderBuilder2[A1, B] = {
@@ -101,18 +106,20 @@ object JsonReaderBuilder {
         arr: Array[SimpleJsonReader.FieldDefinition[_]]
     ): Unit = {
       prev.fields(arr)
-      arr(pos) =
-        SimpleJsonReader.FieldDefinition[A2](name, jsonReader)
+      arr(pos) = SimpleJsonReader.FieldDefinition[A2](name, jsonReader)
     }
 
     private[JsonReaderBuilder] def value(extracted: Array[Any]): (A1, A2) =
       (prev.value(extracted), extracted(pos).asInstanceOf[A2])
 
-    def addField[B](name: String, jsonReader: JsonReader[B]): JsonReaderBuilder3[A1, A2, B] = {
+    def addField[B](
+        name: String,
+        jsonReader: JsonReader[B]
+    ): JsonReaderBuilder3[A1, A2, B] = {
       addField[B](name)(jsonReader)
     }
 
-    @targetName("addField1") 
+    @targetName("addField1")
     def addField[B](name: String)(implicit
         jsonReader: JsonReader[B]
     ): JsonReaderBuilder3[A1, A2, B] = {
@@ -170,8 +177,7 @@ object JsonReaderBuilder {
         arr: Array[SimpleJsonReader.FieldDefinition[_]]
     ): Unit = {
       prev.fields(arr)
-      arr(pos) =
-        SimpleJsonReader.FieldDefinition[A3](name, jsonReader)
+      arr(pos) = SimpleJsonReader.FieldDefinition[A3](name, jsonReader)
     }
 
     private[JsonReaderBuilder] def value(extracted: Array[Any]): (A1, A2, A3) =
@@ -179,11 +185,14 @@ object JsonReaderBuilder {
         case (a1, a2) => (a1, a2, extracted(pos).asInstanceOf[A3])
       }
 
-    def addField[B](name: String, jsonReader: JsonReader[B]): JsonReaderBuilder4[A1, A2, A3, B] = {
+    def addField[B](
+        name: String,
+        jsonReader: JsonReader[B]
+    ): JsonReaderBuilder4[A1, A2, A3, B] = {
       addField[B](name)(jsonReader)
     }
 
-    @targetName("addField1") 
+    @targetName("addField1")
     def addField[B](name: String)(implicit
         jsonReader: JsonReader[B]
     ): JsonReaderBuilder4[A1, A2, A3, B] = {
@@ -241,8 +250,7 @@ object JsonReaderBuilder {
         arr: Array[SimpleJsonReader.FieldDefinition[_]]
     ): Unit = {
       prev.fields(arr)
-      arr(pos) =
-        SimpleJsonReader.FieldDefinition[A4](name, jsonReader)
+      arr(pos) = SimpleJsonReader.FieldDefinition[A4](name, jsonReader)
     }
 
     private[JsonReaderBuilder] def value(
@@ -251,11 +259,14 @@ object JsonReaderBuilder {
       case (a1, a2, a3) => (a1, a2, a3, extracted(pos).asInstanceOf[A4])
     }
 
-    def addField[B](name: String, jsonReader: JsonReader[B]): JsonReaderBuilder5[A1, A2, A3, A4, B] = {
+    def addField[B](
+        name: String,
+        jsonReader: JsonReader[B]
+    ): JsonReaderBuilder5[A1, A2, A3, A4, B] = {
       addField[B](name)(jsonReader)
     }
 
-    @targetName("addField1") 
+    @targetName("addField1")
     def addField[B](name: String)(implicit
         jsonReader: JsonReader[B]
     ): JsonReaderBuilder5[A1, A2, A3, A4, B] = {
@@ -321,8 +332,7 @@ object JsonReaderBuilder {
         arr: Array[SimpleJsonReader.FieldDefinition[_]]
     ): Unit = {
       prev.fields(arr)
-      arr(pos) =
-        SimpleJsonReader.FieldDefinition[A5](name, jsonReader)
+      arr(pos) = SimpleJsonReader.FieldDefinition[A5](name, jsonReader)
     }
 
     private[JsonReaderBuilder] def value(
@@ -331,11 +341,14 @@ object JsonReaderBuilder {
       case (a1, a2, a3, a4) => (a1, a2, a3, a4, extracted(pos).asInstanceOf[A5])
     }
 
-    def addField[B](name: String, jsonReader: JsonReader[B]): JsonReaderBuilder6[A1, A2, A3, A4, A5, B] = {
+    def addField[B](
+        name: String,
+        jsonReader: JsonReader[B]
+    ): JsonReaderBuilder6[A1, A2, A3, A4, A5, B] = {
       addField[B](name)(jsonReader)
     }
 
-    @targetName("addField1") 
+    @targetName("addField1")
     def addField[B](name: String)(implicit
         jsonReader: JsonReader[B]
     ): JsonReaderBuilder6[A1, A2, A3, A4, A5, B] = {
@@ -402,8 +415,7 @@ object JsonReaderBuilder {
         arr: Array[SimpleJsonReader.FieldDefinition[_]]
     ): Unit = {
       prev.fields(arr)
-      arr(pos) =
-        SimpleJsonReader.FieldDefinition[A6](name, jsonReader)
+      arr(pos) = SimpleJsonReader.FieldDefinition[A6](name, jsonReader)
     }
 
     private[JsonReaderBuilder] def value(
@@ -413,11 +425,14 @@ object JsonReaderBuilder {
         (a1, a2, a3, a4, a5, extracted(pos).asInstanceOf[A6])
     }
 
-    def addField[B](name: String, jsonReader: JsonReader[B]): JsonReaderBuilder7[A1, A2, A3, A4, A5, A6, B] = {
+    def addField[B](
+        name: String,
+        jsonReader: JsonReader[B]
+    ): JsonReaderBuilder7[A1, A2, A3, A4, A5, A6, B] = {
       addField[B](name)(jsonReader)
     }
 
-    @targetName("addField1") 
+    @targetName("addField1")
     def addField[B](name: String)(implicit
         jsonReader: JsonReader[B]
     ): JsonReaderBuilder7[A1, A2, A3, A4, A5, A6, B] = {
@@ -489,8 +504,7 @@ object JsonReaderBuilder {
         arr: Array[SimpleJsonReader.FieldDefinition[_]]
     ): Unit = {
       prev.fields(arr)
-      arr(pos) =
-        SimpleJsonReader.FieldDefinition[A7](name, jsonReader)
+      arr(pos) = SimpleJsonReader.FieldDefinition[A7](name, jsonReader)
     }
 
     private[JsonReaderBuilder] def value(
@@ -500,11 +514,14 @@ object JsonReaderBuilder {
         (a1, a2, a3, a4, a5, a6, extracted(pos).asInstanceOf[A7])
     }
 
-    def addField[B](name: String, jsonReader: JsonReader[B]): JsonReaderBuilder8[A1, A2, A3, A4, A5, A6, A7, B] = {
+    def addField[B](
+        name: String,
+        jsonReader: JsonReader[B]
+    ): JsonReaderBuilder8[A1, A2, A3, A4, A5, A6, A7, B] = {
       addField[B](name)(jsonReader)
     }
 
-    @targetName("addField1") 
+    @targetName("addField1")
     def addField[B](name: String)(implicit
         jsonReader: JsonReader[B]
     ): JsonReaderBuilder8[A1, A2, A3, A4, A5, A6, A7, B] = {
@@ -577,8 +594,7 @@ object JsonReaderBuilder {
         arr: Array[SimpleJsonReader.FieldDefinition[_]]
     ): Unit = {
       prev.fields(arr)
-      arr(pos) =
-        SimpleJsonReader.FieldDefinition[A8](name, jsonReader)
+      arr(pos) = SimpleJsonReader.FieldDefinition[A8](name, jsonReader)
     }
 
     private[JsonReaderBuilder] def value(
@@ -588,11 +604,14 @@ object JsonReaderBuilder {
         (a1, a2, a3, a4, a5, a6, a7, extracted(pos).asInstanceOf[A8])
     }
 
-    def addField[B](name: String, jsonReader: JsonReader[B]): JsonReaderBuilder9[A1, A2, A3, A4, A5, A6, A7, A8, B] = {
+    def addField[B](
+        name: String,
+        jsonReader: JsonReader[B]
+    ): JsonReaderBuilder9[A1, A2, A3, A4, A5, A6, A7, A8, B] = {
       addField[B](name)(jsonReader)
     }
 
-    @targetName("addField1") 
+    @targetName("addField1")
     def addField[B](name: String)(implicit
         jsonReader: JsonReader[B]
     ): JsonReaderBuilder9[A1, A2, A3, A4, A5, A6, A7, A8, B] = {
@@ -667,8 +686,7 @@ object JsonReaderBuilder {
         arr: Array[SimpleJsonReader.FieldDefinition[_]]
     ): Unit = {
       prev.fields(arr)
-      arr(pos) =
-        SimpleJsonReader.FieldDefinition[A9](name, jsonReader)
+      arr(pos) = SimpleJsonReader.FieldDefinition[A9](name, jsonReader)
     }
 
     private[JsonReaderBuilder] def value(
@@ -678,11 +696,14 @@ object JsonReaderBuilder {
         (a1, a2, a3, a4, a5, a6, a7, a8, extracted(pos).asInstanceOf[A9])
     }
 
-    def addField[B](name: String, jsonReader: JsonReader[B]): JsonReaderBuilder10[A1, A2, A3, A4, A5, A6, A7, A8, A9, B] = {
+    def addField[B](
+        name: String,
+        jsonReader: JsonReader[B]
+    ): JsonReaderBuilder10[A1, A2, A3, A4, A5, A6, A7, A8, A9, B] = {
       addField[B](name)(jsonReader)
     }
 
-    @targetName("addField1") 
+    @targetName("addField1")
     def addField[B](name: String)(implicit
         jsonReader: JsonReader[B]
     ): JsonReaderBuilder10[A1, A2, A3, A4, A5, A6, A7, A8, A9, B] = {
@@ -758,8 +779,7 @@ object JsonReaderBuilder {
         arr: Array[SimpleJsonReader.FieldDefinition[_]]
     ): Unit = {
       prev.fields(arr)
-      arr(pos) =
-        SimpleJsonReader.FieldDefinition[A10](name, jsonReader)
+      arr(pos) = SimpleJsonReader.FieldDefinition[A10](name, jsonReader)
     }
 
     private[JsonReaderBuilder] def value(
@@ -769,11 +789,14 @@ object JsonReaderBuilder {
         (a1, a2, a3, a4, a5, a6, a7, a8, a9, extracted(pos).asInstanceOf[A10])
     }
 
-    def addField[B](name: String, jsonReader: JsonReader[B]): JsonReaderBuilder11[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, B] = {
+    def addField[B](
+        name: String,
+        jsonReader: JsonReader[B]
+    ): JsonReaderBuilder11[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, B] = {
       addField[B](name)(jsonReader)
     }
 
-    @targetName("addField1") 
+    @targetName("addField1")
     def addField[B](name: String)(implicit
         jsonReader: JsonReader[B]
     ): JsonReaderBuilder11[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, B] = {
@@ -850,8 +873,7 @@ object JsonReaderBuilder {
         arr: Array[SimpleJsonReader.FieldDefinition[_]]
     ): Unit = {
       prev.fields(arr)
-      arr(pos) =
-        SimpleJsonReader.FieldDefinition[A11](name, jsonReader)
+      arr(pos) = SimpleJsonReader.FieldDefinition[A11](name, jsonReader)
     }
 
     private[JsonReaderBuilder] def value(
@@ -874,11 +896,14 @@ object JsonReaderBuilder {
           )
       }
 
-    def addField[B](name: String, jsonReader: JsonReader[B]): JsonReaderBuilder12[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, B] = {
+    def addField[B](
+        name: String,
+        jsonReader: JsonReader[B]
+    ): JsonReaderBuilder12[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, B] = {
       addField[B](name)(jsonReader)
     }
 
-    @targetName("addField1") 
+    @targetName("addField1")
     def addField[B](name: String)(implicit
         jsonReader: JsonReader[B]
     ): JsonReaderBuilder12[A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, B] = {
@@ -959,8 +984,7 @@ object JsonReaderBuilder {
         arr: Array[SimpleJsonReader.FieldDefinition[_]]
     ): Unit = {
       prev.fields(arr)
-      arr(pos) =
-        SimpleJsonReader.FieldDefinition[A12](name, jsonReader)
+      arr(pos) = SimpleJsonReader.FieldDefinition[A12](name, jsonReader)
     }
 
     private[JsonReaderBuilder] def value(
@@ -984,7 +1008,10 @@ object JsonReaderBuilder {
           )
       }
 
-    def addField[B](name: String, jsonReader: JsonReader[B]): JsonReaderBuilder13[
+    def addField[B](
+        name: String,
+        jsonReader: JsonReader[B]
+    ): JsonReaderBuilder13[
       A1,
       A2,
       A3,
@@ -1002,7 +1029,7 @@ object JsonReaderBuilder {
       addField[B](name)(jsonReader)
     }
 
-    @targetName("addField1") 
+    @targetName("addField1")
     def addField[B](name: String)(implicit
         jsonReader: JsonReader[B]
     ): JsonReaderBuilder13[
@@ -1117,8 +1144,7 @@ object JsonReaderBuilder {
         arr: Array[SimpleJsonReader.FieldDefinition[_]]
     ): Unit = {
       prev.fields(arr)
-      arr(pos) =
-        SimpleJsonReader.FieldDefinition[A13](name, jsonReader)
+      arr(pos) = SimpleJsonReader.FieldDefinition[A13](name, jsonReader)
     }
 
     private[JsonReaderBuilder] def value(
@@ -1143,7 +1169,10 @@ object JsonReaderBuilder {
           )
       }
 
-    def addField[B](name: String, jsonReader: JsonReader[B]): JsonReaderBuilder14[
+    def addField[B](
+        name: String,
+        jsonReader: JsonReader[B]
+    ): JsonReaderBuilder14[
       A1,
       A2,
       A3,
@@ -1162,7 +1191,7 @@ object JsonReaderBuilder {
       addField[B](name)(jsonReader)
     }
 
-    @targetName("addField1") 
+    @targetName("addField1")
     def addField[B](name: String)(implicit
         jsonReader: JsonReader[B]
     ): JsonReaderBuilder14[
@@ -1281,8 +1310,7 @@ object JsonReaderBuilder {
         arr: Array[SimpleJsonReader.FieldDefinition[_]]
     ): Unit = {
       prev.fields(arr)
-      arr(pos) =
-        SimpleJsonReader.FieldDefinition[A14](name, jsonReader)
+      arr(pos) = SimpleJsonReader.FieldDefinition[A14](name, jsonReader)
     }
 
     private[JsonReaderBuilder] def value(
@@ -1308,7 +1336,10 @@ object JsonReaderBuilder {
           )
       }
 
-    def addField[B](name: String, jsonReader: JsonReader[B]): JsonReaderBuilder15[
+    def addField[B](
+        name: String,
+        jsonReader: JsonReader[B]
+    ): JsonReaderBuilder15[
       A1,
       A2,
       A3,
@@ -1328,7 +1359,7 @@ object JsonReaderBuilder {
       addField[B](name)(jsonReader)
     }
 
-    @targetName("addField1") 
+    @targetName("addField1")
     def addField[B](name: String)(implicit
         jsonReader: JsonReader[B]
     ): JsonReaderBuilder15[
@@ -1496,8 +1527,7 @@ object JsonReaderBuilder {
         arr: Array[SimpleJsonReader.FieldDefinition[_]]
     ): Unit = {
       prev.fields(arr)
-      arr(pos) =
-        SimpleJsonReader.FieldDefinition[A15](name, jsonReader)
+      arr(pos) = SimpleJsonReader.FieldDefinition[A15](name, jsonReader)
     }
 
     private[JsonReaderBuilder] def value(
@@ -1524,7 +1554,10 @@ object JsonReaderBuilder {
           )
       }
 
-    def addField[B](name: String, jsonReader: JsonReader[B]): JsonReaderBuilder16[
+    def addField[B](
+        name: String,
+        jsonReader: JsonReader[B]
+    ): JsonReaderBuilder16[
       A1,
       A2,
       A3,
@@ -1545,7 +1578,7 @@ object JsonReaderBuilder {
       addField[B](name)(jsonReader)
     }
 
-    @targetName("addField1") 
+    @targetName("addField1")
     def addField[B](name: String)(implicit
         jsonReader: JsonReader[B]
     ): JsonReaderBuilder16[
@@ -1720,8 +1753,7 @@ object JsonReaderBuilder {
         arr: Array[SimpleJsonReader.FieldDefinition[_]]
     ): Unit = {
       prev.fields(arr)
-      arr(pos) =
-        SimpleJsonReader.FieldDefinition[A16](name, jsonReader)
+      arr(pos) = SimpleJsonReader.FieldDefinition[A16](name, jsonReader)
     }
 
     private[JsonReaderBuilder] def value(
@@ -1765,7 +1797,10 @@ object JsonReaderBuilder {
           )
       }
 
-    def addField[B](name: String, jsonReader: JsonReader[B]): JsonReaderBuilder17[
+    def addField[B](
+        name: String,
+        jsonReader: JsonReader[B]
+    ): JsonReaderBuilder17[
       A1,
       A2,
       A3,
@@ -1787,7 +1822,7 @@ object JsonReaderBuilder {
       addField[B](name)(jsonReader)
     }
 
-    @targetName("addField1") 
+    @targetName("addField1")
     def addField[B](name: String)(implicit
         jsonReader: JsonReader[B]
     ): JsonReaderBuilder17[
@@ -1986,8 +2021,7 @@ object JsonReaderBuilder {
         arr: Array[SimpleJsonReader.FieldDefinition[_]]
     ): Unit = {
       prev.fields(arr)
-      arr(pos) =
-        SimpleJsonReader.FieldDefinition[A17](name, jsonReader)
+      arr(pos) = SimpleJsonReader.FieldDefinition[A17](name, jsonReader)
     }
 
     private[JsonReaderBuilder] def value(extracted: Array[Any]): (
@@ -2048,7 +2082,10 @@ object JsonReaderBuilder {
         )
     }
 
-    def addField[B](name: String, jsonReader: JsonReader[B]): JsonReaderBuilder18[
+    def addField[B](
+        name: String,
+        jsonReader: JsonReader[B]
+    ): JsonReaderBuilder18[
       A1,
       A2,
       A3,
@@ -2071,7 +2108,7 @@ object JsonReaderBuilder {
       addField[B](name)(jsonReader)
     }
 
-    @targetName("addField1") 
+    @targetName("addField1")
     def addField[B](name: String)(implicit
         jsonReader: JsonReader[B]
     ): JsonReaderBuilder18[
@@ -2314,8 +2351,7 @@ object JsonReaderBuilder {
         arr: Array[SimpleJsonReader.FieldDefinition[_]]
     ): Unit = {
       prev.fields(arr)
-      arr(pos) =
-        SimpleJsonReader.FieldDefinition[A18](name, jsonReader)
+      arr(pos) = SimpleJsonReader.FieldDefinition[A18](name, jsonReader)
     }
 
     private[JsonReaderBuilder] def value(extracted: Array[Any]): (
@@ -2379,7 +2415,10 @@ object JsonReaderBuilder {
         )
     }
 
-    def addField[B](name: String, jsonReader: JsonReader[B]): JsonReaderBuilder19[
+    def addField[B](
+        name: String,
+        jsonReader: JsonReader[B]
+    ): JsonReaderBuilder19[
       A1,
       A2,
       A3,
@@ -2403,7 +2442,7 @@ object JsonReaderBuilder {
       addField[B](name)(jsonReader)
     }
 
-    @targetName("addField1") 
+    @targetName("addField1")
     def addField[B](name: String)(implicit
         jsonReader: JsonReader[B]
     ): JsonReaderBuilder19[
@@ -2656,8 +2695,7 @@ object JsonReaderBuilder {
         arr: Array[SimpleJsonReader.FieldDefinition[_]]
     ): Unit = {
       prev.fields(arr)
-      arr(pos) =
-        SimpleJsonReader.FieldDefinition[A19](name, jsonReader)
+      arr(pos) = SimpleJsonReader.FieldDefinition[A19](name, jsonReader)
     }
 
     private[JsonReaderBuilder] def value(extracted: Array[Any]): (
@@ -2724,7 +2762,10 @@ object JsonReaderBuilder {
         )
     }
 
-    def addField[B](name: String, jsonReader: JsonReader[B]): JsonReaderBuilder20[
+    def addField[B](
+        name: String,
+        jsonReader: JsonReader[B]
+    ): JsonReaderBuilder20[
       A1,
       A2,
       A3,
@@ -2749,7 +2790,7 @@ object JsonReaderBuilder {
       addField[B](name)(jsonReader)
     }
 
-    @targetName("addField1") 
+    @targetName("addField1")
     def addField[B](name: String)(implicit
         jsonReader: JsonReader[B]
     ): JsonReaderBuilder20[
@@ -3012,8 +3053,7 @@ object JsonReaderBuilder {
         arr: Array[SimpleJsonReader.FieldDefinition[_]]
     ): Unit = {
       prev.fields(arr)
-      arr(pos) =
-        SimpleJsonReader.FieldDefinition[A20](name, jsonReader)
+      arr(pos) = SimpleJsonReader.FieldDefinition[A20](name, jsonReader)
     }
 
     private[JsonReaderBuilder] def value(extracted: Array[Any]): (
@@ -3083,7 +3123,10 @@ object JsonReaderBuilder {
         )
     }
 
-    def addField[B](name: String, jsonReader: JsonReader[B]): JsonReaderBuilder21[
+    def addField[B](
+        name: String,
+        jsonReader: JsonReader[B]
+    ): JsonReaderBuilder21[
       A1,
       A2,
       A3,
@@ -3109,7 +3152,7 @@ object JsonReaderBuilder {
       addField[B](name)(jsonReader)
     }
 
-    @targetName("addField1") 
+    @targetName("addField1")
     def addField[B](name: String)(implicit
         jsonReader: JsonReader[B]
     ): JsonReaderBuilder21[
@@ -3382,8 +3425,7 @@ object JsonReaderBuilder {
         arr: Array[SimpleJsonReader.FieldDefinition[_]]
     ): Unit = {
       prev.fields(arr)
-      arr(pos) =
-        SimpleJsonReader.FieldDefinition[A21](name, jsonReader)
+      arr(pos) = SimpleJsonReader.FieldDefinition[A21](name, jsonReader)
     }
 
     private[JsonReaderBuilder] def value(extracted: Array[Any]): (
@@ -3456,7 +3498,10 @@ object JsonReaderBuilder {
         )
     }
 
-    def addField[B](name: String, jsonReader: JsonReader[B]): JsonReaderBuilder22[
+    def addField[B](
+        name: String,
+        jsonReader: JsonReader[B]
+    ): JsonReaderBuilder22[
       A1,
       A2,
       A3,
@@ -3483,7 +3528,7 @@ object JsonReaderBuilder {
       addField[B](name)(jsonReader)
     }
 
-    @targetName("addField1") 
+    @targetName("addField1")
     def addField[B](name: String)(implicit
         jsonReader: JsonReader[B]
     ): JsonReaderBuilder22[
@@ -3767,8 +3812,7 @@ object JsonReaderBuilder {
         arr: Array[SimpleJsonReader.FieldDefinition[_]]
     ): Unit = {
       prev.fields(arr)
-      arr(pos) =
-        SimpleJsonReader.FieldDefinition[A22](name, jsonReader)
+      arr(pos) = SimpleJsonReader.FieldDefinition[A22](name, jsonReader)
     }
 
     private[JsonReaderBuilder] def value(extracted: Array[Any]): (
@@ -3844,7 +3888,10 @@ object JsonReaderBuilder {
         )
     }
 
-    def addField[B](name: String, jsonReader: JsonReader[B]): JsonReaderBuilder2[
+    def addField[B](
+        name: String,
+        jsonReader: JsonReader[B]
+    ): JsonReaderBuilder2[
       (
           A1,
           A2,
@@ -3874,7 +3921,7 @@ object JsonReaderBuilder {
       addField[B](name)(jsonReader)
     }
 
-    @targetName("addField1") 
+    @targetName("addField1")
     def addField[B](name: String)(implicit
         jsonReader: JsonReader[B]
     ): JsonReaderBuilder2[

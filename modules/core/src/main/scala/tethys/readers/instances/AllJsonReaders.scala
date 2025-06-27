@@ -21,7 +21,7 @@ trait AllJsonReaders extends OptionReaders {
         }
       }
 
-      override def defaultValue: Boolean = false
+      override def defaultValue: Option[Boolean] = Some(false)
     }
 
   implicit lazy val stringReader: JsonReader[String] = new JsonReader[String] {
@@ -39,7 +39,7 @@ trait AllJsonReaders extends OptionReaders {
       }
     }
 
-    override def defaultValue: String = ""
+    override def defaultValue: Option[String] = Some("")
   }
 
   implicit lazy val charReader: JsonReader[Char] = new JsonReader[Char] {
@@ -60,7 +60,7 @@ trait AllJsonReaders extends OptionReaders {
       }
     }
 
-    override def defaultValue: Char = 0
+    override def defaultValue: Option[Char] = Some(0)
   }
 
   implicit lazy val numberReader: JsonReader[Number] = new JsonReader[Number] {
@@ -78,7 +78,7 @@ trait AllJsonReaders extends OptionReaders {
       }
     }
 
-    override def defaultValue: Number = 0
+    override def defaultValue: Option[Number] = Some(0)
   }
 
   implicit lazy val byteReader: JsonReader[Byte] = new JsonReader[Byte] {
@@ -96,7 +96,7 @@ trait AllJsonReaders extends OptionReaders {
       }
     }
 
-    override def defaultValue: Byte = 0
+    override def defaultValue: Option[Byte] = Some(0)
   }
 
   implicit lazy val shortReader: JsonReader[Short] = new JsonReader[Short] {
@@ -114,7 +114,7 @@ trait AllJsonReaders extends OptionReaders {
       }
     }
 
-    override def defaultValue: Short = 0
+    override def defaultValue: Option[Short] = Some(0)
   }
 
   implicit lazy val intReader: JsonReader[Int] = new JsonReader[Int] {
@@ -130,7 +130,7 @@ trait AllJsonReaders extends OptionReaders {
       }
     }
 
-    override def defaultValue: Int = 0
+    override def defaultValue: Option[Int] = Some(0)
   }
 
   implicit lazy val longReader: JsonReader[Long] = new JsonReader[Long] {
@@ -148,7 +148,7 @@ trait AllJsonReaders extends OptionReaders {
       }
     }
 
-    override def defaultValue: Long = 0
+    override def defaultValue: Option[Long] = Some(0)
   }
 
   implicit lazy val floatReader: JsonReader[Float] = new JsonReader[Float] {
@@ -166,7 +166,7 @@ trait AllJsonReaders extends OptionReaders {
       }
     }
 
-    override def defaultValue: Float = 0
+    override def defaultValue: Option[Float] = Some(0)
   }
 
   implicit lazy val doubleReader: JsonReader[Double] = new JsonReader[Double] {
@@ -184,7 +184,7 @@ trait AllJsonReaders extends OptionReaders {
       }
     }
 
-    override def defaultValue: Double = 0
+    override def defaultValue: Option[Double] = Some(0)
   }
 
   implicit lazy val bigDecimalReader: JsonReader[BigDecimal] =

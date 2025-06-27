@@ -11,20 +11,21 @@ trait JsonReader[@specialized(specializations) A] {
 
   def read(it: TokenIterator)(implicit fieldName: FieldName): A
 
-  def defaultValue: A
+  def defaultValue: Option[A] = None
 
   def map[B](fun: A => B): JsonReader[B] = new JsonReader[B] {
     override def read(it: TokenIterator)(implicit fieldName: FieldName): B =
       fun(self.read(it))
 
-    override def defaultValue: B = fun(self.defaultValue) 
+    override def defaultValue: Option[B] = self.defaultValue.map(fun)
   }
 
   def mapWithField[B](fun: FieldName => A => B): JsonReader[B] =
     new JsonReader[B] {
       override def read(it: TokenIterator)(implicit fieldName: FieldName): B =
         fun(fieldName)(self.read(it))
-      override def defaultValue: B = fun(FieldName("[defaultValue]"))(self.defaultValue) 
+      override def defaultValue: Option[B] =
+        self.defaultValue.map(fun(FieldName("[defaultValue]")))
     }
 }
 

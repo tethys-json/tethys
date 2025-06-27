@@ -47,6 +47,7 @@ object BenchMarkdown {
       if(it.currentToken().isNumberValue) Right(Math.round(JsonReader.doubleReader.read(it) * 1000) / 1000.0)
       else Left(JsonReader.stringReader.read(it))
     }
+    override def defaultValue: Option[Either[String, Double]] = None
   }
   implicit val primaryMetricsReader: JsonReader[PrimaryMetrics] = jsonReader[PrimaryMetrics]
   implicit val benchmarkReader: JsonReader[Benchmark] = jsonReader[Benchmark]

@@ -38,7 +38,7 @@ private[readers] class SimpleJsonReader[A](
     }
   }
 
-  override def defaultValue: A = throw new IllegalStateException("No default value")
+  override def defaultValue: Option[A] = None
 
   @tailrec
   private def collectNotExtracted(
@@ -68,8 +68,8 @@ private[readers] class SimpleJsonReader[A](
             hasErrors = true,
             extracted,
             builder.append("', '").append(name)
-          )    
-        }
+          )
+      }
     }
   }
 
@@ -82,12 +82,17 @@ private[readers] class SimpleJsonReader[A](
       extracted
     } else {
       val name = fields(i).name
-      addDefaultValues(i + 1, 
+      addDefaultValues(
+        i + 1,
         if (extracted.contains(name)) {
           extracted
         } else {
           try {
-            extracted.updated(name, fields(i).reader.defaultValue)
+            fields(i).reader.defaultValue
+              .map(
+                extracted.updated(name, _)
+              )
+              .getOrElse(extracted)
           } catch {
             case e: IllegalArgumentException => extracted
           }
@@ -133,7 +138,10 @@ private[readers] class SimpleJsonReader[A](
     } else {
       val field = fields(i)
       if (field.name == name) {
-        extracted.updated(name, field.reader.read(it)(fieldName.appendFieldName(name)))
+        extracted.updated(
+          name,
+          field.reader.read(it)(fieldName.appendFieldName(name))
+        )
       } else {
         extractField(i + 1, name, it, extracted)
       }

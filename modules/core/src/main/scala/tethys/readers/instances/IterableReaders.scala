@@ -122,7 +122,7 @@ private[tethys] trait LowPriorityIterableReaders
         )
     }
 
-    override def defaultValue: C[A] = cb.newBuilder.result()
+    override def defaultValue: Option[C[A]] = Some(cb.newBuilder.result())
 
     @tailrec
     private def recRead(

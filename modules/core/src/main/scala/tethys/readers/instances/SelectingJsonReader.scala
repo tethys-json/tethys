@@ -14,5 +14,6 @@ class SelectingJsonReader[A, B](simpleJsonReader: SimpleJsonReader[A])(
     selector(simpleJsonReader.read(it1)).read(it2)
   }
 
-  override def defaultValue: B = selector(simpleJsonReader.defaultValue).defaultValue
+  override def defaultValue: Option[B] =
+    simpleJsonReader.defaultValue.flatMap(selector(_).defaultValue)
 }

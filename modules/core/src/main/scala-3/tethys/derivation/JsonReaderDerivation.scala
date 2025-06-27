@@ -30,7 +30,7 @@ private[tethys] trait JsonReaderDerivation:
           it.skipExpression()
           value
         }
-      override def defaultValue: A = value
+      override def defaultValue: Option[A] = Some(value)
 
   inline def derived[A](inline config: ReaderBuilder[A])(using
       mirror: Mirror.ProductOf[A]

@@ -504,8 +504,7 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
                     }.asTerm
                   ).asExprOf[T]
                 }
-            override def defaultValue: T = 
-              throw new IllegalArgumentException("There is no derived default value")
+            override def defaultValue: Option[T] = None
         }.asTerm
       )
       term.asExprOf[JsonReader[T]]

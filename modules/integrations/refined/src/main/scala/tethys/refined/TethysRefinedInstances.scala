@@ -19,10 +19,9 @@ trait TethysRefinedInstances {
       ): F[T, P] =
         fromEither(RefType[F].refine(JsonReader[T].read(it)))
 
-      override def defaultValue: F[T, P] = {
-        given FieldName = FieldName("[defaultValue]")
-        fromEither(RefType[F].refine(JsonReader[T].defaultValue)) 
-      }
+      override def defaultValue: Option[F[T, P]] =
+        JsonReader[T].defaultValue.flatMap(RefType[F].refine(_).toOption)
+
     }
 
   implicit final def RefinedKeyReader[T, P, F[_, _]: RefType](implicit
