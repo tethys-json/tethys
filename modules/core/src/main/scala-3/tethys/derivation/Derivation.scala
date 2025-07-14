@@ -21,6 +21,7 @@ import scala.compiletime.{constValueTuple, summonInline}
 import scala.quoted.*
 import scala.collection.mutable
 import scala.deriving.Mirror
+import tethys.readers.JsonReaderDefaultValue
 
 private[tethys] object Derivation:
 
@@ -540,6 +541,9 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
                   .addField[discriminator](
                     name = ${ Expr(label) },
                     jsonReader = ${ lookup[JsonReader[discriminator]] }
+                  )(using
+                    readerDefaultValue =
+                      ${ lookup[JsonReaderDefaultValue[discriminator]] }
                   )
                   .selectReader[T] { discriminator =>
                     ${
