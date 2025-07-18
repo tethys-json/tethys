@@ -3,6 +3,7 @@ lazy val scala213 = "2.13.16"
 lazy val scala3 = "3.3.6"
 
 ThisBuild / scalaVersion := scala3
+ThisBuild / versionScheme := Some("early-semver")
 
 lazy val commonSettings = Seq(
   organization := "com.tethys-json",
