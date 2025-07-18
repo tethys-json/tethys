@@ -27,5 +27,6 @@ object RawJson {
       tokenWriter.flush()
       RawJson(stringWriter.toString)
     }
+    override def defaultValue: Option[RawJson] = Some(RawJson("null"))
   }
 }

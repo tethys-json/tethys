@@ -504,6 +504,7 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
                     }.asTerm
                   ).asExprOf[T]
                 }
+            override def defaultValue: Option[T] = None
         }.asTerm
       )
       term.asExprOf[JsonReader[T]]

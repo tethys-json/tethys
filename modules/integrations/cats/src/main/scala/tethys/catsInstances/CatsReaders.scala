@@ -20,6 +20,7 @@ trait CatsReaders {
               s"List is empty and can't be converted to NonEmptyList"
             )
         }
+      override def defaultValue: Option[NonEmptyList[T]] = None
     }
 
   implicit def readerForNev[T: JsonReader]: JsonReader[NonEmptyVector[T]] =
@@ -34,6 +35,7 @@ trait CatsReaders {
               s"Vector is empty and can't be converted to NonEmptyVector"
             )
         }
+      override def defaultValue: Option[NonEmptyVector[T]] = None
     }
 
   implicit def readerForChain[T: JsonReader]: JsonReader[Chain[T]] =
@@ -51,6 +53,7 @@ trait CatsReaders {
               s"Chain is empty and can't be converted to NonEmptyChain"
             )
         }
+      override def defaultValue: Option[NonEmptyChain[T]] = None
     }
 
 }
