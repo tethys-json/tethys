@@ -538,7 +538,7 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
               readers ++ discriminatorStats,
               '{
                 JsonReader.builder
-                  .addField[discriminator](
+                  .field[discriminator](
                     name = ${ Expr(label) },
                     jsonReader = ${ lookup[JsonReader[discriminator]] }
                   )

@@ -22,7 +22,7 @@ class JsonReaderBuilderTest extends AnyFlatSpec with Matchers {
   it should "build reader from fields" in {
     implicit val reader: JsonReader[B] = {
       JsonReader.builder
-        .addField[Int]("i")
+        .field[Int]("i")
         .buildReader(i => B(i))
     }
 
@@ -32,19 +32,19 @@ class JsonReaderBuilderTest extends AnyFlatSpec with Matchers {
   it should "build selecting reader from fields" in {
     implicit val readerB: JsonReader[B] = {
       JsonReader.builder
-        .addField[Int]("i")
+        .field[Int]("i")
         .buildReader(i => B(i))
     }
 
     implicit val readerC: JsonReader[C] = {
       JsonReader.builder
-        .addField[String]("s")
+        .field[String]("s")
         .buildReader(s => C(s))
     }
 
     implicit val readerA: JsonReader[A] = {
       JsonReader.builder
-        .addField[String]("clazz")
+        .field[String]("clazz")
         .selectReader[A] {
           case "B" => readerB
           case "C" => readerC
@@ -58,13 +58,13 @@ class JsonReaderBuilderTest extends AnyFlatSpec with Matchers {
   it should "build reader for fat object" in {
     implicit val reader: JsonReader[FatClass] = {
       JsonReader.builder
-        .addField[Int]("a")
-        .addField[String]("b")
-        .addField[Boolean]("c")
-        .addField[Seq[String]]("d")
-        .addField[Double]("e")
-        .addField[Char]("f")
-        .addField[Option[Int]]("opt")
+        .field[Int]("a")
+        .field[String]("b")
+        .field[Boolean]("c")
+        .field[Seq[String]]("d")
+        .field[Double]("e")
+        .field[Char]("f")
+        .field[Option[Int]]("opt")
         .buildReader(FatClass.apply)
     }
 
@@ -91,7 +91,7 @@ class JsonReaderBuilderTest extends AnyFlatSpec with Matchers {
   it should "build strict reader from fields" in {
     implicit val reader: JsonReader[B] = {
       JsonReader.builder
-        .addField[Option[Int]]("i")
+        .field[Option[Int]]("i")
         .buildStrictReader(i => B(i.getOrElse(0)))
     }
 
@@ -133,30 +133,30 @@ class JsonReaderBuilderTest extends AnyFlatSpec with Matchers {
       )
     ] = {
       JsonReader.builder
-        .addField[Int]("f1")
-        .addField[Int]("f2")
-        .addField[Int]("f3")
-        .addField[Int]("f4")
-        .addField[Int]("f5")
-        .addField[Int]("f6")
-        .addField[Int]("f7")
-        .addField[Int]("f8")
-        .addField[Int]("f9")
-        .addField[Int]("f10")
-        .addField[Int]("f11")
-        .addField[Int]("f12")
-        .addField[Int]("f13")
-        .addField[Int]("f14")
-        .addField[Int]("f15")
-        .addField[Int]("f16")
-        .addField[Int]("f17")
-        .addField[Int]("f18")
-        .addField[Int]("f19")
-        .addField[Int]("f20")
-        .addField[Int]("f21")
-        .addField[Int]("f22")
-        .addField[Int]("f23")
-        .addField[Int]("f24")
+        .field[Int]("f1")
+        .field[Int]("f2")
+        .field[Int]("f3")
+        .field[Int]("f4")
+        .field[Int]("f5")
+        .field[Int]("f6")
+        .field[Int]("f7")
+        .field[Int]("f8")
+        .field[Int]("f9")
+        .field[Int]("f10")
+        .field[Int]("f11")
+        .field[Int]("f12")
+        .field[Int]("f13")
+        .field[Int]("f14")
+        .field[Int]("f15")
+        .field[Int]("f16")
+        .field[Int]("f17")
+        .field[Int]("f18")
+        .field[Int]("f19")
+        .field[Int]("f20")
+        .field[Int]("f21")
+        .field[Int]("f22")
+        .field[Int]("f23")
+        .field[Int]("f24")
         .buildReader((tuple, f23, f24) => (tuple, f23, f24))
     }
 
