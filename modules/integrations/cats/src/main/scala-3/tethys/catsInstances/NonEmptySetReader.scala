@@ -22,5 +22,6 @@ trait NonEmptySetReader {
               s"Seq is empty and can't be converted to NonEmptySet"
             )
         }
+      override def defaultValue: Option[NonEmptySet[T]] = None
     }
 }

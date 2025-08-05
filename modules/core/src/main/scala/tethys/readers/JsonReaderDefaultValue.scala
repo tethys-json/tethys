@@ -22,7 +22,7 @@ object JsonReaderDefaultValue extends LowPriorityDefaultValue {
   }
   private val optionInstance: OptionDefaultValue[Nothing] =
     new OptionDefaultValue[Nothing]
-  implicit def optionDefaultValue[A]: OptionDefaultValue[A] =
+  def optionDefaultValue[A]: OptionDefaultValue[A] =
     optionInstance.asInstanceOf[OptionDefaultValue[A]]
 }
 
@@ -34,6 +34,6 @@ trait LowPriorityDefaultValue {
 
   private val noDefaultValueInstance: NoDefaultValue[Nothing] =
     new NoDefaultValue[Nothing]
-  implicit def noDefaultValue[A]: NoDefaultValue[A] =
+  def noDefaultValue[A]: NoDefaultValue[A] =
     noDefaultValueInstance.asInstanceOf[NoDefaultValue[A]]
 }

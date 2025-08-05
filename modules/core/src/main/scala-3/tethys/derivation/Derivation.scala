@@ -504,6 +504,7 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
                     }.asTerm
                   ).asExprOf[T]
                 }
+            override def defaultValue: Option[T] = None
         }.asTerm
       )
       term.asExprOf[JsonReader[T]]
@@ -537,7 +538,7 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
               readers ++ discriminatorStats,
               '{
                 JsonReader.builder
-                  .addField[discriminator](
+                  .field[discriminator](
                     name = ${ Expr(label) },
                     jsonReader = ${ lookup[JsonReader[discriminator]] }
                   )

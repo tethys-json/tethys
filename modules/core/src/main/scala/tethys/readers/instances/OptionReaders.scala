@@ -97,6 +97,8 @@ private[tethys] trait LowPriorityOptionReaders extends MapReaders {
         readSomeValue(it)
       }
     }
+
+    override def defaultValue: Option[Option[A]] = Some(None)
   }
 
 }
