@@ -28,11 +28,8 @@ trait ReaderDerivation
   private val readerErrorCompanion = q"$readersPack.ReaderError"
   private val primitiveReadersCompanion = q"$readersPack.instances.PrimitiveReaders"
 
-  private val jsonReaderDefaultValueType = tq"$readersPack.JsonReaderDefaultValue"
   private val jsonReaderType = tq"$tethysPack.JsonReader"
   private val somethingChanged = TermName(c.freshName("somethingChanged"))
-
-
 
   private sealed trait ReaderField {
     def value: TermName
@@ -91,8 +88,8 @@ trait ReaderDerivation
     val variablesTrees = allocateVariables(readerFields, typeDefaultValues)
     val functionsTrees = allocateFunctions(readerFields)
     val cases = allocateCases(config.isStrict, readerFields, typeReaders)
-    val rawPostProcessing = allocateRawFieldsPostProcessing(readerFields)
-    val transformations = allocateTransformationsLoop(readerFields)
+    val rawPostProcessing = allocateRawFieldsPostProcessing(readerFields, typeReaders)
+    val transformations = allocateTransformationsLoop(readerFields, typeReaders)
 
     val name = TermName(c.freshName("name"))
 
@@ -393,24 +390,28 @@ trait ReaderDerivation
     (res :+ defaultCase): List[CaseDef]
   }
 
-  private def allocateRawFieldsPostProcessing(readerFields: List[ReaderField]): Tree = {
+  private def allocateRawFieldsPostProcessing(
+      readerFields: List[ReaderField],
+      readers: List[(Type, TermName)]
+  ): Tree = {
     type Res = (List[TermName], List[(Tree, String)], List[Tree])
     def buildTree(tpe: Type, jsonName: String, value: TermName, isInitialized: TermName): Res => Res = {
       case (processed, possiblyNotInitialized, trees) =>
-        extractDefaultValue(tpe) match {
-          case Some(defaultValue) =>
-            val tree =
-              q"""
-             if(!$isInitialized) {
-                $value = $defaultValue
-                $isInitialized = true
-             }
-           """
-            (value :: processed, possiblyNotInitialized, tree :: trees)
-
-          case None =>
-            (value :: processed, (q"!$isInitialized", jsonName) :: possiblyNotInitialized, trees)
-        }
+      readers.collectFirst { case (rTpe, term) if rTpe =:= tpe => term } match {
+        case Some(readerTerm) =>
+          val tree =
+            q"""
+                  if (!$isInitialized) {
+                    $readerTerm.defaultValue.foreach{ v => 
+                      $value = v
+                      $isInitialized = true  
+                    } 
+                  }
+              """
+          (value :: processed, (q"!$isInitialized", jsonName) :: possiblyNotInitialized, tree :: trees)
+        case None =>
+          (value :: processed, (q"!$isInitialized", jsonName) :: possiblyNotInitialized, trees)
+      }
     }
 
 
@@ -465,7 +466,10 @@ trait ReaderDerivation
     }
   }
 
-  private def allocateTransformationsLoop(readerFields: List[ReaderField]): Tree = {
+  private def allocateTransformationsLoop(
+      readerFields: List[ReaderField],
+      readers: List[(Type, TermName)]
+  ): Tree = {
     val (_, possiblyNotInitializedFields, defaults, loopActions) =  readerFields.foldLeft((List[TermName](), List[(Tree, String)](), List[Tree](), List[Tree]())) {
       case ((processed, possiblyNotInitialized, defaultTrees, loopTrees), field) =>
         def buildTransformation(name: String,
@@ -496,28 +500,32 @@ trait ReaderDerivation
                   }
                """
 
-          extractDefaultValue(tpe) match {
-            case Some(defaultValue) =>
-              val tree =
-                q"""
-                     if(!$isInitialized) {
-                        $value = $defaultValue
-                        $isInitialized = true
-                     }
-                   """
-              (value :: processed, possiblyNotInitialized, tree :: defaultTrees, loopAction :: loopTrees)
+            readers.collectFirst {
+              case (rTpe, term) if rTpe =:= tpe => term
+            } match {
+              case Some(readerTerm) =>
+                val tree =
+                  q"""
+                    if (!$isInitialized) {
+                      $readerTerm.defaultValue.foreach{ v => 
+                        $value = v
+                        $isInitialized = true  
+                      } 
+                    }
+                """
+                (value :: processed, (q"!$isInitialized", name) :: possiblyNotInitialized, tree :: defaultTrees, loopAction :: loopTrees)
 
-            case None =>
-              (value :: processed, (q"!$isInitialized", name) :: possiblyNotInitialized, defaultTrees, loopAction :: loopTrees)
+              case None =>
+                (value :: processed, (q"!$isInitialized", name) :: possiblyNotInitialized, defaultTrees, loopAction :: loopTrees)
+            }
           }
-        }
 
         field match {
           case ExtractedField(name, tpe, functionName, args, _, value, isInitialized) =>
             buildTransformation(name, tpe, args, value, isInitialized, None) {
               q"""
                  $functionName.apply(..${args.map(_.value)})
-               """
+              """
             }
 
           case FromExtractedReader(name, tpe, _, functionName, args, _, value, isInitialized, tempIterator) =>
@@ -525,7 +533,7 @@ trait ReaderDerivation
               q"""
                  implicit val $fieldNameTerm: $fieldNameType = $fieldNameTmp.appendFieldName($name)
                  $functionName.apply(..${args.map(_.value)}).read($tempIterator)
-               """
+              """
             }
 
           case _ =>
@@ -570,25 +578,6 @@ trait ReaderDerivation
            $readerErrorCompanion.wrongJson("Can not extract fields" + $uninitializedFields.mkString("'", "', '", "'"))
          }
        """
-    }
-  }
-
-  private def extractDefaultValue(tpe: Type): Option[Tree] = {
-    c.typecheck(q"implicitly[$jsonReaderDefaultValueType[$tpe]]") match {
-      case q"$_.implicitly[$_]($defaultValue)" =>
-        val mbValue = defaultValue.tpe.typeSymbol.annotations.map(_.tree).collectFirst {
-          case q"new $clazz(${value: Tree})" if clazz.tpe =:= typeOf[JsonReaderDefaultValue.ReaderDefaultValue] =>
-            value
-        }
-
-        mbValue match {
-          case None =>
-            abort(s"JsonReaderDefaultValue '${defaultValue.tpe}' is not annotated with 'ReaderDefaultValue'")
-          case Some(q"null") =>
-            None
-          case Some(value) =>
-            Some(value)
-        }
     }
   }
 

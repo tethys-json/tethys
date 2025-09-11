@@ -215,9 +215,12 @@ lazy val refined = project
 lazy val jackson = modules / "backend" / "jackson"
 
 lazy val jacksonSettings = Seq(
-  Compile / unmanagedSourceDirectories += jackson / "jackson-backend" / "src" / "main",
-  Test / unmanagedSourceDirectories += jackson / "jackson-backend" / "src" / "test",
-  Test / unmanagedResourceDirectories += jackson / "jackson-backend" / "src" / "test" / "resources"
+  Compile / unmanagedSourceDirectories +=
+    (jackson / "jackson-backend" / "src" / "main").getAbsoluteFile,
+  Test / unmanagedSourceDirectories +=
+    (jackson / "jackson-backend" / "src" / "test").getAbsoluteFile,
+  Test / unmanagedResourceDirectories +=
+    (jackson / "jackson-backend" / "src" / "test" / "resources").getAbsoluteFile
 )
 
 lazy val `jackson-212` = project
