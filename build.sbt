@@ -1,4 +1,3 @@
-lazy val scala212 = "2.12.20"
 lazy val scala213 = "2.13.16"
 lazy val scala3 = "3.3.6"
 
@@ -62,7 +61,7 @@ def crossScalaSettings = {
     }
 
   Seq(
-    crossScalaVersions := Seq(scala212, scala213, scala3),
+    crossScalaVersions := Seq(scala213, scala3),
     Compile / unmanagedSourceDirectories ++= addDirsByScalaVersion(
       "src/main"
     ).value,
