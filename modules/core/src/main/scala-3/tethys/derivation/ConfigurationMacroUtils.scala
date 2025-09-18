@@ -829,27 +829,42 @@ trait ConfigurationMacroUtils:
           s"Only one field can be a selector. Found ${multiple.map(_.name).mkString(", ")}"
         )
 
-  private def stub(tpe: TypeRepr): Term =
-    import quotes.reflect.*
-    val symbol = tpe.typeSymbol
-    val constructorFieldsFilledWithNulls: List[List[Term]] =
-      symbol.primaryConstructor.paramSymss
-        .filterNot(_.exists(_.isType))
-        .map(_.map(_.typeRef.widen match {
-          case t @ AppliedType(inner, applied) =>
-            Select
-              .unique('{ null }.asTerm, "asInstanceOf")
-              .appliedToTypes(List(inner.appliedTo(tpe.typeArgs)))
-          case other =>
-            Select
-              .unique('{ null }.asTerm, "asInstanceOf")
-              .appliedToTypes(List(other))
-        }))
+  def stub(tpe: TypeRepr): Term =
+    val constructorTypes = tpe.typeSymbol.primaryConstructor.paramSymss.flatten
+      .filter(_.isType)
+      .map(_.name)
 
-    New(TypeTree.ref(symbol))
-      .select(symbol.primaryConstructor)
-      .appliedToTypes(symbol.typeRef.typeArgs.map(_ => TypeRepr.of[Null]))
-      .appliedToArgss(constructorFieldsFilledWithNulls)
+    val constructorFields = tpe.dealias.typeSymbol.primaryConstructor.paramSymss
+      .filterNot(_.exists(_.isType))
+
+    val con = Select(
+      New(TypeIdent(tpe.typeSymbol)),
+      tpe.typeSymbol.primaryConstructor
+    ).appliedToTypes(tpe.typeArgs)
+
+    val typeNames = {
+      @tailrec
+      def collectTypes(
+          tpe: TypeRepr,
+          acc: Map[String, TypeRepr]
+      ): Map[String, TypeRepr] =
+        tpe match
+          case MethodType(names, types, res) =>
+            collectTypes(res, acc ++ names.zip(types))
+          case tpe => acc
+
+      collectTypes(con.tpe.widenTermRefByName, Map.empty).view.mapValues {
+        case n: ByNameType => n.widenByName
+        case n             => n
+      }.toMap
+    }
+
+    con.appliedToArgss(
+      constructorFields
+        .map(_.map { sym => typeNames(sym.name).asType })
+        .map(_.map { case '[t] => '{ null.asInstanceOf[t] }.asTerm })
+    )
+  end stub
 
   @scala.annotation.tailrec
   private def traverseTree(config: Term): Term =
