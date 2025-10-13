@@ -2,7 +2,7 @@ package tethys
 
 import tethys.readers.instances.AllJsonReaders
 import tethys.readers.tokens.TokenIterator
-import tethys.readers.{FieldName, JsonReaderBuilder}
+import tethys.readers.{FieldName, JsonReaderBuilder, ReaderError}
 
 import scala.language.higherKinds
 
@@ -31,6 +31,18 @@ trait JsonReader[@specialized(specializations) A] {
 
 object JsonReader extends AllJsonReaders with derivation.JsonReaderDerivation {
   def apply[A](implicit jsonReader: JsonReader[A]): JsonReader[A] = jsonReader
+
+  def const[A](value: A): JsonReader[A] = new JsonReader[A] {
+    override def read(it: TokenIterator)(implicit fieldName: FieldName): A =
+      if (!it.currentToken().isObjectStart)
+        ReaderError.wrongJson(
+          "Expected object start but found: " + it.currentToken().toString
+        )
+      else {
+        it.skipExpression()
+        value
+      }
+  }
 
   val builder: JsonReaderBuilder.type = JsonReaderBuilder
 }
