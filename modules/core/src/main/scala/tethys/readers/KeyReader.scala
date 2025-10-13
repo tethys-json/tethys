@@ -1,5 +1,6 @@
 package tethys.readers
 
+@specialized(tethys.specializations)
 trait KeyReader[A] {
   def read(s: String)(implicit fieldName: FieldName): A
 }
