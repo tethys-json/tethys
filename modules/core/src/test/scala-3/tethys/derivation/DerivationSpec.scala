@@ -20,6 +20,22 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     res
   }
 
+  it should "derive sum type for opaque types" in {
+    import tethys.*
+
+    object Id:
+      opaque type Id = Long
+      given JsonReader[Id] = JsonReader.longReader
+
+      object Id:
+        def apply(i: Long): Id = i
+
+    enum Foo(@selector val typ: String) derives JsonReader:
+      case Bar(id: Id.Id) extends Foo("foo")
+
+    read[Foo](obj("typ" -> "foo", "id" -> 1)) shouldBe Foo.Bar(Id.Id(1))
+  }
+
   it should "build message correctly" in {
     case class Foo(bar: Int, baz: String, faz: Boolean) derives JsonReader
 
