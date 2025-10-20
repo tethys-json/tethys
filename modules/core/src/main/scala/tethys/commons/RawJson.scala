@@ -1,10 +1,12 @@
 package tethys.commons
 
-import java.io.StringWriter
-
 import tethys.readers.FieldName
 import tethys.readers.tokens.TokenIterator
-import tethys.writers.tokens.{TokenWriter, TokenWriterProducer}
+import tethys.writers.tokens.{
+  TokenWriter,
+  TokenWriterConfig,
+  TokenWriterProducer
+}
 import tethys.{JsonReader, JsonStreaming, JsonWriter}
 
 final case class RawJson(json: String)
@@ -16,16 +18,16 @@ object RawJson {
   }
 
   implicit def rawJsonReader(implicit
-      tokenWriterProducer: TokenWriterProducer
+      tokenWriterProducer: TokenWriterProducer,
+      tokenWriterConfig: TokenWriterConfig
   ): JsonReader[RawJson] = new JsonReader[RawJson] {
     override def read(
         it: TokenIterator
     )(implicit fieldName: FieldName): RawJson = {
-      val stringWriter = new StringWriter()
-      val tokenWriter: TokenWriter = tokenWriterProducer.forWriter(stringWriter)
-      JsonStreaming.streamValue(it, tokenWriter)
-      tokenWriter.flush()
-      RawJson(stringWriter.toString)
+      val tokenWriter = tokenWriterProducer.produce(tokenWriterConfig)
+      try JsonStreaming.streamValue(it, tokenWriter)
+      finally tokenWriter.flush()
+      RawJson(tokenWriter.result())
     }
   }
 }
