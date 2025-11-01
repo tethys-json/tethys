@@ -118,6 +118,27 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     ) shouldBe A.C
   }
 
+  it should "compile and correctly read/write enum with custom StringEnumWriter" in {
+    enum A(val value: String):
+      case B extends A("b")
+      case C extends A("c")
+
+    object A:
+      given StringEnumJsonWriter[A] = StringEnumJsonWriter.derived(_.value)
+      given StringEnumJsonReader[A] = StringEnumJsonReader.derived(_.value)
+
+    A.B.asTokenList shouldBe TokenNode.value("b")
+    A.C.asTokenList shouldBe TokenNode.value("c")
+
+    read[A](
+      TokenNode.value("b")
+    ) shouldBe A.B
+
+    read[A](
+      TokenNode.value("c")
+    ) shouldBe A.C
+  }
+
   it should "compile and correctly read/write enum with OrdinalEnumWriter" in {
     enum A derives OrdinalEnumJsonWriter, OrdinalEnumJsonReader:
       case B, C
@@ -134,7 +155,7 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     ) shouldBe A.C
   }
 
-  it should "compile and correcly write enum obj with discriminator" in {
+  it should "compile and correctly write enum obj with discriminator" in {
     enum A:
       case B, C
 

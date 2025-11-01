@@ -10,12 +10,22 @@ object StringEnumJsonReader:
     new StringEnumJsonReader[A]:
       def read(it: TokenIterator)(implicit fieldName: FieldName): A = impl(it)
 
+  inline def derived[A <: scala.reflect.Enum](
+      f: A => String
+  ): StringEnumJsonReader[A] =
+    val valuesMap =
+      derivation.EnumCompanion.getValues[A].map(x => f(x) -> x).toMap
+    StringEnumJsonReader.from[A](impl(valuesMap.apply))
+
   inline def derived[A <: scala.reflect.Enum]: StringEnumJsonReader[A] =
-    StringEnumJsonReader.from[A]: it =>
+    StringEnumJsonReader.from[A](impl(derivation.EnumCompanion.getByName[A]))
+
+  private def impl[A](get: String => A): TokenIterator => FieldName ?=> A =
+    it =>
       if it.currentToken().isStringValue then
         val res = it.string()
         it.next()
-        try derivation.EnumCompanion.getByName[A](res)
+        try get(res)
         catch
           case ex: NoSuchElementException =>
             ReaderError.wrongJson(s"Unknown enum name: $res")
