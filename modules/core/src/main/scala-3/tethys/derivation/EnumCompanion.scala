@@ -10,6 +10,9 @@ private[tethys] object EnumCompanion:
   inline def isEnum[T]: Boolean =
     ${ EnumCompanionMacro.isEnum[T] }
 
+  inline def getValues[T]: Array[T] =
+    ${ EnumCompanionMacro.getValues[T] }
+
 private[derivation] object EnumCompanionMacro:
   import scala.quoted.*
   def getByName[T: scala.quoted.Type](name: Expr[String])(using
@@ -33,3 +36,11 @@ private[derivation] object EnumCompanionMacro:
   def isEnum[T: scala.quoted.Type](using quotes: Quotes): Expr[Boolean] =
     import quotes.reflect.*
     Expr(TypeRepr.of[T].typeSymbol.flags.is(Flags.Enum))
+
+  def getValues[T: scala.quoted.Type](
+      using quotes: Quotes
+  ): Expr[Array[T]] =
+    import quotes.reflect.*
+    Select
+      .unique(Ref(TypeRepr.of[T].typeSymbol.companionModule), "values")
+      .asExprOf[Array[T]]
