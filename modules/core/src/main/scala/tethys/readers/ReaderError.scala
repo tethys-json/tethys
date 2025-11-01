@@ -15,7 +15,7 @@ object ReaderError {
     val field = fieldName.value()
     throw new ReaderError(
       message = s"Illegal json at '$field': $reason",
-      cause = null,
+      cause = cause,
       field = field
     )
   }
