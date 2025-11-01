@@ -37,8 +37,8 @@ private[derivation] object EnumCompanionMacro:
     import quotes.reflect.*
     Expr(TypeRepr.of[T].typeSymbol.flags.is(Flags.Enum))
 
-  def getValues[T: scala.quoted.Type](
-      using quotes: Quotes
+  def getValues[T: scala.quoted.Type](using
+      quotes: Quotes
   ): Expr[Array[T]] =
     import quotes.reflect.*
     Select
