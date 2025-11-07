@@ -3,8 +3,7 @@ package tethys.readers
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import tethys.{JsonReader, TokenIteratorOps}
-import tethys.commons.{Token, TokenNode}
-import tethys.readers.JsonReaderBuilderTest.B
+import tethys.commons.TokenNode
 import tethys.readers.JsonReaderTest.{PositiveInt, Triple}
 import tethys.readers.tokens.QueueIterator
 
