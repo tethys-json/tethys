@@ -2,7 +2,7 @@ package tethys.readers
 
 import scala.util.control.NonFatal
 
-final class ReaderError protected (
+final class ReaderError private (
     message: String,
     cause: Throwable,
     field: String
@@ -14,7 +14,7 @@ object ReaderError {
   ): Nothing = {
     val field = fieldName.value()
     throw new ReaderError(
-      message = s"Illegal json at '$field': $reason",
+      message = errorMessage(reason, field),
       cause = cause,
       field = field
     )
@@ -36,4 +36,17 @@ object ReaderError {
         )
     }
   }
+
+  final case class Details(
+      reason: String,
+      cause: Throwable = null
+  ) {
+    def toError(implicit fieldName: FieldName): ReaderError = {
+      val field = fieldName.value()
+      ReaderError(errorMessage(reason, field), cause, fieldName.value())
+    }
+  }
+
+  private def errorMessage(reason: String, field: String): String =
+    s"Illegal json at '$field': $reason"
 }
