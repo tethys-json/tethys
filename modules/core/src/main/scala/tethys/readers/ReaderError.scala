@@ -43,7 +43,7 @@ object ReaderError {
   ) {
     def toError(implicit fieldName: FieldName): ReaderError = {
       val field = fieldName.value()
-      ReaderError(errorMessage(reason, field), cause, fieldName.value())
+      new ReaderError(errorMessage(reason, field), cause, field)
     }
   }
 

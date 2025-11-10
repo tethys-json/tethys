@@ -43,7 +43,8 @@ object JsonReaderTest {
   class PositiveInt private (val value: Int) extends AnyVal
   object PositiveInt {
     def fromInt(x: Int): Option[PositiveInt] =
-      Option.when(x > 0)(new PositiveInt(x))
+      if (x > 0) Some(new PositiveInt(x))
+      else None
 
     implicit val reader: JsonReader[PositiveInt] =
       JsonReader[Int].emap(x =>
