@@ -27,6 +27,16 @@ trait JsonReader[@specialized(specializations) A] {
       override def defaultValue: Option[B] =
         self.defaultValue.map(fun(FieldName("[defaultValue]")))
     }
+
+  def emap[B](fun: A => Either[ReaderError.Details, B]): JsonReader[B] = {
+    new JsonReader[B] {
+      override def read(it: TokenIterator)(implicit fieldName: FieldName): B =
+        fun(self.read(it)).fold(err => throw err.toError, identity)
+
+      override def defaultValue: Option[B] =
+        self.defaultValue.flatMap(fun(_).toOption)
+    }
+  }
 }
 
 object JsonReader extends AllJsonReaders with derivation.JsonReaderDerivation {
