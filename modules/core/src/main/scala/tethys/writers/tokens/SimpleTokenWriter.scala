@@ -93,6 +93,9 @@ class SimpleTokenWriter extends TokenWriter {
       this
     }
   }
+
+  override def result(): String =
+    throw new UnsupportedOperationException("SimpleTokenWriter.outString")
 }
 
 object SimpleTokenWriter {

@@ -9,8 +9,22 @@ trait TokenWriter {
 
   def writeObjectEnd(): this.type
 
+  /** Writes a `String` value as a JSON key.
+    *
+    * @param name
+    *   the `String` value to write
+    * @throws TokenWriterException
+    *   if the provided string has an illegal surrogate pair
+    */
   def writeFieldName(name: String): this.type
 
+  /** Writes a `String` value as a JSON value.
+    *
+    * @param v
+    *   the `String` value to write
+    * @throws TokenWriterException
+    *   if the provided string has an illegal surrogate pair
+    */
   def writeString(v: String): this.type
 
   def writeNumber(v: Byte): this.type
@@ -53,4 +67,6 @@ trait TokenWriter {
   def close(): Unit
 
   def flush(): Unit
+
+  def result(): String
 }
