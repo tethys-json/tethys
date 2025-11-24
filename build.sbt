@@ -192,7 +192,7 @@ lazy val enumeratum = project
     libraryDependencies ++= {
       CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, y)) =>
-          Seq("com.beachape" %% "enumeratum" % "1.9.0")
+          Seq("com.beachape" %% "enumeratum" % "1.9.1")
         case _ => Seq.empty
       }
     }
