@@ -1,4 +1,5 @@
 package tethys
+
 import tethys.writers.tokens.TokenWriter
 
 trait StringEnumJsonWriter[A] extends JsonWriter[A]
@@ -8,13 +9,13 @@ object StringEnumJsonWriter:
     derived(_.toString)
 
   inline def derived[A <: scala.reflect.Enum](
-      f: A => String
+      f: A -> String
   ): StringEnumJsonWriter[A] =
-    (value: A, tokenWriter: TokenWriter) => tokenWriter.writeString(f(value))
+    (value: A, tokenWriter: TokenWriter^) => tokenWriter.writeString(f(value))
 
   inline def withLabel[A <: scala.reflect.Enum](
       label: String
   ): JsonObjectWriter[A] =
-    (value: A, tokenWriter: writers.tokens.TokenWriter) =>
+    (value: A, tokenWriter: writers.tokens.TokenWriter^) =>
       tokenWriter.writeFieldName(label)
       tokenWriter.writeString(value.toString)

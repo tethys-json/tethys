@@ -24,6 +24,14 @@ private[tethys] trait JsonReaderDerivation:
   ): JsonReader[A] =
     Derivation.deriveJsonReaderForProduct[A](config, JsonConfiguration.default)
 
+  inline def derivedWith[A](inline config: ReaderBuilder[A])(using
+      mirror: Mirror.ProductOf[A]
+  ): JsonReader[A]^ =
+    Derivation.deriveJsonReaderForProductWith[A](
+      config,
+      JsonConfiguration.default
+    )
+
   @deprecated("Use ReaderBuilder instead")
   inline def derived[A](inline config: ReaderDerivationConfig)(using
       mirror: Mirror.ProductOf[A]
@@ -45,3 +53,19 @@ private[tethys] trait JsonReaderDerivation:
         )
       case given Mirror.SumOf[A] =>
         Derivation.deriveJsonReaderForSum[A]
+
+  inline def derivedWith[A](using mirror: Mirror.Of[A]): JsonReader[A]^ =
+    inline mirror match
+      case given Mirror.ProductOf[A] =>
+        Derivation.deriveJsonReaderForProductWith[A](
+          summonFrom[ReaderBuilder[A]] {
+            case config: ReaderBuilder[A] => config
+            case _                        => ReaderBuilder[A]
+          },
+          summonFrom[JsonConfiguration] {
+            case config: JsonConfiguration => config
+            case _                         => JsonConfiguration.default
+          }
+        )
+      case given Mirror.SumOf[A] =>
+        Derivation.deriveJsonReaderForSumWith[A]

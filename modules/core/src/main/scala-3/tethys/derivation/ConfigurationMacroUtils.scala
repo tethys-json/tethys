@@ -211,7 +211,7 @@ trait ConfigurationMacroUtils:
         case '{
               ($rest: WriterBuilder[T]).remove(${
                 SelectedField(field)
-              }: T => Any)
+              }: T -> Any)
             } =>
           if updatedFields.contains(field.name) then
             exitFieldAlreadyUpdated(field.name)
@@ -463,15 +463,23 @@ trait ConfigurationMacroUtils:
                   )
                   .map(_.asExprOf[Any])
 
-            field.update(idx, updatedDefault, mergedConfig.fieldStyle)
+            updateReaderField(
+              field,
+              idx,
+              updatedDefault,
+              mergedConfig.fieldStyle
+            )
 
           case Some(field) =>
-            field.update(idx, default, mergedConfig.fieldStyle)
+            updateReaderField(field, idx, default, mergedConfig.fieldStyle)
 
           case None =>
-            ReaderField
-              .Basic(symbol.name, tpe.memberType(symbol), None)
-              .update(idx, default, mergedConfig.fieldStyle)
+            updateReaderField(
+              ReaderField.Basic(symbol.name, tpe.memberType(symbol), None),
+              idx,
+              default,
+              mergedConfig.fieldStyle
+            )
       }
     val existingFieldNames = fields.map(_.name).toSet
     val additionalFields = fields
@@ -906,40 +914,12 @@ trait ConfigurationMacroUtils:
           None
     def unapply(expr: Expr[Any]): Option[SelectedField] = unapply(expr.asTerm)
 
-  sealed trait WriterField {
+  sealed trait WriterField:
     def name: String
-
     def nameWithStyle: String
-
+    def labelExpr: Option[Expr[String]]
     def update: Option[WriterField.Update]
-
     def tpe: TypeRepr
-
-    def value(root: Term): Term = update match
-      case None =>
-        Select.unique(root, name)
-
-      case Some(WriterField.Update(lambda, WriterField.Update.What.Root)) =>
-        (tpe.asType, root.tpe.asType) match
-          case ('[t1], '[t2]) =>
-            '{
-              ${ lambda.asExprOf[t2 => t1] }.apply(${ root.asExprOf[t2] })
-            }.asTerm
-
-      case Some(WriterField.Update(lambda, WriterField.Update.What.Field)) =>
-        val field = Select.unique(root, name)
-        (tpe.asType, field.tpe.asType) match
-          case ('[finalType], '[fieldType]) =>
-            '{
-              ${ lambda.asExprOf[fieldType => finalType] }.apply(${
-                field.asExprOf[fieldType]
-              })
-            }.asTerm
-
-    def label: Expr[String]
-  }
-
-  end WriterField
 
   object WriterField:
     case class Basic(
@@ -949,7 +929,7 @@ trait ConfigurationMacroUtils:
         tpe: TypeRepr,
         newName: Option[Expr[String]]
     ) extends WriterField:
-      def label: Expr[String] = newName.getOrElse(Expr(nameWithStyle))
+      def labelExpr: Option[Expr[String]] = newName
 
     case class Added(
         name: String,
@@ -957,13 +937,39 @@ trait ConfigurationMacroUtils:
         update: Option[Update],
         tpe: TypeRepr
     ) extends WriterField:
-      def nameWithStyle = name
+      def nameWithStyle: String = name
+      def labelExpr: Option[Expr[String]] = Some(label)
 
     case class Update(lambda: Term, what: Update.What)
 
     object Update:
       enum What:
         case Root, Field
+
+  protected final def writerFieldValue(field: WriterField, root: Term): Term =
+    field.update match
+      case None =>
+        Select.unique(root, field.name)
+
+      case Some(WriterField.Update(lambda, WriterField.Update.What.Root)) =>
+        (field.tpe.asType, root.tpe.asType) match
+          case ('[t1], '[t2]) =>
+            '{
+              ${ lambda.asExprOf[t2 -> t1] }.apply(${ root.asExprOf[t2] })
+            }.asTerm
+
+      case Some(WriterField.Update(lambda, WriterField.Update.What.Field)) =>
+        val selectedField = Select.unique(root, field.name)
+        (field.tpe.asType, selectedField.tpe.asType) match
+          case ('[finalType], '[fieldType]) =>
+            '{
+              ${ lambda.asExprOf[fieldType -> finalType] }.apply(${
+                selectedField.asExprOf[fieldType]
+              })
+            }.asTerm
+
+  protected final def writerFieldLabel(field: WriterField): Expr[String] =
+    field.labelExpr.getOrElse(Expr(field.nameWithStyle))
 
   case class WriterBuilderMacroConfig(
       delete: Set[String] = Set.empty,
@@ -984,148 +990,12 @@ trait ConfigurationMacroUtils:
       to: TypeRepr
   )
 
-  sealed trait ReaderField {
+  sealed trait ReaderField:
     def name: String
     def tpe: TypeRepr
     def reader: Boolean
-
-    def initializeFieldCase(
-        readers: Map[TypeRepr, Ref],
-        it: Expr[TokenIterator],
-        fieldName: Expr[FieldName]
-    ): Option[CaseDef] =
-      this match
-        case _: ReaderField.Basic =>
-          Some(
-            readerTpe.get.asType match {
-              case '[t] =>
-                CaseDef(
-                  Literal(StringConstant(name)),
-                  None,
-                  Block(
-                    init {
-                      val reader = readers
-                        .get(readerTpe.get)
-                        .fold(lookup[JsonReader[t]])(_.asExprOf[JsonReader[t]])
-                      '{
-                        ${ reader }.read(${ it })(
-                          ${ fieldName }.appendFieldName(${ Expr(name) })
-                        )
-                      }.asTerm
-                    },
-                    '{}.asTerm
-                  )
-                )
-            }
-          )
-
-        case _: ReaderField.Extracted =>
-          iteratorRef.map { iteratorRef =>
-            CaseDef(
-              Literal(StringConstant(name)),
-              None,
-              Block(
-                initIterator('{ ${ it }.collectExpression() }.asTerm),
-                '{}.asTerm
-              )
-            )
-          }
-
-    lazy val (initialize, ref, initRef, iteratorRef) = {
-      val flags =
-        default.fold(Flags.Deferred | Flags.Mutable)(_ => Flags.Mutable)
-      val symbol = Symbol.newVal(
-        Symbol.spliceOwner,
-        s"${name}Var",
-        tpe,
-        flags,
-        Symbol.noSymbol
-      )
-      val initSymbol = Symbol.newVal(
-        Symbol.spliceOwner,
-        s"${name}Init",
-        TypeRepr.of[Boolean],
-        Flags.Mutable,
-        Symbol.noSymbol
-      )
-      val stat = ValDef(symbol, default.map(_.asTerm))
-      val initStat = ValDef(initSymbol, Some('{ false }.asTerm))
-      val iteratorSymbol = Option.when(reader)(
-        Symbol.newVal(
-          Symbol.spliceOwner,
-          s"${name}Iterator",
-          TypeRepr.of[TokenIterator],
-          Flags.Mutable | Flags.Deferred,
-          Symbol.noSymbol
-        )
-      )
-      val iteratorStat = iteratorSymbol.map(ValDef(_, None))
-      val iteratorRef = iteratorStat.map(stat => Ref(stat.symbol))
-      (
-        List(stat, initStat) ++ iteratorStat,
-        Ref(stat.symbol),
-        Ref(initStat.symbol),
-        iteratorRef
-      )
-    }
-
     def idx: Int
     def default: Option[Expr[Any]]
-    def readerTpe: Option[TypeRepr] = this match
-      case ReaderField.Basic(name, tpe, extractor, idx, default) =>
-        Some(extractor.map(_._1).getOrElse(tpe))
-      case field: ReaderField.Extracted if field.reader =>
-        None
-      case field: ReaderField.Extracted =>
-        Some(field.tpe)
-
-    def init(value: Term): List[Statement] = this match
-      case ReaderField.Basic(_, _, None, _, _) =>
-        List(
-          Assign(ref, value),
-          Assign(initRef, '{ true }.asTerm)
-        )
-
-      case ReaderField.Basic(_, _, Some((_, lambda)), _, _) =>
-        List(
-          Assign(ref, Apply(Select.unique(lambda, "apply"), List(value))),
-          Assign(initRef, '{ true }.asTerm)
-        )
-      case extracted: ReaderField.Extracted =>
-        List(
-          Assign(ref, value),
-          Assign(initRef, '{ true }.asTerm)
-        )
-
-    def initIterator(value: Term): List[Statement] = iteratorRef
-      .map { ref =>
-        List(
-          Assign(ref, value),
-          Assign(initRef, '{ true }.asTerm)
-        )
-      }
-      .getOrElse(Nil)
-
-    def update(
-        index: Int,
-        default: Option[Expr[Any]],
-        fieldStyle: Option[FieldStyle]
-    ): ReaderField = this match
-      case field: ReaderField.Basic =>
-        field.copy(
-          idx = index,
-          default = default,
-          name =
-            fieldStyle.fold(field.name)(FieldStyle.applyStyle(field.name, _))
-        )
-      case field: ReaderField.Extracted =>
-        field.copy(
-          idx = index,
-          default = default,
-          name =
-            fieldStyle.fold(field.name)(FieldStyle.applyStyle(field.name, _))
-        )
-  }
 
   object ReaderField:
     case class Basic(
@@ -1135,7 +1005,7 @@ trait ConfigurationMacroUtils:
         idx: Int = 0,
         default: Option[Expr[Any]] = None
     ) extends ReaderField:
-      def reader = false
+      def reader: Boolean = false
 
     case class Extracted(
         name: String,
@@ -1145,42 +1015,289 @@ trait ConfigurationMacroUtils:
         reader: Boolean,
         idx: Int = 0,
         default: Option[Expr[Any]] = None
-    ) extends ReaderField:
-      def extract(
-          fields: Map[String, Ref],
-          fieldName: Expr[FieldName]
-      ): List[Statement] =
-        val term = extractors match
-          case (depName, _) :: Nil =>
-            Apply(Select.unique(lambda, "apply"), List(fields(depName)))
-          case _ =>
-            val value = extractors
-              .map((name, _) => fields(name))
-              .foldRight[Term]('{ EmptyTuple }.asTerm) { (el, acc) =>
-                Select
-                  .unique(acc, "*:")
-                  .appliedToTypes(List(el.tpe, acc.tpe))
-                  .appliedToArgs(List(el))
-              }
-            Select.unique(lambda, "apply").appliedToArgs(List(value))
+    ) extends ReaderField
 
-        iteratorRef match
-          case Some(iteratorRef) =>
-            val reader = Typed(term, TypeTree.of[JsonReader[Any]])
-              .asExprOf[JsonReader[Any]]
+  protected final case class ReaderFieldState(
+      initialize: List[Statement],
+      ref: Ref,
+      initRef: Ref,
+      iteratorRef: Option[Ref]
+  )
+
+  protected final def initializeReaderFieldState(
+      field: ReaderField
+  ): ReaderFieldState =
+    val flags =
+      field.default.fold(Flags.Deferred | Flags.Mutable)(_ => Flags.Mutable)
+    val symbol = Symbol.newVal(
+      Symbol.spliceOwner,
+      s"${field.name}Var",
+      field.tpe,
+      flags,
+      Symbol.noSymbol
+    )
+    val initSymbol = Symbol.newVal(
+      Symbol.spliceOwner,
+      s"${field.name}Init",
+      TypeRepr.of[Boolean],
+      Flags.Mutable,
+      Symbol.noSymbol
+    )
+    val stat = ValDef(symbol, field.default.map(_.asTerm))
+    val initStat = ValDef(initSymbol, Some('{ false }.asTerm))
+    val iteratorSymbol = Option.when(field.reader)(
+      Symbol.newVal(
+        Symbol.spliceOwner,
+        s"${field.name}Iterator",
+        TypeRepr.of[TokenIterator],
+        Flags.Mutable | Flags.Deferred,
+        Symbol.noSymbol
+      )
+    )
+    val iteratorStat = iteratorSymbol.map(ValDef(_, None))
+    val iteratorRef = iteratorStat.map(stat => Ref(stat.symbol))
+    ReaderFieldState(
+      List(stat, initStat) ++ iteratorStat,
+      Ref(stat.symbol),
+      Ref(initStat.symbol),
+      iteratorRef
+    )
+
+  protected final def readerFieldReaderTpe(
+      field: ReaderField
+  ): Option[TypeRepr] = field match
+    case ReaderField.Basic(_, tpe, extractor, _, _) =>
+      Some(extractor.map(_._1).getOrElse(tpe))
+    case extracted: ReaderField.Extracted if extracted.reader =>
+      None
+    case extracted: ReaderField.Extracted =>
+      Some(extracted.tpe)
+
+  protected final def readerFieldInit(
+      field: ReaderField,
+      state: ReaderFieldState,
+      value: Term
+  ): List[Statement] = field match
+    case ReaderField.Basic(_, _, None, _, _) =>
+      List(
+        Assign(state.ref, value),
+        Assign(state.initRef, '{ true }.asTerm)
+      )
+
+    case ReaderField.Basic(_, _, Some((_, lambda)), _, _) =>
+      List(
+        Assign(state.ref, Apply(Select.unique(lambda, "apply"), List(value))),
+        Assign(state.initRef, '{ true }.asTerm)
+      )
+
+    case _: ReaderField.Extracted =>
+      List(
+        Assign(state.ref, value),
+        Assign(state.initRef, '{ true }.asTerm)
+      )
+
+  protected final def readerFieldInitIterator(
+      state: ReaderFieldState,
+      value: Term
+  ): List[Statement] = state.iteratorRef
+    .map { ref =>
+      List(
+        Assign(ref, value),
+        Assign(state.initRef, '{ true }.asTerm)
+      )
+    }
+    .getOrElse(Nil)
+
+  protected final def readerFieldInitializeFieldCase(
+      field: ReaderField,
+      state: ReaderFieldState,
+      readers: Map[TypeRepr, Ref],
+      it: Expr[TokenIterator],
+      fieldName: Expr[FieldName]
+  ): Option[CaseDef] =
+    field match
+      case _: ReaderField.Basic =>
+        val readerTpe = readerFieldReaderTpe(field).get
+        Some(
+          readerTpe.asType match
+            case '[t] =>
+              CaseDef(
+                Literal(StringConstant(field.name)),
+                None,
+                Block(
+                  readerFieldInit(
+                    field,
+                    state, {
+                      val reader = readers
+                        .get(readerTpe)
+                        .fold(lookup[JsonReader[t]])(_.asExprOf[JsonReader[t]])
+                      '{
+                        ${ reader }.read(${ it })(
+                          ${ fieldName }.appendFieldName(${ Expr(field.name) })
+                        )
+                      }.asTerm
+                    }
+                  ),
+                  '{}.asTerm
+                )
+              )
+        )
+
+      case _: ReaderField.Extracted =>
+        state.iteratorRef.map { _ =>
+          CaseDef(
+            Literal(StringConstant(field.name)),
+            None,
+            Block(
+              readerFieldInitIterator(
+                state,
+                '{ ${ it }.collectExpression() }.asTerm
+              ),
+              '{}.asTerm
+            )
+          )
+        }
+
+  protected final def readerFieldInitializeFieldCaseWith(
+      field: ReaderField,
+      state: ReaderFieldState,
+      it: Expr[TokenIterator],
+      fieldName: Expr[FieldName]
+  ): Option[CaseDef] =
+    field match
+      case _: ReaderField.Basic =>
+        val readerTpe = readerFieldReaderTpe(field).get
+        Some(
+          readerTpe.asType match
+            case '[t] =>
+              CaseDef(
+                Literal(StringConstant(field.name)),
+                None,
+                Block(
+                  readerFieldInit(
+                    field,
+                    state, {
+                      '{
+                        DerivationSupport
+                          .summonOrDerivedReaderWith[t]
+                          .read(${ it })(
+                            ${ fieldName }.appendFieldName(${ Expr(field.name) })
+                          )
+                      }.asTerm
+                    }
+                  ),
+                  '{}.asTerm
+                )
+              )
+        )
+
+      case _: ReaderField.Extracted =>
+        state.iteratorRef.map { _ =>
+          CaseDef(
+            Literal(StringConstant(field.name)),
+            None,
+            Block(
+              readerFieldInitIterator(
+                state,
+                '{ ${ it }.collectExpression() }.asTerm
+              ),
+              '{}.asTerm
+            )
+          )
+        }
+
+  protected final def updateReaderField(
+      field: ReaderField,
+      index: Int,
+      default: Option[Expr[Any]],
+      fieldStyle: Option[FieldStyle]
+  ): ReaderField = field match
+    case basic: ReaderField.Basic =>
+      basic.copy(
+        idx = index,
+        default = default,
+        name = fieldStyle.fold(basic.name)(FieldStyle.applyStyle(basic.name, _))
+      )
+    case extracted: ReaderField.Extracted =>
+      extracted.copy(
+        idx = index,
+        default = default,
+        name = fieldStyle.fold(extracted.name)(
+          FieldStyle.applyStyle(extracted.name, _)
+        )
+      )
+
+  private final def extractedReaderTerm(
+      field: ReaderField.Extracted,
+      fields: Map[String, Ref]
+  ): Term =
+    field.extractors match
+      case (depName, _) :: Nil =>
+        Apply(Select.unique(field.lambda, "apply"), List(fields(depName)))
+      case _ =>
+        val value = field.extractors
+          .map((name, _) => fields(name))
+          .foldRight[Term]('{ EmptyTuple }.asTerm) { (el, acc) =>
+            Select
+              .unique(acc, "*:")
+              .appliedToTypes(List(el.tpe, acc.tpe))
+              .appliedToArgs(List(el))
+          }
+        Select.unique(field.lambda, "apply").appliedToArgs(List(value))
+
+  protected final def extractReaderField(
+      field: ReaderField.Extracted,
+      state: ReaderFieldState,
+      fields: Map[String, Ref],
+      fieldName: Expr[FieldName]
+  ): List[Statement] =
+    val term = extractedReaderTerm(field, fields)
+
+    state.iteratorRef match
+      case Some(iteratorRef) =>
+        val reader = Typed(term, TypeTree.of[JsonReader[Any]])
+          .asExprOf[JsonReader[Any]]
+        val it = '{
+          if ${ state.initRef.asExprOf[Boolean] } then
+            ${ iteratorRef.asExprOf[TokenIterator] }
+          else QueueIterator(List(TokenNode.NullValueNode))
+        }
+        val value = '{
+          ${ reader }.read(${ it })(${ fieldName }.appendFieldName(${
+            Expr(field.name)
+          }))
+        }
+        readerFieldInit(field, state, value.asTerm)
+      case None =>
+        readerFieldInit(field, state, term)
+
+  protected final def extractReaderFieldWith(
+      field: ReaderField.Extracted,
+      state: ReaderFieldState,
+      fields: Map[String, Ref],
+      fieldName: Expr[FieldName]
+  ): List[Statement] =
+    val term = extractedReaderTerm(field, fields)
+
+    state.iteratorRef match
+      case Some(iteratorRef) =>
+        field.tpe.asType match
+          case '[f] =>
             val it = '{
-              if ${ initRef.asExprOf[Boolean] } then
+              if ${ state.initRef.asExprOf[Boolean] } then
                 ${ iteratorRef.asExprOf[TokenIterator] }
               else QueueIterator(List(TokenNode.NullValueNode))
             }
             val value = '{
-              ${ reader }.read(${ it })(${ fieldName }.appendFieldName(${
-                Expr(name)
-              }))
+              DerivationSupport
+                .widenReaderWith[f](${ term.asExprOf[Any] })
+                .read(${ it })(
+                  ${ fieldName }.appendFieldName(${ Expr(field.name) })
+                )
             }
-            init(value.asTerm)
-          case None =>
-            init(term)
+            readerFieldInit(field, state, value.asTerm)
+      case None =>
+        readerFieldInit(field, state, term)
 
   case class ReaderBuilderMacroConfig(
       extracted: Map[String, ReaderField] = Map.empty,

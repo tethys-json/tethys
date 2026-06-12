@@ -3,7 +3,7 @@ package tethys.writers.tokens
 import tethys.commons.TokenNode
 import tethys.commons.TokenNode._
 import tethys.readers.FieldName
-import tethys.readers.tokens.TokenIteratorProducer
+import tethys.readers.tokens.{TokenIterator, TokenIteratorProducer}
 
 import scala.collection.mutable
 
@@ -83,13 +83,35 @@ class SimpleTokenWriter extends TokenWriter {
     this
   }
 
+  @deprecated(
+    "Use withRawJsonSupportSafe instead, it uses the scoped token API",
+    "0.0.0"
+  )
   def withRawJsonSupport(implicit
       producer: TokenIteratorProducer
   ): SimpleTokenWriter = new SimpleTokenWriter {
     import tethys._
     override def writeRawJson(json: String): this.type = {
-      val tokenIterator = json.toTokenIterator.fold(throw _, identity)
+      val tokenIterator = json.toTokenIterator match {
+        case Right(iterator) =>
+          val boxedTokenIterator: TokenIterator^ = iterator
+          boxedTokenIterator
+        case Left(error) => throw error
+      }
       JsonStreaming.streamValue(tokenIterator, this)(FieldName())
+      this
+    }
+  }
+
+  def withRawJsonSupportSafe(implicit
+      producer: TokenIteratorProducer
+  ): SimpleTokenWriter = new SimpleTokenWriter {
+    import tethys._
+    override def writeRawJson(json: String): this.type = {
+      json.withTokenIterator { tokenIterator =>
+        val boxedTokenIterator: TokenIterator^ = tokenIterator
+        JsonStreaming.streamValue(boxedTokenIterator, this)(FieldName())
+      }.fold(throw _, identity)
       this
     }
   }

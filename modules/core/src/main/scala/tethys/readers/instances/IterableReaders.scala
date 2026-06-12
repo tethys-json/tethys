@@ -15,7 +15,7 @@ private[tethys] trait IterableReaders extends LowPriorityIterableReaders {
       cb: CollectionBuilder[Byte, C[Byte]]
   ): JsonReader[C[Byte]] = new TraversableReader[Byte, C] {
     override protected def appendBuilder(
-        it: TokenIterator,
+        it: TokenIterator^,
         builder: mutable.Builder[Byte, C[Byte]]
     )(implicit fieldName: FieldName): Unit = {
       builder += PrimitiveReaders.ByteJsonReader.read(it)
@@ -26,7 +26,7 @@ private[tethys] trait IterableReaders extends LowPriorityIterableReaders {
       cb: CollectionBuilder[Short, C[Short]]
   ): JsonReader[C[Short]] = new TraversableReader[Short, C] {
     override protected def appendBuilder(
-        it: TokenIterator,
+        it: TokenIterator^,
         builder: mutable.Builder[Short, C[Short]]
     )(implicit fieldName: FieldName): Unit = {
       builder += PrimitiveReaders.ShortJsonReader.read(it)
@@ -37,7 +37,7 @@ private[tethys] trait IterableReaders extends LowPriorityIterableReaders {
       cb: CollectionBuilder[Int, C[Int]]
   ): JsonReader[C[Int]] = new TraversableReader[Int, C] {
     override protected def appendBuilder(
-        it: TokenIterator,
+        it: TokenIterator^,
         builder: mutable.Builder[Int, C[Int]]
     )(implicit fieldName: FieldName): Unit = {
       builder += PrimitiveReaders.IntJsonReader.read(it)
@@ -48,7 +48,7 @@ private[tethys] trait IterableReaders extends LowPriorityIterableReaders {
       cb: CollectionBuilder[Long, C[Long]]
   ): JsonReader[C[Long]] = new TraversableReader[Long, C] {
     override protected def appendBuilder(
-        it: TokenIterator,
+        it: TokenIterator^,
         builder: mutable.Builder[Long, C[Long]]
     )(implicit fieldName: FieldName): Unit = {
       builder += PrimitiveReaders.LongJsonReader.read(it)
@@ -59,7 +59,7 @@ private[tethys] trait IterableReaders extends LowPriorityIterableReaders {
       cb: CollectionBuilder[Float, C[Float]]
   ): JsonReader[C[Float]] = new TraversableReader[Float, C] {
     override protected def appendBuilder(
-        it: TokenIterator,
+        it: TokenIterator^,
         builder: mutable.Builder[Float, C[Float]]
     )(implicit fieldName: FieldName): Unit = {
       builder += PrimitiveReaders.FloatJsonReader.read(it)
@@ -70,7 +70,7 @@ private[tethys] trait IterableReaders extends LowPriorityIterableReaders {
       cb: CollectionBuilder[Double, C[Double]]
   ): JsonReader[C[Double]] = new TraversableReader[Double, C] {
     override protected def appendBuilder(
-        it: TokenIterator,
+        it: TokenIterator^,
         builder: mutable.Builder[Double, C[Double]]
     )(implicit fieldName: FieldName): Unit = {
       builder += PrimitiveReaders.DoubleJsonReader.read(it)
@@ -81,7 +81,7 @@ private[tethys] trait IterableReaders extends LowPriorityIterableReaders {
       cb: CollectionBuilder[Boolean, C[Boolean]]
   ): JsonReader[C[Boolean]] = new TraversableReader[Boolean, C] {
     override protected def appendBuilder(
-        it: TokenIterator,
+        it: TokenIterator^,
         builder: mutable.Builder[Boolean, C[Boolean]]
     )(implicit fieldName: FieldName): Unit = {
       builder += PrimitiveReaders.BooleanJsonReader.read(it)
@@ -97,7 +97,7 @@ private[tethys] trait LowPriorityIterableReaders
       collectionBuilder: CollectionBuilder[A, C[A]]
   ): JsonReader[C[A]] = new TraversableReader[A, C] {
     override protected def appendBuilder(
-        it: TokenIterator,
+        it: TokenIterator^,
         builder: mutable.Builder[A, C[A]]
     )(implicit fieldName: FieldName): Unit = {
       builder += jsonReader.read(it)
@@ -108,12 +108,12 @@ private[tethys] trait LowPriorityIterableReaders
       cb: CollectionBuilder[A, C[A]]
   ) extends JsonReader[C[A]] {
     protected def appendBuilder(
-        it: TokenIterator,
+        it: TokenIterator^,
         builder: mutable.Builder[A, C[A]]
     )(implicit fieldName: FieldName): Unit
 
     override def read(
-        it: TokenIterator
+        it: TokenIterator^
     )(implicit fieldName: FieldName): C[A] = {
       if (it.currentToken().isArrayStart) recRead(0, it.next(), cb.newBuilder)
       else
@@ -125,7 +125,7 @@ private[tethys] trait LowPriorityIterableReaders
     @tailrec
     private def recRead(
         i: Int,
-        it: TokenIterator,
+        it: TokenIterator^,
         builder: mutable.Builder[A, C[A]]
     )(implicit fieldName: FieldName): C[A] = {
       it.currentToken() match {

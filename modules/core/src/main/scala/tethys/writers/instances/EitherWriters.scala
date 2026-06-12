@@ -11,7 +11,7 @@ private[tethys] trait EitherWriters {
     override def write(
         name: String,
         value: Either[L, R],
-        tokenWriter: TokenWriter
+        tokenWriter: TokenWriter^
     ): Unit = {
       value match {
         case Left(left)   => L.write(name, left, tokenWriter)
@@ -19,7 +19,7 @@ private[tethys] trait EitherWriters {
       }
     }
 
-    def write(value: Either[L, R], tokenWriter: TokenWriter): Unit = {
+    def write(value: Either[L, R], tokenWriter: TokenWriter^): Unit = {
       value match {
         case Left(left)   => L.write(left, tokenWriter)
         case Right(right) => R.write(right, tokenWriter)

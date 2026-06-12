@@ -85,7 +85,7 @@ class RawJsonTest extends AnyFlatSpec with Matchers {
   }
   it should "write json as is in middle of array" in {
     val writer: JsonWriter[List[Any]] = new JsonWriter[List[Any]] {
-      override def write(value: List[Any], tokenWriter: TokenWriter): Unit = {
+      override def write(value: List[Any], tokenWriter: TokenWriter^): Unit = {
         tokenWriter.writeArrayStart()
         JsonWriter.intWriter.write(value(0).asInstanceOf[Int], tokenWriter)
         RawJson.rawJsonWriter.write(value(1).asInstanceOf[RawJson], tokenWriter)

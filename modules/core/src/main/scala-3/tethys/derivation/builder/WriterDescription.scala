@@ -38,12 +38,12 @@ object WriterDescription {
     case class Update[T, From, To](
         field: String,
         name: Option[String],
-        fun: From => To
+        fun: From -> To
     ) extends BuilderOperation[T]
     case class UpdateFromRoot[T, To](
         field: String,
         name: Option[String],
-        fun: T => To
+        fun: T -> To
     ) extends BuilderOperation[T]
     case class UpdatePartial[T, From, To](
         field: String,
@@ -55,7 +55,7 @@ object WriterDescription {
         name: Option[String],
         fun: PartialFunction[T, To]
     ) extends BuilderOperation[T]
-    case class Add[T, To](field: String, fun: T => To)
+    case class Add[T, To](field: String, fun: T -> To)
         extends BuilderOperation[T]
   }
 }

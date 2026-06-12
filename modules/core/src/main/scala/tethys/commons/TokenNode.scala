@@ -3,7 +3,11 @@ package tethys.commons
 import tethys.JsonReader
 import tethys.commons.Token._
 import tethys.readers.ReaderError
-import tethys.readers.tokens.{QueueIterator, TokenIteratorProducer}
+import tethys.readers.tokens.{
+  QueueIterator,
+  TokenIterator,
+  TokenIteratorProducer
+}
 
 sealed trait TokenNode {
   def token: Token
@@ -105,46 +109,73 @@ object TokenNode {
     case v                       => throw new Exception(s"Can't auto wrap '$v'")
   }
 
+  private def tokenIteratorAsList(
+      iterator: TokenIterator^
+  ): List[TokenNode] = {
+    val builder = List.newBuilder[TokenNode]
+    while (!iterator.currentToken().isEmpty) {
+      val token = iterator.currentToken()
+      val node = {
+        if (token.isArrayStart) ArrayStartNode
+        else if (token.isArrayEnd) ArrayEndNode
+        else if (token.isObjectStart) ObjectStartNode
+        else if (token.isObjectEnd) ObjectEndNode
+        else if (token.isNullValue) NullValueNode
+        else if (token.isFieldName) FieldNameNode(iterator.fieldName())
+        else if (token.isStringValue) StringValueNode(iterator.string())
+        else if (token.isNumberValue) iterator.number() match {
+          case v: java.lang.Byte    => ByteValueNode(v)
+          case v: java.lang.Short   => ShortValueNode(v)
+          case v: java.lang.Integer => IntValueNode(v)
+          case v: java.lang.Long    => LongValueNode(v)
+          case v: java.lang.Float   => FloatValueNode(v)
+          case v: java.lang.Double  => DoubleValueNode(v)
+          case n                    => NumberValueNode(n)
+        }
+        else BooleanValueNode(iterator.boolean())
+      }
+
+      builder += node
+      iterator.next()
+    }
+
+    builder.result()
+  }
+
   implicit class TokenNodesOps(val json: String) extends AnyVal {
+    @deprecated(
+      "Use jsonAsTokensListSafe instead, it uses the scoped token API",
+      "0.0.0"
+    )
     def jsonAsTokensList(implicit
         producer: TokenIteratorProducer
     ): List[TokenNode] = {
       import tethys._
-      val iterator = json.toTokenIterator.fold(throw _, identity)
-      val builder = List.newBuilder[TokenNode]
-      while (!iterator.currentToken().isEmpty) {
-        val token = iterator.currentToken()
-        val node = {
-          if (token.isArrayStart) ArrayStartNode
-          else if (token.isArrayEnd) ArrayEndNode
-          else if (token.isObjectStart) ObjectStartNode
-          else if (token.isObjectEnd) ObjectEndNode
-          else if (token.isNullValue) NullValueNode
-          else if (token.isFieldName) FieldNameNode(iterator.fieldName())
-          else if (token.isStringValue) StringValueNode(iterator.string())
-          else if (token.isNumberValue) iterator.number() match {
-            case v: java.lang.Byte    => ByteValueNode(v)
-            case v: java.lang.Short   => ShortValueNode(v)
-            case v: java.lang.Integer => IntValueNode(v)
-            case v: java.lang.Long    => LongValueNode(v)
-            case v: java.lang.Float   => FloatValueNode(v)
-            case v: java.lang.Double  => DoubleValueNode(v)
-            case n                    => NumberValueNode(n)
-          }
-          else BooleanValueNode(iterator.boolean())
-        }
-
-        builder += node
-        iterator.next()
+      val iterator = json.toTokenIterator match {
+        case Right(tokenIterator) =>
+          val boxedTokenIterator: TokenIterator^ = tokenIterator
+          boxedTokenIterator
+        case Left(error) => throw error
       }
+      tokenIteratorAsList(iterator)
+    }
 
-      builder.result()
+    def jsonAsTokensListSafe(implicit
+        producer: TokenIteratorProducer
+    ): List[TokenNode] = {
+      import tethys._
+      json
+        .withTokenIterator { tokenIterator =>
+          val boxedTokenIterator: TokenIterator^ = tokenIterator
+          tokenIteratorAsList(boxedTokenIterator)
+        }
+        .fold(throw _, identity)
     }
   }
 
   implicit class TokenListOps(private val tokens: Seq[TokenNode])
       extends AnyVal {
-    import tethys.TokenIteratorOps
+    import tethys.*
     def tokensAs[A: JsonReader]: A =
       QueueIterator(tokens).readJson[A].fold(throw _, identity)
   }

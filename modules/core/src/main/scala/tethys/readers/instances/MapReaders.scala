@@ -16,7 +16,7 @@ private[tethys] trait MapReaders extends LowPriorityMapReaders {
   ): JsonReader[M[K, Byte]] = {
     new MapReader[K, Byte, M] {
       override protected def appendBuilder(
-          it: TokenIterator,
+          it: TokenIterator^,
           builder: mutable.Builder[(K, Byte), M[K, Byte]],
           key: K
       )(implicit fieldName: FieldName): Unit = {
@@ -31,7 +31,7 @@ private[tethys] trait MapReaders extends LowPriorityMapReaders {
   ): JsonReader[M[K, Short]] = {
     new MapReader[K, Short, M] {
       override protected def appendBuilder(
-          it: TokenIterator,
+          it: TokenIterator^,
           builder: mutable.Builder[(K, Short), M[K, Short]],
           key: K
       )(implicit fieldName: FieldName): Unit = {
@@ -46,7 +46,7 @@ private[tethys] trait MapReaders extends LowPriorityMapReaders {
   ): JsonReader[M[K, Int]] = {
     new MapReader[K, Int, M] {
       override protected def appendBuilder(
-          it: TokenIterator,
+          it: TokenIterator^,
           builder: mutable.Builder[(K, Int), M[K, Int]],
           key: K
       )(implicit fieldName: FieldName): Unit = {
@@ -61,7 +61,7 @@ private[tethys] trait MapReaders extends LowPriorityMapReaders {
   ): JsonReader[M[K, Long]] = {
     new MapReader[K, Long, M] {
       override protected def appendBuilder(
-          it: TokenIterator,
+          it: TokenIterator^,
           builder: mutable.Builder[(K, Long), M[K, Long]],
           key: K
       )(implicit fieldName: FieldName): Unit = {
@@ -76,7 +76,7 @@ private[tethys] trait MapReaders extends LowPriorityMapReaders {
   ): JsonReader[M[K, Float]] = {
     new MapReader[K, Float, M] {
       override protected def appendBuilder(
-          it: TokenIterator,
+          it: TokenIterator^,
           builder: mutable.Builder[(K, Float), M[K, Float]],
           key: K
       )(implicit fieldName: FieldName): Unit = {
@@ -92,7 +92,7 @@ private[tethys] trait MapReaders extends LowPriorityMapReaders {
   ): JsonReader[M[K, Double]] = {
     new MapReader[K, Double, M] {
       override protected def appendBuilder(
-          it: TokenIterator,
+          it: TokenIterator^,
           builder: mutable.Builder[(K, Double), M[K, Double]],
           key: K
       )(implicit fieldName: FieldName): Unit = {
@@ -108,7 +108,7 @@ private[tethys] trait MapReaders extends LowPriorityMapReaders {
   ): JsonReader[M[K, Boolean]] = {
     new MapReader[K, Boolean, M] {
       override protected def appendBuilder(
-          it: TokenIterator,
+          it: TokenIterator^,
           builder: mutable.Builder[(K, Boolean), M[K, Boolean]],
           key: K
       )(implicit fieldName: FieldName): Unit = {
@@ -127,7 +127,7 @@ private[tethys] trait LowPriorityMapReaders extends IterableReaders {
   ): JsonReader[M[K, A]] = {
     new MapReader[K, A, M] {
       override protected def appendBuilder(
-          it: TokenIterator,
+          it: TokenIterator^,
           builder: mutable.Builder[(K, A), M[K, A]],
           key: K
       )(implicit fieldName: FieldName): Unit = {
@@ -142,13 +142,13 @@ private[tethys] trait LowPriorityMapReaders extends IterableReaders {
   ) extends JsonReader[M[K, A]] {
 
     protected def appendBuilder(
-        it: TokenIterator,
+        it: TokenIterator^,
         builder: mutable.Builder[(K, A), M[K, A]],
         key: K
     )(implicit fieldName: FieldName): Unit
 
     override def read(
-        it: TokenIterator
+        it: TokenIterator^
     )(implicit fieldName: FieldName): M[K, A] = {
       if (it.currentToken().isObjectStart)
         recRead(it.next(), cb.newBuilder)(fieldName)
@@ -160,7 +160,7 @@ private[tethys] trait LowPriorityMapReaders extends IterableReaders {
 
     @tailrec
     private def recRead(
-        it: TokenIterator,
+        it: TokenIterator^,
         builder: mutable.Builder[(K, A), M[K, A]]
     )(fieldName: FieldName): M[K, A] = {
       it.currentToken() match {

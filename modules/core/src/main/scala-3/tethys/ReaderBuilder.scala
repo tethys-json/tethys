@@ -4,12 +4,12 @@ import tethys.{FieldStyle, JsonReader}
 
 sealed trait ReaderBuilder[A]:
   def extract[Field](
-      field: A => Field
+      field: A -> Field
   ): ReaderBuilder.DependentFieldAs[A, Field]
 
   def extractReader[Field](
-      field: A => Field
-  ): ReaderBuilder.DependentField0[A, JsonReader[_ <: Field]]
+      field: A -> Field
+  ): ReaderBuilder.DependentReaderField0[A, Field]
 
   def fieldStyle(fieldStyle: FieldStyle): ReaderBuilder[A]
 
@@ -29,23 +29,30 @@ object ReaderBuilder:
     )
 
   sealed trait AsSyntax[A, B, C]:
-    def apply(fun: B => C): ReaderBuilder[A]
+    def apply(fun: B -> C): ReaderBuilder[A]
 
   sealed trait DependentFieldAs[A, B] extends DependentField0[A, B]:
     def as[C]: ReaderBuilder.AsSyntax[A, C, B]
 
   sealed trait DependentField0[A, Field]:
-    def apply(fun: () => Field): ReaderBuilder[A]
+    def apply(fun: () -> Field): ReaderBuilder[A]
 
-    def from[B](f1: A => B): DependentField1[A, Field, B]
+    def from[B](f1: A -> B): DependentField1[A, Field, B]
 
     def from[B](name: String): DependentField1[A, Field, B]
 
+  sealed trait DependentReaderField0[A, Field]:
+    def apply(fun: () -> JsonReader[_ <: Field]^): ReaderBuilder[A]
+
+    def from[B](f1: A -> B): DependentReaderField1[A, Field, B]
+
+    def from[B](name: String): DependentReaderField1[A, Field, B]
+
   sealed trait DependentField1[A, Field, OneCollected]:
-    def apply(fun: OneCollected => Field): ReaderBuilder[A]
+    def apply(fun: OneCollected -> Field): ReaderBuilder[A]
 
     def and[B](
-        f1: A => B
+        f1: A -> B
     ): DependentFieldN[A, Field, OneCollected *: B *: EmptyTuple]
 
     def and[B](
@@ -56,11 +63,22 @@ object ReaderBuilder:
         ev: OneCollected *: EmptyTuple =:= mirror.MirroredElemTypes
     ): ReaderBuilder[A]
 
-  sealed trait DependentFieldN[A, Field, Collected <: NonEmptyTuple]:
-    def apply(fun: Collected => Field): ReaderBuilder[A]
+  sealed trait DependentReaderField1[A, Field, OneCollected]:
+    def apply(fun: OneCollected -> JsonReader[_ <: Field]^): ReaderBuilder[A]
 
     def and[B](
-        f1: A => B
+        f1: A -> B
+    ): DependentReaderFieldN[A, Field, OneCollected *: B *: EmptyTuple]
+
+    def and[B](
+        name: String
+    ): DependentReaderFieldN[A, Field, OneCollected *: B *: EmptyTuple]
+
+  sealed trait DependentFieldN[A, Field, Collected <: NonEmptyTuple]:
+    def apply(fun: Collected -> Field): ReaderBuilder[A]
+
+    def and[B](
+        f1: A -> B
     ): DependentFieldN[A, Field, Tuple.Append[Collected, B]]
 
     def and[B](
@@ -70,3 +88,14 @@ object ReaderBuilder:
     def product(using mirror: scala.deriving.Mirror.ProductOf[Field])(using
         ev: Collected =:= mirror.MirroredElemTypes
     ): ReaderBuilder[A]
+
+  sealed trait DependentReaderFieldN[A, Field, Collected <: NonEmptyTuple]:
+    def apply(fun: Collected -> JsonReader[_ <: Field]^): ReaderBuilder[A]
+
+    def and[B](
+        f1: A -> B
+    ): DependentReaderFieldN[A, Field, Tuple.Append[Collected, B]]
+
+    def and[B](
+        name: String
+    ): DependentReaderFieldN[A, Field, Tuple.Append[Collected, B]]

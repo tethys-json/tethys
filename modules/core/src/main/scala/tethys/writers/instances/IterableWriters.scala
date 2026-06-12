@@ -16,7 +16,7 @@ private[tethys] trait IterableWriters extends LowPriorityJsonWriters {
       extends JsonWriter[C[A]] {
     def iterator(c: C[A]): Iterator[A]
 
-    override def write(value: C[A], tokenWriter: TokenWriter): Unit = {
+    override def write(value: C[A], tokenWriter: TokenWriter^): Unit = {
       tokenWriter.writeArrayStart()
 
       val valueIterator = iterator(value)

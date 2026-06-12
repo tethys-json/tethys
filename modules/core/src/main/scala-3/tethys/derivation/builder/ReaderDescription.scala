@@ -37,7 +37,7 @@ object ReaderDescription {
   sealed trait BuilderOperation
 
   object BuilderOperation {
-    final case class ExtractFieldAs[B, C](field: String, fun: B => C)
+    final case class ExtractFieldAs[B, C](field: String, fun: B -> C)
         extends BuilderOperation
     final case class ExtractFieldValue(
         field: String,

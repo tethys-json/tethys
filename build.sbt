@@ -1,6 +1,6 @@
 lazy val scala212 = "2.12.20"
 lazy val scala213 = "2.13.17"
-lazy val scala3 = "3.3.7"
+lazy val scala3 = "3.8.3"
 
 ThisBuild / scalaVersion := scala3
 ThisBuild / versionScheme := Some("early-semver")
@@ -42,6 +42,13 @@ lazy val commonSettings = Seq(
       email = "goshacodes@gmail.com",
       url = url("https://github.com/goshacodes")
     )
+  ),
+  Test / publishArtifact := false
+)
+
+lazy val ccSettings = Seq(
+  scalacOptions ++= Seq(
+    "-language:experimental.captureChecking"
   ),
   Test / publishArtifact := false
 )
@@ -100,7 +107,8 @@ lazy val tethys = project
     circe,
     refined,
     enumeratum,
-    cats
+    cats,
+    fs2
   )
 
 lazy val modules = file("modules")
@@ -115,6 +123,7 @@ def addScalaReflect(scalaVersion: String): Seq[ModuleID] =
 lazy val core = project
   .in(modules / "core")
   .settings(crossScalaSettings)
+  .settings(ccSettings)
   .settings(commonSettings)
   .settings(testSettings)
   .settings(
@@ -182,6 +191,20 @@ lazy val cats = project
   )
   .dependsOn(core)
 
+lazy val fs2 = project
+  .in(modules / "integrations" / "fs2")
+  .settings(ccSettings)
+  .settings(testSettings)
+  .settings(
+    name := "tethys-fs2",
+    libraryDependencies ++= Seq(
+      "co.fs2" %% "fs2-core" % "3.12.2",
+      "co.fs2" %% "fs2-io" % "3.12.2" % Test,
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.18.4"
+    )
+  )
+  .dependsOn(core, `jackson-218` % Test)
+
 lazy val enumeratum = project
   .in(integrations / "enumeratum")
   .settings(crossScalaSettings)
@@ -219,6 +242,7 @@ lazy val jacksonSettings = Seq(
 
 lazy val `jackson-212` = project
   .in(jackson / "jackson-212")
+  .settings(ccSettings)
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(jacksonSettings)
@@ -233,6 +257,7 @@ lazy val `jackson-212` = project
 
 lazy val `jackson-213` = project
   .in(jackson / "jackson-213")
+  .settings(ccSettings)
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(jacksonSettings)
@@ -247,6 +272,7 @@ lazy val `jackson-213` = project
 
 lazy val `jackson-214` = project
   .in(jackson / "jackson-214")
+  .settings(ccSettings)
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(jacksonSettings)
@@ -261,6 +287,7 @@ lazy val `jackson-214` = project
 
 lazy val `jackson-215` = project
   .in(jackson / "jackson-215")
+  .settings(ccSettings)
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(jacksonSettings)
@@ -275,6 +302,7 @@ lazy val `jackson-215` = project
 
 lazy val `jackson-216` = project
   .in(jackson / "jackson-216")
+  .settings(ccSettings)
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(jacksonSettings)
@@ -289,6 +317,7 @@ lazy val `jackson-216` = project
 
 lazy val `jackson-217` = project
   .in(jackson / "jackson-217")
+  .settings(ccSettings)
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(jacksonSettings)
@@ -303,6 +332,7 @@ lazy val `jackson-217` = project
 
 lazy val `jackson-218` = project
   .in(jackson / "jackson-218")
+  .settings(ccSettings)
   .settings(crossScalaSettings)
   .settings(commonSettings)
   .settings(jacksonSettings)

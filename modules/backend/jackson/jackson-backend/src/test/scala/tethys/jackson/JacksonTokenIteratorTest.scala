@@ -6,12 +6,19 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 
 class JacksonTokenIteratorTest extends AnyFlatSpec with Matchers {
+  private def iterator(json: String) = json.toTokenIterator match {
+    case Right(tokenIterator) =>
+      val boxedTokenIterator: tethys.readers.tokens.TokenIterator^ =
+        tokenIterator
+      boxedTokenIterator
+    case Left(error) => throw error
+  }
 
   behavior of "JacksonTokenIterator"
 
   it should "properly iterate over json string" in {
     val json = """{"a":1,"b":["s",true,{"a":null},1.0,false]}"""
-    val it = json.toTokenIterator.fold(throw _, identity)
+    val it = iterator(json)
     it.currentToken().isObjectStart shouldBe true
 
     it.nextToken().isFieldName shouldBe true
@@ -49,7 +56,7 @@ class JacksonTokenIteratorTest extends AnyFlatSpec with Matchers {
 
   it should "correctly skip next expressions" in {
     val json = """{"a":1,"b":["s",true,{"a":null},1.0,false]}"""
-    val it = json.toTokenIterator.fold(throw _, identity)
+    val it = iterator(json)
     it.currentToken().isObjectStart shouldBe true
 
     it.nextToken().isFieldName shouldBe true
@@ -66,7 +73,7 @@ class JacksonTokenIteratorTest extends AnyFlatSpec with Matchers {
 
   it should "correctly collect expressions" in {
     val json = """{"a":1,"b":["s",true,{"a":null},1.0,false]}"""
-    val it = json.toTokenIterator.fold(throw _, identity)
+    val it = iterator(json)
     it.currentToken().isObjectStart shouldBe true
 
     it.nextToken().isFieldName shouldBe true

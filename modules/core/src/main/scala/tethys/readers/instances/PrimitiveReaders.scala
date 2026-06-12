@@ -5,7 +5,7 @@ import tethys.readers.{FieldName, ReaderError}
 
 object PrimitiveReaders {
   object ByteJsonReader {
-    def read(it: TokenIterator)(implicit fieldName: FieldName): Byte = {
+    def read(it: TokenIterator^)(implicit fieldName: FieldName): Byte = {
       if (it.currentToken().isNumberValue) {
         val res = it.byte()
         it.nextToken()
@@ -20,7 +20,7 @@ object PrimitiveReaders {
   }
 
   object ShortJsonReader {
-    def read(it: TokenIterator)(implicit fieldName: FieldName): Short = {
+    def read(it: TokenIterator^)(implicit fieldName: FieldName): Short = {
       if (it.currentToken().isNumberValue) {
         val res = it.short()
         it.nextToken()
@@ -35,7 +35,7 @@ object PrimitiveReaders {
   }
 
   object IntJsonReader {
-    def read(it: TokenIterator)(implicit fieldName: FieldName): Int = {
+    def read(it: TokenIterator^)(implicit fieldName: FieldName): Int = {
       if (it.currentToken().isNumberValue) {
         val res = it.int()
         it.nextToken()
@@ -47,7 +47,7 @@ object PrimitiveReaders {
 
     val defaultValue: Option[Int] = None
 
-    private def error(it: TokenIterator)(implicit fieldName: FieldName) = {
+    private def error(it: TokenIterator^)(implicit fieldName: FieldName) = {
       ReaderError.wrongJson(
         s"Expected int value but found: ${it.currentToken()}"
       )
@@ -55,7 +55,7 @@ object PrimitiveReaders {
   }
 
   object LongJsonReader {
-    def read(it: TokenIterator)(implicit fieldName: FieldName): Long = {
+    def read(it: TokenIterator^)(implicit fieldName: FieldName): Long = {
       if (it.currentToken().isNumberValue) {
         val res = it.long()
         it.nextToken()
@@ -71,7 +71,7 @@ object PrimitiveReaders {
   }
 
   object FloatJsonReader {
-    def read(it: TokenIterator)(implicit fieldName: FieldName): Float = {
+    def read(it: TokenIterator^)(implicit fieldName: FieldName): Float = {
       if (it.currentToken().isNumberValue) {
         val res = it.float()
         it.nextToken()
@@ -86,7 +86,7 @@ object PrimitiveReaders {
   }
 
   object DoubleJsonReader {
-    def read(it: TokenIterator)(implicit fieldName: FieldName): Double = {
+    def read(it: TokenIterator^)(implicit fieldName: FieldName): Double = {
       if (it.currentToken().isNumberValue) {
         val res = it.double()
         it.nextToken()
@@ -101,7 +101,7 @@ object PrimitiveReaders {
   }
 
   object BooleanJsonReader {
-    def read(it: TokenIterator)(implicit fieldName: FieldName): Boolean = {
+    def read(it: TokenIterator^)(implicit fieldName: FieldName): Boolean = {
       if (it.currentToken().isBooleanValue) {
         val res = it.boolean()
         it.nextToken()

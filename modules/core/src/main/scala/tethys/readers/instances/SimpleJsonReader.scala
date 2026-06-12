@@ -10,13 +10,13 @@ import scala.collection.mutable
 
 private[readers] class SimpleJsonReader[A](
     fields: Array[FieldDefinition[_]],
-    mapper: Array[Any] => A,
+    mapper: Array[Any] -> A,
     strict: Boolean
 ) extends JsonReader[A] {
 
   private val defaults: Array[Any] = fields.map(_.defaultValue)
 
-  override def read(it: TokenIterator)(implicit fieldName: FieldName): A = {
+  override def read(it: TokenIterator^)(implicit fieldName: FieldName): A = {
     if (!it.currentToken().isObjectStart)
       ReaderError.wrongJson(
         s"Expected object start but found: ${it.currentToken()}"
@@ -68,7 +68,7 @@ private[readers] class SimpleJsonReader[A](
   }
 
   @tailrec
-  private def recRead(it: TokenIterator, extracted: Array[Any])(implicit
+  private def recRead(it: TokenIterator^, extracted: Array[Any])(implicit
       fieldName: FieldName
   ): Array[Any] = {
     it.currentToken() match {
@@ -89,7 +89,7 @@ private[readers] class SimpleJsonReader[A](
   private def extractField(
       i: Int,
       name: String,
-      it: TokenIterator,
+      it: TokenIterator^,
       extracted: Array[Any]
   )(implicit fieldName: FieldName): Array[Any] = {
     if (i >= extracted.length) {

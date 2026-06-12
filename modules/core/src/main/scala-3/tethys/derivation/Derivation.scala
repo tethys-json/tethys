@@ -36,6 +36,18 @@ private[tethys] object Derivation:
   inline def deriveJsonWriterForSum[T]: JsonObjectWriter[T] =
     ${ DerivationMacro.deriveJsonWriterForSum[T] }
 
+  inline def deriveJsonWriterForProductWith[T](
+      inline config: WriterBuilder[T],
+      inline jsonConfig: JsonConfiguration
+  ): JsonObjectWriter[T]^ =
+    ${
+      DerivationMacro
+        .deriveJsonWriterForProductWith[T]('{ config }, '{ jsonConfig })
+    }
+
+  inline def deriveJsonWriterForSumWith[T]: JsonObjectWriter[T]^ =
+    ${ DerivationMacro.deriveJsonWriterForSumWith[T] }
+
   inline def deriveJsonReaderForProduct[T](
       inline config: ReaderBuilder[T],
       inline jsonConfig: JsonConfiguration
@@ -43,6 +55,15 @@ private[tethys] object Derivation:
     ${
       DerivationMacro
         .deriveJsonReaderForProduct[T]('{ config }, '{ jsonConfig })
+    }
+
+  inline def deriveJsonReaderForProductWith[T](
+      inline config: ReaderBuilder[T],
+      inline jsonConfig: JsonConfiguration
+  ): JsonReader[T]^ =
+    ${
+      DerivationMacro
+        .deriveJsonReaderForProductWith[T]('{ config }, '{ jsonConfig })
     }
 
   @deprecated
@@ -72,6 +93,9 @@ private[tethys] object Derivation:
   inline def deriveJsonReaderForSum[T]: JsonReader[T] =
     ${ DerivationMacro.deriveJsonReaderForSum[T] }
 
+  inline def deriveJsonReaderForSumWith[T]: JsonReader[T]^ =
+    ${ DerivationMacro.deriveJsonReaderForSumWith[T] }
+
 object DerivationMacro:
   def deriveJsonWriterForProduct[T: Type](
       config: Expr[WriterBuilder[T]],
@@ -87,6 +111,20 @@ object DerivationMacro:
   ): Expr[JsonObjectWriter[T]] =
     new DerivationMacro(quotes).deriveJsonWriterForSum[T](None)
 
+  def deriveJsonWriterForProductWith[T: Type](
+      config: Expr[WriterBuilder[T]],
+      jsonConfig: Expr[JsonConfiguration]
+  )(using
+      quotes: Quotes
+  ): Expr[JsonObjectWriter[T]^] =
+    new DerivationMacro(quotes)
+      .deriveJsonWriterForProductWith[T](config, jsonConfig)
+
+  def deriveJsonWriterForSumWith[T: Type](using
+      quotes: Quotes
+  ): Expr[JsonObjectWriter[T]^] =
+    new DerivationMacro(quotes).deriveJsonWriterForSumWith[T]
+
   def deriveJsonReaderForProduct[T: Type](
       config: Expr[ReaderBuilder[T]],
       jsonConfig: Expr[JsonConfiguration]
@@ -96,10 +134,24 @@ object DerivationMacro:
     new DerivationMacro(quotes)
       .deriveJsonReaderForProduct[T](config, jsonConfig)
 
+  def deriveJsonReaderForProductWith[T: Type](
+      config: Expr[ReaderBuilder[T]],
+      jsonConfig: Expr[JsonConfiguration]
+  )(using
+      quotes: Quotes
+  ): Expr[JsonReader[T]^] =
+    new DerivationMacro(quotes)
+      .deriveJsonReaderForProductWith[T](config, jsonConfig)
+
   def deriveJsonReaderForSum[T: Type](using
       quotes: Quotes
   ): Expr[JsonReader[T]] =
     new DerivationMacro(quotes).deriveJsonReaderForSum[T]
+
+  def deriveJsonReaderForSumWith[T: Type](using
+      quotes: Quotes
+  ): Expr[JsonReader[T]^] =
+    new DerivationMacro(quotes).deriveJsonReaderForSumWith[T]
 
   @deprecated
   def deriveJsonReaderForProductLegacy[T: Type](
@@ -149,8 +201,11 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
                         .fold(lookup[JsonWriter[f]])(_.asExprOf[JsonWriter[f]])
                       '{
                         ${ writer }.write(
-                          ${ field.label },
-                          ${ field.value('{ value }.asTerm).asExprOf[f] },
+                          ${ writerFieldLabel(field) },
+                          ${
+                            writerFieldValue(field, '{ value }.asTerm)
+                              .asExprOf[f]
+                          },
                           tokenWriter
                         )
                       }
@@ -161,6 +216,42 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
       }.asTerm
     )
     writer.asExprOf[JsonObjectWriter[T]]
+
+  def deriveJsonWriterForProductWith[T: Type](
+      config: Expr[WriterBuilder[T]],
+      jsonConfig: Expr[JsonConfiguration]
+  ): Expr[JsonObjectWriter[T]^] =
+    val fields = prepareWriterProductFields(config, jsonConfig)
+    '{
+      new JsonObjectWriter[T]:
+        given JsonWriter[T] = this
+
+        override def writeValues(value: T, tokenWriter: TokenWriter): Unit =
+          ${
+            Expr.block(
+              fields.map { field =>
+                field.tpe.asType match
+                  case '[f] =>
+                    val writer: Expr[JsonWriter[f]^] = field.tpe.dealias match
+                      case _: OrType =>
+                        deriveOrTypeJsonWriterWith[f]
+                      case _ =>
+                        '{ DerivationSupport.summonOrDerivedWriterWith[f] }
+                    '{
+                      ${ writer }.write(
+                          ${ writerFieldLabel(field) },
+                          ${
+                            writerFieldValue(field, '{ value }.asTerm)
+                              .asExprOf[f]
+                          },
+                          tokenWriter
+                        )
+                    }
+              },
+              '{}
+            )
+          }
+    }
 
   def deriveJsonWriterForSum[T: Type](
       legacyConfig: Option[DiscriminatorConfig]
@@ -232,6 +323,51 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
       }.asTerm
     )
     writer.asExprOf[JsonObjectWriter[T]]
+
+  def deriveJsonWriterForSumWith[T: Type]: Expr[JsonObjectWriter[T]^] =
+    val tpe = TypeRepr.of[T]
+    val parsedConfig = parseSumConfig[T]
+    val types = getAllChildren(tpe)
+    '{
+      new JsonObjectWriter[T]:
+        given JsonWriter[T] = this
+
+        override def writeValues(value: T, tokenWriter: TokenWriter): Unit =
+          ${
+            parsedConfig.discriminator.fold('{}) {
+              case DiscriminatorConfig(label, tpe, _) =>
+                tpe.asType match
+                  case '[discriminatorType] =>
+                    '{
+                      DerivationSupport
+                        .summonOrDerivedWriterWith[discriminatorType]
+                        .write(
+                          name = ${ Expr(label) },
+                          value = ${
+                            Select
+                              .unique('{ value }.asTerm, label)
+                              .asExprOf[discriminatorType]
+                          },
+                          tokenWriter = tokenWriter
+                        )
+                    }
+            }
+          }
+          ${
+            matchByTypeAndWrite(
+              term = '{ value }.asTerm,
+              types = types,
+              write = (ref, tpe) =>
+                tpe.asType match
+                  case '[branch] =>
+                    '{
+                      DerivationSupport
+                        .summonOrDerivedObjectWriterWith[branch]
+                        .writeValues(${ ref.asExprOf[branch] }, tokenWriter)
+                    }
+            )
+          }
+    }
 
   private def deriveMissingWritersForSum(
       types: List[TypeRepr]
@@ -311,13 +447,7 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
     (stats, refs.toMap)
 
   private def deriveOrTypeJsonWriter[T: Type]: Expr[JsonWriter[T]] =
-    def collectTypes(tpe: TypeRepr, acc: List[TypeRepr] = Nil): List[TypeRepr] =
-      tpe match
-        case OrType(left, right) =>
-          collectTypes(left, Nil) ::: acc ::: collectTypes(right, Nil)
-        case other => other :: acc
-
-    val types = collectTypes(TypeRepr.of[T])
+    val types = collectOrTypes(TypeRepr.of[T])
     val (missingWriters, refs) = deriveMissingWriters(TypeRepr.of[T], types)
     val term = Block(
       missingWriters,
@@ -341,10 +471,40 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
     )
     term.asExprOf[JsonWriter[T]]
 
+  private def deriveOrTypeJsonWriterWith[T: Type]: Expr[JsonWriter[T]^] =
+    val types = collectOrTypes(TypeRepr.of[T])
+    '{
+      new JsonWriter[T]:
+        def write(value: T, tokenWriter: TokenWriter): Unit =
+          ${
+            matchByTypeAndWrite(
+              term = '{ value }.asTerm,
+              types = types,
+              (ref, tpe) =>
+                tpe.asType match
+                  case '[t] =>
+                    '{
+                      DerivationSupport
+                        .summonOrDerivedWriterWith[t]
+                        .write(${ ref.asExprOf[t] }, tokenWriter)
+                    }
+            )
+          }
+    }
+
+  private def collectOrTypes(
+      tpe: TypeRepr,
+      acc: List[TypeRepr] = Nil
+  ): List[TypeRepr] =
+    tpe match
+      case OrType(left, right) =>
+        collectOrTypes(left, Nil) ::: acc ::: collectOrTypes(right, Nil)
+      case other => other :: acc
+
   private def matchByTypeAndWrite(
       term: Term,
       types: List[TypeRepr],
-      write: (Ref, TypeRepr) => Expr[Unit]
+      write: (Ref, TypeRepr) -> Expr[Unit]
   ): Expr[Unit] =
     Match(
       term,
@@ -379,6 +539,8 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
     val fieldsWithoutReader = fields.collect {
       case field: ReaderField.Extracted if field.reader => field.name
     }
+    val fieldStates =
+      fields.map(field => field -> initializeReaderFieldState(field)).toMap
 
     val (basicFields, extractedFields) = fields.partitionMap {
       case field: ReaderField.Basic     => Left(field)
@@ -393,10 +555,12 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
     def failIfNotInitialized(fieldName: Expr[FieldName]): Expr[Unit] =
       basicFields.filterNot(_.default.nonEmpty) match
         case refs @ head :: tail =>
+          val headState = fieldStates(head)
           val boolExpr = tail.foldLeft('{
-            !${ head.initRef.asExprOf[Boolean] }
+            !${ headState.initRef.asExprOf[Boolean] }
           }) { (acc, el) =>
-            '{ ${ acc } || !${ el.initRef.asExprOf[Boolean] } }
+            val state = fieldStates(el)
+            '{ ${ acc } || !${ state.initRef.asExprOf[Boolean] } }
           }
           '{
             if { $boolExpr } then
@@ -407,8 +571,9 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
               ${
                 Expr.block(
                   refs.map { ref =>
+                    val state = fieldStates(ref)
                     '{
-                      if !${ ref.initRef.asExprOf[Boolean] } then
+                      if !${ state.initRef.asExprOf[Boolean] } then
                         uninitializedFields += ${ Expr(ref.name) }
                     }
                   },
@@ -445,7 +610,7 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
                 it.nextToken()
                 ${
                   Block(
-                    fields.flatMap(_.initialize),
+                    fields.flatMap(field => fieldStates(field).initialize),
                     '{
                       while (!it.currentToken().isObjectEnd)
                         val jsonName = it.fieldName()
@@ -453,8 +618,10 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
                         ${
                           Match(
                             selector = '{ jsonName }.asTerm,
-                            cases = fields.flatMap(
-                              _.initializeFieldCase(
+                            cases = fields.flatMap(field =>
+                              readerFieldInitializeFieldCase(
+                                field,
+                                fieldStates(field),
                                 refs,
                                 '{ it },
                                 '{ fieldName }
@@ -479,10 +646,19 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
 
                       ${
                         val allRefs =
-                          fields.map(field => field.name -> field.ref).toMap
+                          fields
+                            .map(field => field.name -> fieldStates(field).ref)
+                            .toMap
                         Expr.block(
                           extractedFields
-                            .flatMap(_.extract(allRefs, '{ fieldName }))
+                            .flatMap(field =>
+                              extractReaderField(
+                                field,
+                                fieldStates(field),
+                                allRefs,
+                                '{ fieldName }
+                              )
+                            )
                             .map(_.asExprOf[Unit]),
                           '{}
                         )
@@ -496,7 +672,7 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
                             fields
                               .filterNot(_.idx == -1)
                               .sortBy(_.idx)
-                              .map(_.ref)
+                              .map(field => fieldStates(field).ref)
                           )
                           .asExprOf[T]
                       }
@@ -507,6 +683,145 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
         }.asTerm
       )
       term.asExprOf[JsonReader[T]]
+
+  def deriveJsonReaderForProductWith[T: Type](
+      config: Expr[ReaderBuilder[T]],
+      jsonConfig: Expr[JsonConfiguration]
+  ): Expr[JsonReader[T]^] =
+    val tpe = TypeRepr.of[T]
+    val (fields, isStrict) = prepareReaderProductFields[T](config, jsonConfig)
+    val extractedFields = fields.collect {
+      case field: ReaderField.Extracted => field
+    }
+    val expectedFieldNames =
+      fields.collect { case field: ReaderField.Basic => field.name }.toSet ++
+        extractedFields.flatMap(_.extractors.map(_._1)) --
+        extractedFields.map(_.name)
+    val fieldStates =
+      fields.map(field => field -> initializeReaderFieldState(field)).toMap
+    val basicFields = fields.collect { case field: ReaderField.Basic => field }
+
+    def failIfNotInitialized(fieldName: Expr[FieldName]): Expr[Unit] =
+      basicFields.filterNot(_.default.nonEmpty) match
+        case refs @ head :: tail =>
+          val headState = fieldStates(head)
+          val boolExpr = tail.foldLeft('{
+            !${ headState.initRef.asExprOf[Boolean] }
+          }) { (acc, el) =>
+            val state = fieldStates(el)
+            '{ ${ acc } || !${ state.initRef.asExprOf[Boolean] } }
+          }
+          '{
+            if { $boolExpr } then
+              val uninitializedFields =
+                new scala.collection.mutable.ArrayBuffer[String](${
+                  Expr(refs.size)
+                })
+              ${
+                Expr.block(
+                  refs.map { ref =>
+                    val state = fieldStates(ref)
+                    '{
+                      if !${ state.initRef.asExprOf[Boolean] } then
+                        uninitializedFields += ${ Expr(ref.name) }
+                    }
+                  },
+                  '{}
+                )
+              }
+              ReaderError.wrongJson(
+                "Can not extract fields from json: " + uninitializedFields
+                  .mkString("'", "', '", "'")
+              )(${ fieldName })
+          }
+
+        case Nil =>
+          '{}
+
+    if tpe.typeSymbol.flags.is(Flags.Module) then
+      '{ JsonReader.const(${ Ref(tpe.termSymbol).asExprOf[T] }) }
+    else
+      '{
+        new JsonReader[T]:
+          given JsonReader[T] = this
+          override def read(it: TokenIterator)(using fieldName: FieldName) =
+            if !it.currentToken().isObjectStart then
+              ReaderError.wrongJson(
+                "Expected object start but found: " + it.currentToken().toString
+              )
+            else
+              it.nextToken()
+              ${
+                Block(
+                  fields.flatMap(field => fieldStates(field).initialize),
+                  '{
+                    while (!it.currentToken().isObjectEnd)
+                      val jsonName = it.fieldName()
+                      it.nextToken()
+                      ${
+                        Match(
+                          selector = '{ jsonName }.asTerm,
+                          cases = fields.flatMap(field =>
+                            readerFieldInitializeFieldCaseWith(
+                              field,
+                              fieldStates(field),
+                              '{ it },
+                              '{ fieldName }
+                            )
+                          ) :+
+                            CaseDef(
+                              Wildcard(),
+                              None,
+                              if isStrict then
+                                '{
+                                  ReaderError.wrongJson(
+                                    s"unexpected field '$jsonName', expected one of ${${ Expr(expectedFieldNames.mkString("'", "', '", "'")) }}"
+                                  )
+                                }.asTerm
+                              else '{ it.skipExpression(); () }.asTerm
+                            )
+                        ).asExprOf[Unit]
+                      }
+                    it.nextToken()
+
+                    ${ failIfNotInitialized('{ fieldName }) }
+
+                    ${
+                      val allRefs =
+                        fields
+                          .map(field => field.name -> fieldStates(field).ref)
+                          .toMap
+                      Expr.block(
+                        extractedFields
+                          .flatMap(field =>
+                            extractReaderFieldWith(
+                              field,
+                              fieldStates(field),
+                              allRefs,
+                              '{ fieldName }
+                            )
+                          )
+                          .map(_.asExprOf[Unit]),
+                        '{}
+                      )
+                    }
+
+                    ${
+                      New(TypeTree.of[T])
+                        .select(tpe.classSymbol.get.primaryConstructor)
+                        .appliedToTypes(tpe.typeArgs)
+                        .appliedToArgs(
+                          fields
+                            .filterNot(_.idx == -1)
+                            .sortBy(_.idx)
+                            .map(field => fieldStates(field).ref)
+                        )
+                        .asExprOf[T]
+                    }
+                  }.asTerm
+                ).asExprOf[T]
+              }
+      }
 
   def deriveJsonReaderForSum[T: Type]: Expr[JsonReader[T]] =
     val tpe = TypeRepr.of[T]
@@ -575,6 +890,88 @@ private[derivation] class DerivationMacro(val quotes: Quotes)
               }.asTerm
             )
             term.asExprOf[JsonReader[T]]
+
+      case None =>
+        report.errorAndAbort(
+          "Discriminator is required to derive JsonReader for sum type. Use @selector annotation"
+        )
+
+  def deriveJsonReaderForSumWith[T: Type]: Expr[JsonReader[T]^] =
+    val tpe = TypeRepr.of[T]
+    val parsed = parseSumConfig[T]
+    val children = getAllChildren(tpe)
+    parsed.discriminator match
+      case Some(DiscriminatorConfig(label, discriminatorTpe, discriminators)) =>
+        discriminatorTpe.asType match
+          case '[discriminator] =>
+            val (discriminatorStats, discriminatorRefs) =
+              discriminators.zipWithIndex
+                .map((term, idx) =>
+                  val stat = ValDef(
+                    Symbol.newVal(
+                      Symbol.spliceOwner,
+                      s"Discriminator_$idx",
+                      term.tpe,
+                      Flags.Private,
+                      Symbol.noSymbol
+                    ),
+                    Some(term)
+                  )
+                  (stat, Ref(stat.symbol))
+                )
+                .unzip
+            '{
+              DerivationSupport.identityReaderWith[T](
+                ${
+                  Block(
+                    discriminatorStats,
+                    '{
+                      new JsonReader[T]:
+                        given JsonReader[T] = this
+
+                        override def read(it: TokenIterator)(using fieldName: FieldName): T =
+                          val discriminatorIt = it.collectExpression()
+                          val valueIt = discriminatorIt.copy()
+                          val discriminator =
+                            DerivationSupport.readObjectFieldWith[discriminator](
+                              discriminatorIt,
+                              ${ Expr(label) },
+                              DerivationSupport.summonOrDerivedReaderWith[discriminator]
+                            )
+
+                          ${
+                            Match(
+                              '{ discriminator }.asTerm,
+                              children
+                                .zip(discriminatorRefs)
+                                .map((tpe, branchDiscriminator) =>
+                                  tpe.asType match
+                                    case '[branch] =>
+                                      CaseDef(
+                                        branchDiscriminator,
+                                        None,
+                                        '{
+                                          DerivationSupport
+                                            .summonOrDerivedReaderWith[branch]
+                                            .read(valueIt)(using fieldName)
+                                        }.asTerm
+                                      )
+                                ) :+ CaseDef(
+                                Wildcard(),
+                                None,
+                                '{
+                                  ReaderError.wrongJson(
+                                    s"Unexpected discriminator found: $discriminator"
+                                  )(using fieldName.appendFieldName(${ Expr(label) }))
+                                }.asTerm
+                              )
+                            ).asExprOf[T]
+                          }
+                    }.asTerm
+                  ).asExprOf[JsonReader[T]]
+                }
+              )
+            }
 
       case None =>
         report.errorAndAbort(

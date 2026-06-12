@@ -9,7 +9,7 @@ import tethys.writers.tokens.TokenWriter
 
 class JacksonTokenWriterTest extends AnyFlatSpec with Matchers {
 
-  def iterate(fun: (TokenWriter) => Unit): String = {
+  def iterate(fun: (TokenWriter^) => Unit): String = {
     val sw = new StringWriter()
     val tokenWriter = sw.toTokenWriter
     fun(tokenWriter)

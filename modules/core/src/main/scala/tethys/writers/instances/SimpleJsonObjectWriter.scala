@@ -9,7 +9,7 @@ import scala.collection.immutable
 class SimpleJsonObjectWriter[A](val fields: Seq[JsonFieldObjectField[A, _]])
     extends JsonObjectWriter[A] {
 
-  override def writeValues(value: A, tokenWriter: TokenWriter): Unit = {
+  override def writeValues(value: A, tokenWriter: TokenWriter^): Unit = {
     val it = fields.iterator
     while (it.hasNext) {
       it.next() match {
@@ -20,7 +20,7 @@ class SimpleJsonObjectWriter[A](val fields: Seq[JsonFieldObjectField[A, _]])
   }
 
   def addField[B](name: String)(
-      fun: A => B
+      fun: A -> B
   )(implicit jsonWriter: JsonWriter[B]): SimpleJsonObjectWriter[A] = {
     SimpleJsonObjectWriter(
       fields :+ JsonFieldObjectField[A, B](name, fun, jsonWriter)
@@ -46,7 +46,7 @@ object SimpleJsonObjectWriter {
 
   case class JsonFieldObjectField[A, B](
       name: String,
-      fun: A => B,
+      fun: A -> B,
       jsonWriter: JsonWriter[B]
   )
 }

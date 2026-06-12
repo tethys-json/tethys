@@ -8,7 +8,7 @@ trait AllJsonReaders extends OptionReaders {
   implicit lazy val booleanReader: JsonReader[Boolean] =
     new JsonReader[Boolean] {
       override def read(
-          it: TokenIterator
+          it: TokenIterator^
       )(implicit fieldName: FieldName): Boolean = {
         if (it.currentToken().isBooleanValue) {
           val res = it.boolean()
@@ -24,7 +24,7 @@ trait AllJsonReaders extends OptionReaders {
 
   implicit lazy val stringReader: JsonReader[String] = new JsonReader[String] {
     override def read(
-        it: TokenIterator
+        it: TokenIterator^
     )(implicit fieldName: FieldName): String = {
       if (it.currentToken().isStringValue) {
         val res = it.string()
@@ -48,7 +48,7 @@ trait AllJsonReaders extends OptionReaders {
 
   implicit lazy val numberReader: JsonReader[Number] = new JsonReader[Number] {
     override def read(
-        it: TokenIterator
+        it: TokenIterator^
     )(implicit fieldName: FieldName): Number = {
       if (it.currentToken().isNumberValue) {
         val res = it.number()
@@ -64,7 +64,7 @@ trait AllJsonReaders extends OptionReaders {
 
   implicit lazy val byteReader: JsonReader[Byte] = new JsonReader[Byte] {
     override def read(
-        it: TokenIterator
+        it: TokenIterator^
     )(implicit fieldName: FieldName): Byte = {
       if (it.currentToken().isNumberValue) {
         val res = it.byte()
@@ -80,7 +80,7 @@ trait AllJsonReaders extends OptionReaders {
 
   implicit lazy val shortReader: JsonReader[Short] = new JsonReader[Short] {
     override def read(
-        it: TokenIterator
+        it: TokenIterator^
     )(implicit fieldName: FieldName): Short = {
       if (it.currentToken().isNumberValue) {
         val res = it.short()
@@ -95,7 +95,7 @@ trait AllJsonReaders extends OptionReaders {
   }
 
   implicit lazy val intReader: JsonReader[Int] = new JsonReader[Int] {
-    override def read(it: TokenIterator)(implicit fieldName: FieldName): Int = {
+    override def read(it: TokenIterator^)(implicit fieldName: FieldName): Int = {
       if (it.currentToken().isNumberValue) {
         val res = it.int()
         it.next()
@@ -110,7 +110,7 @@ trait AllJsonReaders extends OptionReaders {
 
   implicit lazy val longReader: JsonReader[Long] = new JsonReader[Long] {
     override def read(
-        it: TokenIterator
+        it: TokenIterator^
     )(implicit fieldName: FieldName): Long = {
       if (it.currentToken().isNumberValue) {
         val res = it.long()
@@ -126,7 +126,7 @@ trait AllJsonReaders extends OptionReaders {
 
   implicit lazy val floatReader: JsonReader[Float] = new JsonReader[Float] {
     override def read(
-        it: TokenIterator
+        it: TokenIterator^
     )(implicit fieldName: FieldName): Float = {
       if (it.currentToken().isNumberValue) {
         val res = it.float()
@@ -142,7 +142,7 @@ trait AllJsonReaders extends OptionReaders {
 
   implicit lazy val doubleReader: JsonReader[Double] = new JsonReader[Double] {
     override def read(
-        it: TokenIterator
+        it: TokenIterator^
     )(implicit fieldName: FieldName): Double = {
       if (it.currentToken().isNumberValue) {
         val res = it.double()

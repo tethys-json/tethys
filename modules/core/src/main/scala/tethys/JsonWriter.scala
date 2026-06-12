@@ -5,29 +5,29 @@ import tethys.writers.tokens.TokenWriter
 
 import scala.language.higherKinds
 
-trait JsonWriter[@specialized(specializations) A] {
-  self =>
+trait JsonWriter[@specialized(specializations) A] { self: JsonWriter[A]^ =>
 
-  def write(name: String, value: A, tokenWriter: TokenWriter): Unit = {
+  def write(name: String, value: A, tokenWriter: TokenWriter^): Unit = {
     tokenWriter.writeFieldName(name)
     write(value, tokenWriter)
   }
 
-  def write(value: A, tokenWriter: TokenWriter): Unit
+  def write(value: A, tokenWriter: TokenWriter^): Unit
 
-  def contramap[B](fun: B => A): JsonWriter[B] = new JsonWriter[B] {
-    override def write(
-        name: String,
-        value: B,
-        tokenWriter: TokenWriter
-    ): Unit = {
-      self.write(name, fun(value), tokenWriter)
-    }
+  def contramap[B](fun: B => A): JsonWriter[B]^{this, fun} =
+    new JsonWriter[B] {
+      override def write(
+          name: String,
+          value: B,
+          tokenWriter: TokenWriter^
+      ): Unit = {
+        self.write(name, fun(value), tokenWriter)
+      }
 
-    override def write(value: B, tokenWriter: TokenWriter): Unit = {
-      self.write(fun(value), tokenWriter)
+      override def write(value: B, tokenWriter: TokenWriter^): Unit = {
+        self.write(fun(value), tokenWriter)
+      }
     }
-  }
 }
 
 object JsonWriter

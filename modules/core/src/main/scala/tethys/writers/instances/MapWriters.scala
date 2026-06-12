@@ -11,7 +11,7 @@ private[tethys] trait MapWriters extends IterableWriters {
   ): JsonObjectWriter[Map[K, A]] = new JsonObjectWriter[Map[K, A]] {
     override def writeValues(
         value: Map[K, A],
-        tokenWriter: TokenWriter
+        tokenWriter: TokenWriter^
     ): Unit = {
       val valueIterator = value.iterator
       while (valueIterator.hasNext) {

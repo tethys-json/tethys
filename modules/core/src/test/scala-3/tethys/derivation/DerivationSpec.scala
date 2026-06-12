@@ -13,11 +13,29 @@ import tethys.writers.instances.SimpleJsonObjectWriter
 
 class DerivationSpec extends AnyFlatSpec with Matchers {
 
+  private def widen(reader: JsonReader[?]): JsonReader[Any] =
+    reader.map[Any](value => value)
+
   def read[A: JsonReader](nodes: List[TokenNode]): A = {
     val it = QueueIterator(nodes)
     val res = it.readJson[A].fold(throw _, identity)
     it.currentToken() shouldBe Token.Empty
     res
+  }
+
+  def readWith[A](nodes: List[TokenNode], jsonReader: JsonReader[A]^): A = {
+    import tethys.TokenIteratorSyntax.*
+    val it = QueueIterator(nodes)
+    val capIt: tethys.readers.tokens.TokenIterator^ = it
+    val res = capIt.readJson(using jsonReader).fold(throw _, identity)
+    it.currentToken() shouldBe Token.Empty
+    res
+  }
+
+  def writeWith[A](value: A, jsonWriter: JsonWriter[A]^): List[TokenNode] = {
+    val tokenWriter = new tethys.writers.tokens.SimpleTokenWriter
+    jsonWriter.write(value, tokenWriter)
+    tokenWriter.tokens.toList
   }
 
   it should "derive sum type for opaque types" in {
@@ -224,6 +242,136 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     read[Choose](obj("discriminator" -> 1)) shouldBe Choose.BB()
   }
 
+  it should "derive reader for simple sum type with derivedWith" in {
+    enum Disc derives StringEnumJsonWriter, StringEnumJsonReader:
+      case A, B
+
+    sealed trait Choose(@selector val discriminator: Disc)
+
+    object Choose:
+      case class AA(value: Int) extends Choose(Disc.A)
+      case class BB(name: String) extends Choose(Disc.B)
+
+    val reader: JsonReader[Choose]^ = JsonReader.derivedWith[Choose]
+
+    readWith(
+      obj("discriminator" -> "A", "value" -> 1),
+      reader
+    ) shouldBe Choose.AA(1)
+
+    readWith(
+      obj("discriminator" -> "B", "name" -> "x"),
+      reader
+    ) shouldBe Choose.BB("x")
+  }
+
+  it should "derive reader for recursive sum type with derivedWith" in {
+    enum Disc derives StringEnumJsonWriter, StringEnumJsonReader:
+      case Leaf, Branch
+
+    sealed trait Node(@selector val discriminator: Disc)
+
+    object Node:
+      case class Leaf(value: Int) extends Node(Disc.Leaf)
+      case class Branch(left: Node, right: Node) extends Node(Disc.Branch)
+
+    val reader: JsonReader[Node]^ = JsonReader.derivedWith[Node]
+
+    readWith(
+      obj(
+        "discriminator" -> "Branch",
+        "left" -> obj("discriminator" -> "Leaf", "value" -> 1),
+        "right" -> obj(
+          "discriminator" -> "Branch",
+          "left" -> obj("discriminator" -> "Leaf", "value" -> 2),
+          "right" -> obj("discriminator" -> "Leaf", "value" -> 3)
+        )
+      ),
+      reader
+    ) shouldBe Node.Branch(
+      Node.Leaf(1),
+      Node.Branch(Node.Leaf(2), Node.Leaf(3))
+    )
+  }
+
+  it should "derive reader for product containing sum field with derivedWith" in {
+    enum Disc derives StringEnumJsonWriter, StringEnumJsonReader:
+      case A, B
+
+    sealed trait SumValue(@selector val discriminator: Disc)
+
+    object SumValue:
+      case class IntValue(value: Int) extends SumValue(Disc.A)
+      case class StringValue(value: String) extends SumValue(Disc.B)
+
+    case class Wrapper(sum: SumValue)
+
+    val reader: JsonReader[Wrapper]^ = JsonReader.derivedWith[Wrapper]
+
+    readWith(
+      obj(
+        "sum" -> obj("discriminator" -> "A", "value" -> 4)
+      ),
+      reader
+    ) shouldBe Wrapper(SumValue.IntValue(4))
+  }
+
+  it should "derive reader for product containing impure field codec with derivedWith" in {
+    case class Payload(value: String) derives JsonReader, JsonObjectWriter
+    case class Wrapper(payload: Payload)
+
+    val sideIt = QueueIterator(TokenNode.value(true))
+    val actual = {
+      given JsonReader[Payload] = JsonReader[Payload].map { value =>
+        sideIt.skipExpression()
+        value
+      }
+
+      readWith(
+        obj(
+          "payload" -> obj("value" -> "x")
+        ),
+        JsonReader.derivedWith[Wrapper]
+      )
+    }
+
+    actual shouldBe Wrapper(Payload("x"))
+    sideIt.currentToken() shouldBe Token.Empty
+  }
+
+  it should "derive reader for sum containing impure field codec with derivedWith" in {
+    enum Disc derives StringEnumJsonWriter, StringEnumJsonReader:
+      case PayloadCase, EmptyCase
+
+    case class Payload(value: String) derives JsonReader, JsonObjectWriter
+
+    sealed trait Choice(@selector val discriminator: Disc)
+
+    object Choice:
+      case class PayloadCase(payload: Payload)
+          extends Choice(Disc.PayloadCase)
+      case class EmptyCase() extends Choice(Disc.EmptyCase)
+
+    val sideIt = QueueIterator(TokenNode.value(true))
+    val actual = {
+      given JsonReader[Payload] = JsonReader[Payload].map { value =>
+        sideIt.skipExpression()
+        value
+      }
+
+      readWith(
+        obj(
+          "discriminator" -> "PayloadCase",
+          "payload" -> obj("value" -> "x")
+        ),
+        JsonReader.derivedWith[Choice]
+      )
+    }
+
+    actual shouldBe Choice.PayloadCase(Payload("x"))
+    sideIt.currentToken() shouldBe Token.Empty
+  }
+
   it should "not compile derivation when discriminator override found" in {
 
     """
@@ -283,6 +431,27 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
       )
     ) shouldBe RecursiveType(1, Seq(RecursiveType(2), RecursiveType(3)))
 
+  }
+
+  it should "derive reader for recursive type with derivedWith" in {
+    val reader = JsonReader.derivedWith[RecursiveType]
+
+    readWith(
+      obj(
+        "a" -> 1,
+        "children" -> arr(
+          obj(
+            "a" -> 2,
+            "children" -> arr()
+          ),
+          obj(
+            "a" -> 3,
+            "children" -> arr()
+          )
+        )
+      ),
+      reader
+    ) shouldBe RecursiveType(1, Seq(RecursiveType(2), RecursiveType(3)))
   }
 
   it should "derive reader for A => B => A cycle" in {
@@ -428,10 +597,11 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
       JsonReader.derived[SimpleTypeWithAny] {
         ReaderBuilder[SimpleTypeWithAny]
           .extractReader(_.any)
-          .from(_.d) {
-            case 1.0 => JsonReader[String]
-            case 2.0 => JsonReader[Int]
-          }
+          .from(_.d)(d =>
+            d match
+              case 1.0 => widen(JsonReader[String])
+              case 2.0 => widen(JsonReader[Int])
+          )
       }
 
     read[SimpleTypeWithAny](
@@ -453,16 +623,107 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     ) shouldBe SimpleTypeWithAny(1, "str", 2.0, 2)
   }
 
+  it should "derive reader for extract reader from description with derivedWith" in {
+    val reader = JsonReader.derivedWith[SimpleTypeWithAny] {
+      ReaderBuilder[SimpleTypeWithAny]
+        .extractReader(_.any)
+        .from(_.d)(d =>
+          d match
+            case 1.0 => widen(JsonReader[String])
+            case 2.0 => widen(JsonReader[Int])
+        )
+    }
+
+    readWith(
+      obj(
+        "i" -> 1,
+        "s" -> "str",
+        "d" -> 1.0,
+        "any" -> "anyStr"
+      ),
+      reader
+    ) shouldBe SimpleTypeWithAny(1, "str", 1.0, "anyStr")
+
+    readWith(
+      obj(
+        "i" -> 1,
+        "s" -> "str",
+        "d" -> 2.0,
+        "any" -> 2
+      ),
+      reader
+    ) shouldBe SimpleTypeWithAny(1, "str", 2.0, 2)
+  }
+
+  it should "derive reader for extract reader from description with impure readers and derivedWith" in {
+    readWith(
+      obj(
+        "i" -> 1,
+        "s" -> "str",
+        "d" -> 1.0,
+        "any" -> "anyStr"
+      ),
+      JsonReader.derivedWith[SimpleTypeWithAny] {
+        ReaderBuilder[SimpleTypeWithAny]
+          .extractReader(_.any)
+          .from(_.d)(d =>
+            d match
+              case 1.0 =>
+                val sideIt = QueueIterator(TokenNode.value(true))
+                JsonReader[String].map { value =>
+                  sideIt.skipExpression()
+                  value
+                }
+              case 2.0 =>
+                val sideIt = QueueIterator(TokenNode.value(false))
+                JsonReader[Int].map { value =>
+                  sideIt.skipExpression()
+                  value
+                }
+          )
+      }
+    ) shouldBe SimpleTypeWithAny(1, "str", 1.0, "anyStr")
+
+    readWith(
+      obj(
+        "i" -> 1,
+        "s" -> "str",
+        "d" -> 2.0,
+        "any" -> 2
+      ),
+      JsonReader.derivedWith[SimpleTypeWithAny] {
+        ReaderBuilder[SimpleTypeWithAny]
+          .extractReader(_.any)
+          .from(_.d)(d =>
+            d match
+              case 1.0 =>
+                val sideIt = QueueIterator(TokenNode.value(true))
+                JsonReader[String].map { value =>
+                  sideIt.skipExpression()
+                  value
+                }
+              case 2.0 =>
+                val sideIt = QueueIterator(TokenNode.value(false))
+                JsonReader[Int].map { value =>
+                  sideIt.skipExpression()
+                  value
+                }
+          )
+      }
+    ) shouldBe SimpleTypeWithAny(1, "str", 2.0, 2)
+  }
+
   it should "derive reader for complex extraction case" in {
     given JsonReader[SimpleTypeWithAny] =
       JsonReader.derived[SimpleTypeWithAny] {
         ReaderBuilder[SimpleTypeWithAny]
           .extractReader(_.any)
-          .from(_.i) {
-            case 1 => JsonReader[String]
-            case 2 => JsonReader[Int]
-            case _ => JsonReader[Option[Boolean]]
-          }
+          .from(_.i)(i =>
+            i match
+              case 1 => widen(JsonReader[String])
+              case 2 => widen(JsonReader[Int])
+              case _ => widen(JsonReader[Option[Boolean]])
+          )
           .extract(_.i)
           .from(_.d)
           .and[Int]("e")((d, e) => d.toInt + e)
@@ -717,6 +978,24 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
     )
   }
 
+  it should "derive writer for recursive type with derivedWith" in {
+    val writer: JsonObjectWriter[RecursiveType]^ =
+      JsonWriter.derivedWith[RecursiveType]
+
+    writeWith(
+      RecursiveType(1, Seq(RecursiveType(2))),
+      writer
+    ) shouldBe obj(
+      "a" -> 1,
+      "children" -> arr(
+        obj(
+          "a" -> 2,
+          "children" -> arr()
+        )
+      )
+    )
+  }
+
   it should "derive writer for A => B => A cycle" in {
     implicit lazy val testWriter1: JsonWriter[ComplexRecursionA] =
       JsonWriter.derived[ComplexRecursionA]
@@ -735,6 +1014,134 @@ class DerivationSpec extends AnyFlatSpec with Matchers {
         )
       )
     )
+  }
+
+  it should "derive writer for simple sum type with derivedWith" in {
+    enum Disc derives StringEnumJsonWriter, StringEnumJsonReader:
+      case A, B
+
+    sealed trait Choose(@selector val discriminator: Disc)
+
+    object Choose:
+      case class AA(value: Int) extends Choose(Disc.A)
+      case class BB(name: String) extends Choose(Disc.B)
+
+    val writer: JsonObjectWriter[Choose]^ = JsonWriter.derivedWith[Choose]
+
+    writeWith(Choose.AA(1), writer) shouldBe obj("discriminator" -> "A", "value" -> 1)
+    writeWith(Choose.BB("x"), writer) shouldBe obj("discriminator" -> "B", "name" -> "x")
+  }
+
+  it should "derive writer for recursive sum type with derivedWith" in {
+    enum Disc derives StringEnumJsonWriter, StringEnumJsonReader:
+      case Leaf, Branch
+
+    sealed trait Node(@selector val discriminator: Disc)
+
+    object Node:
+      case class Leaf(value: Int) extends Node(Disc.Leaf)
+      case class Branch(left: Node, right: Node) extends Node(Disc.Branch)
+
+    val writer: JsonObjectWriter[Node]^ = JsonWriter.derivedWith[Node]
+
+    writeWith(
+      Node.Branch(Node.Leaf(1), Node.Branch(Node.Leaf(2), Node.Leaf(3))),
+      writer
+    ) shouldBe obj(
+      "discriminator" -> "Branch",
+      "left" -> obj("discriminator" -> "Leaf", "value" -> 1),
+      "right" -> obj(
+        "discriminator" -> "Branch",
+        "left" -> obj("discriminator" -> "Leaf", "value" -> 2),
+        "right" -> obj("discriminator" -> "Leaf", "value" -> 3)
+      )
+    )
+  }
+
+  it should "derive writer for product containing sum field with derivedWith" in {
+    enum Disc derives StringEnumJsonWriter, StringEnumJsonReader:
+      case A, B
+
+    sealed trait SumValue(@selector val discriminator: Disc)
+
+    object SumValue:
+      case class IntValue(value: Int) extends SumValue(Disc.A)
+      case class StringValue(value: String) extends SumValue(Disc.B)
+
+    case class Wrapper(sum: SumValue)
+
+    val writer: JsonObjectWriter[Wrapper]^ = JsonWriter.derivedWith[Wrapper]
+
+    writeWith(Wrapper(SumValue.IntValue(4)), writer) shouldBe obj(
+      "sum" -> obj("discriminator" -> "A", "value" -> 4)
+    )
+  }
+
+  it should "derive writer for union field with derivedWith" in {
+    case class Wrapper(value: Int | String)
+
+    val writer: JsonObjectWriter[Wrapper]^ = JsonWriter.derivedWith[Wrapper]
+
+    writeWith(Wrapper(1), writer) shouldBe obj("value" -> 1)
+    writeWith(Wrapper("x"), writer) shouldBe obj("value" -> "x")
+  }
+
+  it should "derive writer for product containing impure field codec with derivedWith" in {
+    case class Payload(value: String) derives JsonReader, JsonObjectWriter
+    case class Wrapper(payload: Payload)
+
+    val sideWriter = new tethys.writers.tokens.SimpleTokenWriter
+    val actual = {
+      given JsonWriter[Payload] = JsonWriter[Payload].contramap[Payload] {
+        value =>
+          sideWriter.writeBoolean(true)
+          value
+      }
+
+      writeWith(
+        Wrapper(Payload("x")),
+        JsonWriter.derivedWith[Wrapper]
+      )
+    }
+
+    actual shouldBe obj(
+      "payload" -> obj("value" -> "x")
+    )
+    sideWriter.tokens.toList shouldBe List(TokenNode.BooleanValueNode(true))
+  }
+
+  it should "derive writer for sum containing impure field codec with derivedWith" in {
+    enum Disc derives StringEnumJsonWriter, StringEnumJsonReader:
+      case PayloadCase, EmptyCase
+
+    case class Payload(value: String) derives JsonReader, JsonObjectWriter
+
+    sealed trait Choice(@selector val discriminator: Disc)
+
+    object Choice:
+      case class PayloadCase(payload: Payload)
+          extends Choice(Disc.PayloadCase)
+      case class EmptyCase() extends Choice(Disc.EmptyCase)
+
+    val sideWriter = new tethys.writers.tokens.SimpleTokenWriter
+    val actual = {
+      given JsonWriter[Payload] = JsonWriter[Payload].contramap[Payload] {
+        value =>
+          sideWriter.writeBoolean(true)
+          value
+      }
+
+      writeWith(
+        Choice.PayloadCase(Payload("x")),
+        JsonWriter.derivedWith[Choice]
+      )
+    }
+
+    actual shouldBe obj(
+      "discriminator" -> "PayloadCase",
+      "payload" -> obj("value" -> "x")
+    )
+    sideWriter.tokens.toList shouldBe List(TokenNode.BooleanValueNode(true))
   }
 
   it should "derive writer for sealed cyclic trait with type parameter" in {

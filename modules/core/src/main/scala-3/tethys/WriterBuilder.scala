@@ -7,15 +7,15 @@ sealed trait WriterBuilder[A]:
 
   def add(name: String): FunApply0[A, A]
 
-  def remove[B](field: A => B): WriterBuilder[A]
+  def remove[B](field: A -> B): WriterBuilder[A]
 
-  def rename[B](field: A => B)(rename: String): WriterBuilder[A]
+  def rename[B](field: A -> B)(rename: String): WriterBuilder[A]
 
-  def update[B](field: A => B): FunApply[A, B] with WithRename[FunApply[A, B]]
+  def update[B](field: A -> B): FunApply[A, B] with WithRename[FunApply[A, B]]
 
   @deprecated("Use 'update' instead")
   def updatePartial[B](
-      field: A => B
+      field: A -> B
   ): FunApply[A, B] with WithRename[FunApply[A, B]]
 
   def fieldStyle(style: FieldStyle): WriterBuilder[A]
@@ -37,7 +37,7 @@ object WriterBuilder:
     def withRename(rename: String): Res
 
   sealed trait FunApply0[A, B]:
-    def apply[C](fun: B => C): WriterBuilder[A]
+    def apply[C](fun: B -> C): WriterBuilder[A]
 
   sealed trait FunApply[A, B] extends FunApply0[A, B]:
-    def fromRoot[C](fun: A => C): WriterBuilder[A]
+    def fromRoot[C](fun: A -> C): WriterBuilder[A]
