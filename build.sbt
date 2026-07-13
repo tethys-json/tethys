@@ -100,7 +100,8 @@ lazy val tethys = project
     circe,
     refined,
     enumeratum,
-    cats
+    cats,
+    literal
   )
 
 lazy val modules = file("modules")
@@ -205,6 +206,21 @@ lazy val refined = project
     )
   )
   .dependsOn(core)
+
+lazy val literal = project
+  .in(modules / "literal")
+  .settings(crossScalaSettings)
+  .settings(commonSettings)
+  .settings(testSettings)
+  .settings(
+    name := "tethys-literal",
+    crossScalaVersions := Seq(scala213, scala3),
+    libraryDependencies ++= Seq(
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.18.2",
+      "io.circe" %% "circe-core" % "0.14.15" % Test
+    )
+  )
+  .dependsOn(core, `jackson-218` % Test, `macro-derivation` % Test)
 
 lazy val jackson = modules / "backend" / "jackson"
 

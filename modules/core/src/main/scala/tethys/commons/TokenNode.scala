@@ -109,7 +109,7 @@ object TokenNode {
     def jsonAsTokensList(implicit
         producer: TokenIteratorProducer
     ): List[TokenNode] = {
-      import tethys._
+      import tethys.StringReaderOps
       val iterator = json.toTokenIterator.fold(throw _, identity)
       val builder = List.newBuilder[TokenNode]
       while (!iterator.currentToken().isEmpty) {
