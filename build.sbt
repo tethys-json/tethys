@@ -96,6 +96,7 @@ lazy val tethys = project
     `jackson-216`,
     `jackson-217`,
     `jackson-218`,
+    `jackson-2x`,
     json4s,
     circe,
     refined,
@@ -311,6 +312,20 @@ lazy val `jackson-218` = project
     name := "tethys-jackson218",
     libraryDependencies ++= Seq(
       "com.fasterxml.jackson.core" % "jackson-core" % "2.18.4"
+    )
+  )
+  .dependsOn(core)
+
+lazy val `jackson-2x` = project
+  .in(jackson / "jackson-2x")
+  .settings(crossScalaSettings)
+  .settings(commonSettings)
+  .settings(jacksonSettings)
+  .settings(testSettings)
+  .settings(
+    name := "tethys-jackson2x",
+    libraryDependencies ++= Seq(
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.22.4"
     )
   )
   .dependsOn(core)
