@@ -726,3 +726,17 @@ case class Bar(seq: Seq[Int])
 val foo = """{"bar":{"seq":[1,2,3]}}""".jsonAs[Foo].fold(throw _, identity)
 val json = foo.asJson
 ```
+
+# `tethys-literal`
+
+Compile-time-validated JSON literals. Scala 2.13 and Scala 3.
+
+```scala
+libraryDependencies += "com.tethys-json" %% "tethys-literal" % tethysVersion
+```
+
+```scala
+import tethys.literal._
+
+val rj = json"""{ "name": "Alice" }"""
+```
