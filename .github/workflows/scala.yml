@@ -54,7 +54,7 @@ jobs:
           java-version: 17
       - uses: sbt/setup-sbt@v1
       - name: coursier-cache
-        uses: coursier/cache-action@v6
+        uses: coursier/cache-action@v8
       - name: Publish artifacts
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
